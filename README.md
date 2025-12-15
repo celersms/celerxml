@@ -1,8 +1,8 @@
 # Overview
 
-**CelerXML** is a lightweight implementation of the [Java Streaming API for XML (StAX)](https://docs.oracle.com/javase/tutorial/jaxp/stax/why.html). It can be used as a drop-in replacement for other StAX processors,
-without recompiling the source code of the user Java application. The main advantage of CelerXML is high performance. It was designed for maximum speed and efficiency. Another advantage is compatibility with Java 7
-and later, while other StAX processors typically require at least Java 8.  
+**CelerXML** is a lightweight implementation of the [Java Streaming API for XML (StAX)](https://docs.oracle.com/javase/tutorial/jaxp/stax/why.html). It can be used as a drop-in replacement for other
+StAX processors, without recompiling the user Java application source code. The main advantage of CelerXML is high performance. It was designed for maximum speed and efficiency. Another advantage is
+compatibility with older Java versions. CelerXML can be used with Java 1.6 and later, while other StAX processors typically require at least Java 8.  
 
 CelerXML is free even for commercial use and redistribution of any kind, as long as all copyrights are preserved. The whole package is provided "AS IS". Check the [license](/LICENSE) file for additional information.  
 
