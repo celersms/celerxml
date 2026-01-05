@@ -1,0 +1,19 @@
+# List of classes and methods to remove return code line numbers
+com.celerxml.BytePN:find
+com.celerxml.ByteSrc:load,isKW,qVal
+com.celerxml.ChrPN:find
+com.celerxml.InputFactoryImpl:createFilteredReader,createXMLEventReader
+com.celerxml.InputFactoryImpl$Key:equals
+com.celerxml.InputSrc:isKW,eqEnc
+com.celerxml.NsD:declared
+com.celerxml.PN:equalsPN,sizeQ,getQ,equals,hashEq
+com.celerxml.PN1:sizeQ
+com.celerxml.PN2:sizeQ
+com.celerxml.PN3:equals,hashEq,sizeQ
+com.celerxml.PNn:equals,hashEq
+com.celerxml.ReaderImpl:getTextStart,isAttributeSpecified
+com.celerxml.ReaderScanner:doPrologDecl,handleDtdStart,commOrCdataStart,handlePIStart,startElem,handleEndElement,entInTxt,prologIndent
+com.celerxml.SAXParserImpl:getParser,getXMLReader,isDeclared,isSpecified,isNamespaceAware,isValidating
+com.celerxml.StrB:append,a,apos,subSequence
+com.celerxml.Utf8Scanner:doPrologDecl,commOrCdataStart,handlePIStart,handleEndElement,prologIndent,startElem,entInTxt
+com.celerxml.XmlScanner:skipTok,isWS,getNamespaceURI,getPrefix,findIdx

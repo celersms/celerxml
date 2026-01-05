@@ -42,6 +42,7 @@ public final class bcClipLinesRet{
 
       // Read the list of classes and methods to optimize from stdin
       ArrayList<String> mth = new ArrayList<String>();
+      int total_saved = 0;
       try{
          BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
          String line;
@@ -63,9 +64,10 @@ public final class bcClipLinesRet{
                   mth.add(ss);
             }while((previdx = idx + 1) < len);
             try{
-               if((len = optimize(new File(fdir, line.replace('.', File.separatorChar) + ".class"), mth.toArray())) > 0)
+               if((len = optimize(new File(fdir, line.replace('.', File.separatorChar) + ".class"), mth.toArray())) > 0){
+                  total_saved += len;
                   System.out.println(line + " updated, bytes removed: " + len);
-               else
+               }else
                   System.err.println("ERR: Failed to update " + line);
             }catch(Exception ex){
                System.err.println("ERR: Failed to optimize " + line + " due to " + ex);
@@ -74,6 +76,8 @@ public final class bcClipLinesRet{
       }catch(IOException ex){
          System.err.println("ERR: Failed to read from stdin due to " + ex);
       }
+      if(total_saved > 0)
+         System.out.println("Total bytes removed: " + total_saved);
    }
 
    private static final int optimize(File classfile, Object[] mth) throws Exception{
@@ -198,31 +202,48 @@ public final class bcClipLinesRet{
                   if(dis.read(buf, 0, xx) != xx) // attribute
                      throw new Exception("Failed to read bytecode");
 
-                  // Check for unreachable return bytecode
+                  // Check for return bytecode
                   if(u1 == code_idx && bb){
                      int ee, ix, yy = buf[4] << 24 | (buf[5] & 0xFF) << 16 | (buf[6] & 0xFF) << 8 | buf[7] & 0xFF;
                      if(yy + 8 > xx)
                         throw new Exception("Invalid code length: " + yy);
-                     if(((ix = buf[yy + 6]) >= 2 && ix <= 4 && buf[yy + 7] == (byte)0xAC) || // iconst_m1/iconst_0/iconst_1, ireturn
-                        (ix == 1 && buf[yy + 7] == (byte)0xB0)){                             // aconst_null, areturn
+                     if(((ix = buf[yy + 6]) >= 2 && ix <= 6 && buf[yy + 7] == (byte)0xAC) || // iconst_m1/iconst_0/iconst_1/iconst_2/iconst_3, ireturn
+                        ((ix == 1 || ix == (byte)0x2A) && buf[yy + 7] == (byte)0xB0)){       // aconst_null/aload_0, areturn
                         ix = yy + 8;
                         ee = (buf[ix++] & 0xFF) << 8 | buf[ix++] & 0xFF; // exception_table_length
                         ix += ee << 3;
-                        ee = (buf[ix++] & 0xFF) << 8 | buf[ix++] & 0xFF; // attributes_count
+                        int attr_cnt = ix;
+                        int num_attr = ee = (buf[ix++] & 0xFF) << 8 | buf[ix++] & 0xFF; // attributes_count
                         while(ee-- > 0){
                            int uu = (buf[ix++] & 0xFF) << 8 | buf[ix++] & 0xFF; // attribute_name_index
                            int attr_mrk = ix;
                            int attr_len = buf[ix++] << 24 | (buf[ix++] & 0xFF) << 16 | (buf[ix++] & 0xFF) << 8 | buf[ix++] & 0xFF; // attribute_length
+                           int attr_nxt = ix + attr_len;
 
-                           // Remove line numbers corresponding to unreachable return bytecode
+                           // Remove line numbers corresponding to return bytecode
                            if(uu != 0 && uu == lines_idx){
                               uu = (buf[ix++] & 0xFF) << 8 | buf[ix++] & 0xFF; // line_number_table_length
                               for(int ii = 0; ii < uu; ii++)
                                  if(((buf[ix] & 0xFF) << 8 | buf[ix + 1] & 0xFF) >= yy - 2){ // start_pc
+                                    if(--uu == 0){
+
+                                       // Remove the whole attribute because it's empty
+                                       System.arraycopy(buf, attr_nxt, buf, attr_mrk - 2, xx - attr_nxt);
+                                       uu = attr_nxt - attr_mrk + 2;
+                                       xx -= uu;
+                                       saved_bytes += uu;
+                                       attr_nxt = attr_mrk - 2;
+                                       num_attr--;
+                                       buf[attr_cnt]     = (byte)(num_attr >> 8);
+                                       buf[attr_cnt + 1] = (byte)num_attr;
+                                       break;
+                                    }
+
+                                    // Remove 1 line
                                     xx -= 4;
                                     System.arraycopy(buf, ix + 4, buf, ix, xx - ix);
-                                    uu--;
                                     saved_bytes += 4;
+                                    attr_nxt -= 4;
                                     attr_len -= 4;
                                     buf[attr_mrk]     = (byte)(attr_len >> 24);
                                     buf[attr_mrk + 1] = (byte)(attr_len >> 16);
@@ -232,8 +253,8 @@ public final class bcClipLinesRet{
                                     buf[attr_mrk + 5] = (byte)uu;
                                  }else
                                     ix += 4;
-                           }else
-                              ix += attr_len;
+                           }
+                           ix = attr_nxt;
                         }
                      }
                   }
