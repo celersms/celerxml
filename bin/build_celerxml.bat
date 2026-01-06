@@ -5,7 +5,7 @@ REM The JDK 9 or later installation path
 SET JDK9=\Tools\jdk-16.0.2
 
 REM The JDK 6 or later installation path (optional)
-SET JDK6=\Tools\jdk1.7
+SET JDK6=\Tools\jdk1.8.0_202
 
 REM === CONFIG END ==================================
 TITLE Rebuilding CelerXML...
@@ -31,10 +31,16 @@ GOTO EXIT
 :RT6FOUND
 rd /s /q classes >nul 2>nul
 mkdir classes\celerxml\META-INF\services 2>nul
+
+REM Include the services
 ECHO com.celerxml.InputFactoryImpl >classes\celerxml\META-INF\services\javax.xml.stream.XMLInputFactory
 ECHO com.celerxml.SAXParserFactoryImpl >classes\celerxml\META-INF\services\javax.xml.parsers.SAXParserFactory
+
+REM Compile the source code
 "%JDK6%\bin\javac" -source 6 -target 6 -classpath src -bootclasspath "%JDK6%\jre\lib\rt.jar" -d classes\celerxml src\com\celerxml\SAXParserFactoryImpl.java
 IF %ERRORLEVEL% NEQ 0 GOTO EXIT
+
+REM Create the module info for Java 9+
 (
 ECHO module celerxml{
 ECHO    requires transitive java.xml;
@@ -45,7 +51,16 @@ ECHO }
 ) >module-info.java
 "%JDK9%\bin\javac" --release 9 -d classes\celerxml -g:none module-info.java
 del module-info.java /q >nul 2>nul
-"%JDK6%\bin\jar" cMf lib\celerxml-1.0.0.jar -C classes\celerxml .
+
+REM Run the optimizer
+"%JDK6%\bin\javac" src\optimizer\bc*.java
+IF %ERRORLEVEL% NEQ 0 GOTO EXIT
+"%JDK6%\bin\java" -classpath src\optimizer bcClipLinesRet classes\celerxml <src\optimizer\bcClipLinesRet.txt
+IF %ERRORLEVEL% NEQ 0 GOTO EXIT
+
+REM Create the jar
+"%JDK6%\bin\jar" cMf lib\celerxml-1.0.1.jar -C classes\celerxml .
+
 :EXIT
 rd /s /q classes >nul
 pause
