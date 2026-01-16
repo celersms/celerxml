@@ -3,20 +3,18 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
 // to permit persons to whom the Software is furnished to do so, subject to the condition that this
 // copyright shall be included in all copies or substantial portions of the Software:
-// Copyright Victor Celer, 2025
+// Copyright Victor Celer, 2025 - 2026
 package com.celerxml;
 
-import javax.xml.stream.Location;
+final class LocImpl implements javax.xml.stream.Location{
 
-final class LocImpl implements Location{
-
-   final private String pubId, sysId;
+   final private String Code, sys;
    final private int col, row, off;
 
    // Translate 0-based values to 1-based
-   LocImpl(String pubId, String sysId, int col, int row, int off){
-      this.pubId = pubId;
-      this.sysId = sysId;
+   LocImpl(String pubId, String sys, int col, int row, int off){
+      Code = pubId;
+      this.sys = sys;
       this.off = off < 0 ? 0x7FFFFFFF : off;
       this.col = col + 1;
       this.row = row + 1;
@@ -32,8 +30,8 @@ final class LocImpl implements Location{
    public final int getCharacterOffset(){ return off; }
 
    @Override
-   public final String getPublicId(){ return pubId; }
+   public final String getPublicId(){ return Code; }
 
    @Override
-   public final String getSystemId(){ return sysId; }
+   public final String getSystemId(){ return sys; }
 }

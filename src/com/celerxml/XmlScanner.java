@@ -3,27 +3,23 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
 // to permit persons to whom the Software is furnished to do so, subject to the condition that this
 // copyright shall be included in all copies or substantial portions of the Software:
-// Copyright Victor Celer, 2025
+// Copyright Victor Celer, 2025 - 2026
 package com.celerxml;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import javax.xml.XMLConstants;
-import javax.xml.namespace.NamespaceContext;
-import javax.xml.namespace.QName;
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamException;
-import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.ContentHandler;
-import org.xml.sax.ext.LexicalHandler;
 
-abstract class XmlScanner implements NamespaceContext{
+abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
 
    final InputFactoryImpl impl;
-   boolean incomplete, pending, emptyTag;
-   int depth, currNsCount, attrCount, currSize, attrs, currToken, currRow, rowOff, bOrC, iniRawOff, startRow, startCol;
+   boolean incompl, pending, empty;
+   int depth, nsCnt, attrCount, currSize, attrs, currToken, currRow, rowOff, bOrC, iniRawOff, startRow, startCol;
    char[] nameBuf, currSeg;
    PN tokName;
    NsD lastNs;
@@ -50,8 +46,8 @@ abstract class XmlScanner implements NamespaceContext{
 
    XmlScanner(InputFactoryImpl impl){
       this.impl = impl;
-      coalescing = impl.getF(2);
-      lazy = impl.getF(256);
+      coalescing = impl.Code(2);
+      lazy = impl.Code(256);
       nameBuf = impl.getCB1();
       defNs = new NsB(null);
       startRow = startCol = -1;
@@ -60,8 +56,8 @@ abstract class XmlScanner implements NamespaceContext{
    }
 
    final void free() throws XMLStreamException{
-      freeBufs();
-      if(impl.getF(8192))
+      Code();
+      if(impl.Code(8192))
          try{
             close();
          }catch(IOException ioe){
@@ -69,25 +65,8 @@ abstract class XmlScanner implements NamespaceContext{
          }
    }
 
-   void freeBufs(){
-      if(currSeg != null){
-         result = null;
-         arr = null;
-         if(segments != null && segments.size() > 0){
-            segments.clear();
-            segSize = 0;
-         }
-         impl.setCB2(currSeg);
-         currSeg = null;
-      }
-      if(nameBuf != null){
-         impl.setCB1(nameBuf);
-         nameBuf = null;
-      }
-   }
-
    final boolean skipTok() throws XMLStreamException{
-      incomplete = false;
+      incompl = false;
       switch(currToken){
          case 3:  // PROCESSING_INSTRUCTION
             skipPI();
@@ -122,10 +101,8 @@ abstract class XmlScanner implements NamespaceContext{
 
    final Location getLocation(){ return new LocImpl(impl.pubId, impl.sysId, startCol, startRow, iniRawOff); }
 
-   final QName getQName(){ return tokName.qName(defNs); }
-
    final String getText() throws XMLStreamException{
-      if(incomplete)
+      if(incompl)
          endTok();
       if(result == null)
          if(arr != null)
@@ -144,7 +121,7 @@ abstract class XmlScanner implements NamespaceContext{
    }
 
    final int getTextLength() throws XMLStreamException{
-      if(incomplete)
+      if(incompl)
          endTok();
       int size = currSize;
       return size < 0 ? resultLen : size + segSize;
@@ -170,7 +147,7 @@ abstract class XmlScanner implements NamespaceContext{
    }
 
    final char[] getTextCharacters() throws XMLStreamException{
-      if(incomplete)
+      if(incompl)
          endTok();
       char[] res = arr;
       if(segments == null || segments.size() == 0)
@@ -181,7 +158,7 @@ abstract class XmlScanner implements NamespaceContext{
    }
 
    final int getTextCharacters(int srcStart, char[] dst, int dstStart, int len) throws XMLStreamException{
-      if(incomplete)
+      if(incompl)
          endTok();
       int amount, totalAmount = 0;
       if(segments != null)
@@ -213,7 +190,7 @@ abstract class XmlScanner implements NamespaceContext{
    }
 
    final boolean isWS() throws XMLStreamException{
-      if(incomplete)
+      if(incompl)
          endTok();
       if(indent)
          return true;
@@ -233,22 +210,22 @@ abstract class XmlScanner implements NamespaceContext{
 
    final int getNsCount(){
       if(currToken == 1) // START_ELEMENT
-         return currNsCount;
-      return lastNs == null ? 0 : lastNs.countLvl(depth);
+         return nsCnt;
+      return lastNs == null ? 0 : lastNs.Code(depth);
    }
 
    final NsD findCurrNsDecl(int idx){
       NsD nsDecl = lastNs;
       int level = depth, count = idx;
       if(currToken == 1){ // START_ELEMENT
-         count = currNsCount - 1 - idx;
+         count = nsCnt - 1 - idx;
          --level;
       }
       while(nsDecl != null && nsDecl.lvl == level){
          if(count == 0)
             return nsDecl;
          --count;
-         nsDecl = nsDecl.prevD;
+         nsDecl = nsDecl.prvD;
       }
       throw new IndexOutOfBoundsException(new StrB(32).a("Wrong namespace index ").apos(idx).toString());
    }
@@ -258,7 +235,7 @@ abstract class XmlScanner implements NamespaceContext{
       if(pfx == null)
          throw new IllegalArgumentException(NULL);
       if(pfx.length() == 0){
-         String uri = defNs.uri;
+         String uri = defNs.Code;
          if(uri == null)
             uri = "";
          return uri;
@@ -270,8 +247,8 @@ abstract class XmlScanner implements NamespaceContext{
       NsD nsDecl = lastNs;
       while(nsDecl != null){
          if(nsDecl.hasPfx(pfx))
-            return nsDecl.bind.uri;
-         nsDecl = nsDecl.prevD;
+            return nsDecl.bind.Code;
+         nsDecl = nsDecl.prvD;
       }
       return null;
    }
@@ -284,13 +261,13 @@ abstract class XmlScanner implements NamespaceContext{
          return XMLConstants.XML_NS_PREFIX;
       if(nsURI.equals(XMLConstants.XMLNS_ATTRIBUTE_NS_URI))
          return XMLConstants.XMLNS_ATTRIBUTE;
-      if(nsURI.equals(defNs.uri))
+      if(nsURI.equals(defNs.Code))
          return "";
       String pfx;
 loop_pfx:
-      for(NsD nsDecl = lastNs; nsDecl != null; nsDecl = nsDecl.prevD)
-         if(nsDecl.hasNsURI(nsURI) && (pfx = nsDecl.bind.pfx) != null){
-            for(NsD decl2 = lastNs; decl2 != nsDecl; decl2 = decl2.prevD)
+      for(NsD nsDecl = lastNs; nsDecl != null; nsDecl = nsDecl.prvD)
+         if(nsDecl.Code(nsURI) && (pfx = nsDecl.bind.pfx) != null){
+            for(NsD decl2 = lastNs; decl2 != nsDecl; decl2 = decl2.prvD)
                if(decl2.hasPfx(pfx))
                   continue loop_pfx;
             return pfx;
@@ -308,13 +285,13 @@ loop_pfx:
       if(nsURI.equals(XMLConstants.XMLNS_ATTRIBUTE_NS_URI))
          return new SIterator(XMLConstants.XMLNS_ATTRIBUTE, false);
       ArrayList<String> l = null;
-      if(nsURI.equals(defNs.uri))
+      if(nsURI.equals(defNs.Code))
          (l = new ArrayList<String>()).add("");
       String pfx;
 loop_pfx:
-      for(NsD nsDecl = lastNs; nsDecl != null; nsDecl = nsDecl.prevD)
-         if(nsDecl.hasNsURI(nsURI) && (pfx = nsDecl.bind.pfx) != null){
-            for(NsD decl2 = lastNs; decl2 != nsDecl; decl2 = decl2.prevD)
+      for(NsD nsDecl = lastNs; nsDecl != null; nsDecl = nsDecl.prvD)
+         if(nsDecl.Code(nsURI) && (pfx = nsDecl.bind.pfx) != null){
+            for(NsD decl2 = lastNs; decl2 != nsDecl; decl2 = decl2.prvD)
                if(decl2.hasPfx(pfx))
                   continue loop_pfx;
             if(l == null)
@@ -330,8 +307,8 @@ loop_pfx:
 
    final PN bindName(PN name, String pfx){
       if(nsCache != null){
-         PN cn = nsCache[name.pfxdName.hashCode() & 0x3F];
-         if(cn != null && cn.pfxdName == name.pfxdName)
+         PN cn = nsCache[name.Code.hashCode() & 0x3F];
+         if(cn != null && cn.Code == name.Code)
             return cn;
       }
       for(int i = 0, len = bindingCnt; i < len; ++i){
@@ -342,17 +319,17 @@ loop_pfx:
             nsBind[i] = nsBind[i - 1];
             nsBind[i - 1] = b;
          }
-         PN bn = name.createBN(b);
+         PN bn = name.Code(b);
          if(nsCache == null){
             if(++bindMiss < 10)
                return bn;
              nsCache = new PN[0x40];
          }
-         nsCache[bn.pfxdName.hashCode() & 0x3F] = bn;
+         nsCache[bn.Code.hashCode() & 0x3F] = bn;
          return bn;
       }
       if(pfx == "xml")
-         return name.createBN(NsB.XML_B);
+         return name.Code(NsB.XML_B);
       ++bindMiss;
       NsB b = new NsB(pfx);
       if(bindingCnt == 0)
@@ -360,7 +337,7 @@ loop_pfx:
       else if(bindingCnt >= nsBind.length)
          nsBind = xpand(nsBind);
       nsBind[bindingCnt++] = b;
-      return name.createBN(b);
+      return name.Code(b);
    }
 
    final void bindNs(PN name, String uri) throws XMLStreamException{
@@ -393,16 +370,16 @@ findOrCreate:
                nsBind[bindingCnt++] = ns;
             }
          }
-         if(pfx != null && ns.isImmutbl() && (pfx != "xml" || !uri.equals(XMLConstants.XML_NS_URI)))
+         if(pfx != null && ns.Code() && (pfx != "xml" || !uri.equals(XMLConstants.XML_NS_URI)))
             throwInputErr(new StrB(20 + pfx.length()).a("Can't rebind prefix ").a(pfx).toString());
       }
-      if(!ns.isImmutbl()){
+      if(!ns.Code()){
          if(uri == XMLConstants.XML_NS_URI)
             throwInputErr("Can't bind 'http://www.w3.org/XML/1998/namespace' to prefix other than 'xml'");
          if(uri == XMLConstants.XMLNS_ATTRIBUTE_NS_URI)
             throwInputErr("Can't bind 'http://www.w3.org/2000/xmlns/' to prefix other than 'xmlns'");
       }
-      if(lastNs != null && lastNs.declared(pfx, depth))
+      if(lastNs != null && lastNs.Code(pfx, depth))
          throwInputErr(pfx == null ? "Duplicate default namespace" : new StrB(24 + pfx.length()).a("Duplicate decl., prefix ").a(pfx).toString());
       lastNs = new NsD(ns, uri, lastNs, depth);
    }
@@ -498,7 +475,7 @@ findOrCreate:
       PN[] names = this.names;
       if(count < 3){
          hashSize = 0;
-         if(count == 2 && names[0].boundEq(names[1])){
+         if(count == 2 && names[0].Code(names[1])){
             noteDupAttr(0, 1);
             return -1;
          }
@@ -519,12 +496,12 @@ findOrCreate:
          if(oldNameIdx == 0)
             map[index] = i + 1;
          else{
-            if(names[--oldNameIdx].boundEq(newName) && errMsg == null)
+            if(names[--oldNameIdx].Code(newName) && errMsg == null)
                noteDupAttr(oldNameIdx, i);
             if(hashCount + 1 >= map.length)
                map = xpand(map, 8);
             // for(int j = hashCount; j < spillIndex; j += 2)
-            //   if(map[j] == hash && names[oldNameIdx = map[j + 1]].boundEq(newName)){
+            //   if(map[j] == hash && names[oldNameIdx = map[j + 1]].Code(newName)){
             //      if(errMsg == null)
             //         noteDupAttr(oldNameIdx, i);
             //      break;
@@ -579,16 +556,16 @@ findOrCreate:
       int xx = hashSize;
       if(xx < 1){
          for(int i = 0, len = attrs; i < len; ++i)
-            if(names[i].boundEq(nsUri, name))
+            if(names[i].Code(nsUri, name))
                return i;
          return -1;
       }
       int hash = name.hashCode(), ix = attrMap[hash & (xx - 1)];
       if(ix > 0){
-         if(names[--ix].boundEq(nsUri, name))
+         if(names[--ix].Code(nsUri, name))
             return ix;
          for(int len = spillEnd; xx < len; xx += 2)
-            if(attrMap[xx] == hash && names[ix = attrMap[xx + 1]].boundEq(nsUri, name))
+            if(attrMap[xx] == hash && names[ix = attrMap[xx + 1]].Code(nsUri, name))
                return ix;
       }
       return -1;
@@ -596,7 +573,7 @@ findOrCreate:
 
    final void chrEvents(ContentHandler h) throws XMLStreamException, SAXException{
       if(h != null){
-         if(incomplete)
+         if(incompl)
             endTok();
          if(arr != null)
             h.characters(arr, 0, resultLen);
@@ -614,7 +591,7 @@ findOrCreate:
 
    final void spaceEvents(ContentHandler h) throws XMLStreamException, SAXException{
       if(h != null){
-         if(incomplete)
+         if(incompl)
             endTok();
          if(arr != null)
             h.ignorableWhitespace(arr, 0, resultLen);
@@ -632,24 +609,24 @@ findOrCreate:
 
    final void PIEvent(ContentHandler h) throws XMLStreamException, SAXException{
       if(h != null){
-         if(incomplete)
+         if(incompl)
             endTok();
          h.processingInstruction(tokName.ln, getText());
       }
    }
 
-   final void startElement(ContentHandler h, Attributes attrs) throws SAXException{
+   final void startElement(ContentHandler h, org.xml.sax.Attributes attrs) throws SAXException{
       if(h != null){
          NsD nsDecl = lastNs;
          int level = depth - 1;
          while(nsDecl != null && nsDecl.lvl == level){
             String pfx = nsDecl.bind.pfx;
-            h.startPrefixMapping(pfx == null ? "" : pfx, nsDecl.bind.uri);
-            nsDecl = nsDecl.prevD;
+            h.startPrefixMapping(pfx == null ? "" : pfx, nsDecl.bind.Code);
+            nsDecl = nsDecl.prvD;
          }
          PN n = tokName;
          String uri = n.getNsUri();
-         h.startElement(uri == null ? "" : uri, n.ln, n.pfxdName, attrs);
+         h.startElement(uri == null ? "" : uri, n.ln, n.Code, attrs);
       }
    }
 
@@ -657,20 +634,20 @@ findOrCreate:
       if(h != null){
          PN n = tokName;
          String uri = n.getNsUri();
-         h.endElement(uri == null ? "" : uri, n.ln, n.pfxdName);
+         h.endElement(uri == null ? "" : uri, n.ln, n.Code);
          NsD nsDecl = lastNs;
          int level = depth;
          while(nsDecl != null && nsDecl.lvl == level){
             String pfx = nsDecl.bind.pfx;
             h.endPrefixMapping(pfx == null ? "" : pfx);
-            nsDecl = nsDecl.prevD;
+            nsDecl = nsDecl.prvD;
          }
       }
    }
 
-   final void commentEvent(LexicalHandler h) throws XMLStreamException, SAXException{
+   final void commentEvent(org.xml.sax.ext.LexicalHandler h) throws XMLStreamException, SAXException{
       if(h != null){
-         if(incomplete)
+         if(incompl)
             endTok();
          if(arr != null)
             h.comment(arr, 0, resultLen);
@@ -684,6 +661,23 @@ findOrCreate:
       }
    }
 
+   void Code(){
+      if(currSeg != null){
+         result = null;
+         arr = null;
+         if(segments != null && segments.size() > 0){
+            segments.clear();
+            segSize = 0;
+         }
+         impl.setCB2(currSeg);
+         currSeg = null;
+      }
+      if(nameBuf != null){
+         impl.setCB1(nameBuf);
+         nameBuf = null;
+      }
+   }
+
    abstract void close() throws IOException;
 
    abstract int nxtFromProlog(boolean isProlog) throws XMLStreamException;
@@ -692,7 +686,7 @@ findOrCreate:
 
    abstract void endTok() throws XMLStreamException;
 
-   abstract Location getCurLoc();
+   abstract Location loc();
 
    abstract boolean skipChars() throws XMLStreamException;
 
@@ -710,14 +704,14 @@ findOrCreate:
 
    abstract boolean more() throws XMLStreamException;
 
-   abstract int getCol();
+   abstract int col();
 
    private final void noteDupAttr(int idx1, int idx2){
       errMsg = new StrB(48).a("Duplicate '").append(names[idx1].toString()).append('\'').append('@').apos(idx1
          ).append(", '").append(names[idx2].toString()).append('\'').append('@').apos(idx2).toString();
    }
 
-   final void throwInputErr(String msg) throws XMLStreamException{ throw new XMLStreamException(msg, getCurLoc()); }
+   final void throwInputErr(String msg) throws XMLStreamException{ throw new XMLStreamException(msg, loc()); }
 
    final void throwUnexpandEnt() throws XMLStreamException{ throwInputErr("Unexpanded ENTITY_REFERENCE"); }
 
@@ -725,44 +719,36 @@ findOrCreate:
       if((ch &= 0x7FFFF) == '/')
          throwInputErr(isProlog ? "Unexpected end element in prolog" : "Unexpected end element in epilog");
       if(ch < 32)
-         throwUnexpChr(ch, isProlog ? ", unrecognized prolog directive" : ", unrecognized epilog directive");
+         thUnxp(ch, isProlog ? ", unrecognized prolog directive" : ", unrecognized epilog directive");
       throwInputErr("Only one root element allowed");
    }
     
-   final void throwPlogUnxpChr(boolean isProlog, int ch) throws XMLStreamException{
-      throwUnexpChr(ch, isProlog ? " in prolog" : " in epilog");
-   }
+   final void throwPlogUnxpChr(boolean isProl, int ch) throws XMLStreamException{ thUnxp(ch, isProl ? " in prolog" : " in epilog"); }
 
    final void throwInvNChr(int ch) throws XMLStreamException{
       throwInputErr(ch == (int)':' ? "At most one ':' allowed in elem./attr. names, none in PI target/entity"
         : new StrB(20).a("Name char ").apos(ch).toString());
    }
 
-   final void throwInvChr(int ch) throws XMLStreamException{
-      throwInputErr(new StrB(24).a("Invalid char ").apos(ch).toString());
+   final void thInvC(int ch) throws XMLStreamException{ throwInputErr(new StrB(24).a("Invalid char ").apos(ch).toString()); }
+
+   final void throwNoPISpace(int ch) throws XMLStreamException{ thUnxp(ch, ", not space or closing '?>'"); }
+
+   final void thHyph() throws XMLStreamException{ throwInputErr("'--' in comment"); }
+
+   final void thUnbPfx(PN name, boolean isAttr) throws XMLStreamException{
+      throwInputErr(new StrB(48).a("Unbound prefix ").append(name.pfx).append(isAttr ? ", attribute " : ", element ").append(name.Code).toString());
    }
 
-   final void throwNoPISpace(int ch) throws XMLStreamException{ throwUnexpChr(ch, ", not space or closing '?>'"); }
+   final void thUnexpEnd(String n) throws XMLStreamException{ throwInputErr(new StrB(24 + n.length()).a("Unexpected end tag, not ").a(n).toString()); }
 
-   final void throwHyphn() throws XMLStreamException{ throwInputErr("'--' in comment, missing '>'?"); }
+   final void thCDEnd() throws XMLStreamException{ throwInputErr("']]>' allowed only as the end CDATA marker"); }
 
-   final void throwUnbPfx(PN name, boolean isAttr) throws XMLStreamException{
-      throwInputErr(new StrB(48).a("Unbound prefix ").append(name.pfx).append(isAttr ? ", attribute " : ", element ").append(name.pfxdName).toString());
-   }
-
-   final void throwUnexpEnd(String name) throws XMLStreamException{
-      throwInputErr(new StrB(24 + name.length()).a("Unexpected end tag, not ").a(name).toString());
-   }
-
-   final void throwCDataEnd() throws XMLStreamException{ throwInputErr("']]>' allowed only as the end marker of CDATA"); }
-
-   final void throwUnexpChr(int ch, String msg) throws XMLStreamException{
+   final void thUnxp(int ch, String msg) throws XMLStreamException{
       if(ch < 32 && ch != '\r' && ch != '\n' && ch != '\t')
-         throwChr(ch);
+         thC(ch);
       throwInputErr(new StrB(28 + msg.length()).a("Unexpected char. ").apos(ch).a(msg).toString());
    }
 
-   final void throwChr(int ch) throws XMLStreamException{
-      throwInputErr(new StrB(24).a("Illegal char. ").apos(ch).toString());
-   }
+   final void thC(int ch) throws XMLStreamException{ throwInputErr(new StrB(24).a("Illegal char. ").apos(ch).toString()); }
 }

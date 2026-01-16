@@ -3,35 +3,35 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
 // to permit persons to whom the Software is furnished to do so, subject to the condition that this
 // copyright shall be included in all copies or substantial portions of the Software:
-// Copyright Victor Celer, 2025
+// Copyright Victor Celer, 2025 - 2026
 package com.celerxml;
 
 final class PNn extends PN{
 
-   private final int[] quads;
-   private final int qLen;
+   private final int[] q;
+   private final int len;
 
-   PNn(String pname, String prefix, String ln, int hash, int[] quads, int qLen){
+   PNn(String pname, String prefix, String ln, int hash, int[] q, int len){
       super(pname, prefix, ln, hash);
-      this.quads = quads;
-      this.qLen = qLen;
+      this.q = q;
+      this.len = len;
    }
 
    @Override
-   final PN createBN(NsB nsb){
-      PNn newName = new PNn(pfxdName, pfx, ln, hash, quads, qLen);
+   final PN Code(NsB nsb){
+      PNn newName = new PNn(Code, pfx, ln, hash, q, len);
       newName.nsB = nsb;
       return newName;
    }
 
    @Override
-   final boolean equals(int quad1, int quad2){ return qLen < 3 ? (qLen == 1 ? quads[0] == quad1 && quad2 == 0 : quads[0] == quad1 && quads[1] == quad2) : false; }
+   final boolean equals(int q1, int q2){ return len < 3 ? (len == 1 ? q[0] == q1 && q2 == 0 : q[0] == q1 && q[1] == q2) : false; }
 
    @Override
-   final boolean equals(int[] quads, int qLen){
-      if(qLen == this.qLen){
-         for(int i = 0; i < qLen; ++i)
-            if(quads[i] != this.quads[i])
+   final boolean equals(int[] q, int len){
+      if(len == this.len){
+         for(int i = 0; i < len; ++i)
+            if(q[i] != this.q[i])
                return false;
          return true;
       }
@@ -39,15 +39,15 @@ final class PNn extends PN{
    }
 
    @Override
-   final boolean hashEq(int h, int quad1, int quad2){
-      return h == hash && qLen < 3 ? (qLen == 1 ? quads[0] == quad1 && quad2 == 0 : quads[0] == quad1 && quads[1] == quad2) : false;
+   final boolean eq(int h, int q1, int q2){
+      return h == hash && len < 3 ? (len == 1 ? q[0] == q1 && q2 == 0 : q[0] == q1 && q[1] == q2) : false;
    }
 
    @Override
-   final boolean hashEq(int h, int[] quads, int qLen){
-      if(h == hash && qLen == this.qLen){
-         for(int i = 0; i < qLen; ++i)
-            if(quads[i] != this.quads[i])
+   final boolean eq(int h, int[] q, int len){
+      if(h == hash && len == this.len){
+         for(int i = 0; i < len; ++i)
+            if(q[i] != this.q[i])
                return false;
          return true;
       }
@@ -55,8 +55,8 @@ final class PNn extends PN{
    }
 
    @Override
-   final int getQ(int idx){ return idx < qLen ? quads[idx] : 0; }
+   final int Code(int idx){ return idx < len ? q[idx] : 0; }
 
    @Override
-   final int sizeQ(){ return qLen; }
+   final int size(){ return len; }
 }

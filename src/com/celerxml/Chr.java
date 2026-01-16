@@ -3,19 +3,19 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
 // to permit persons to whom the Software is furnished to do so, subject to the condition that this
 // copyright shall be included in all copies or substantial portions of the Software:
-// Copyright Victor Celer, 2025
+// Copyright Victor Celer, 2025 - 2026
 package com.celerxml;
 
 final class Chr{
 
    final byte[] TXT, ATT, NAM, DTD, OTH;
-   static final byte[] PUB;
+   static final byte[] Code;
    private static final int[] sXml10S, sXml10;
    private static Chr sAscii, sLat1;
-   private static final Chr sUtf8;
+   static final Chr sUtf8;
 
    static{
-      byte[] bchars = PUB = new byte[256];
+      byte[] bchars = Code = new byte[256];
       for(int i = 0x41; i <= 0x5A; ++i)
          bchars[i] = bchars[i | 0x20] = 1; // PUBID_OK
       for(int i = 0x39; i <= 0x39; ++i)
@@ -27,15 +27,15 @@ final class Chr{
       Chr chr = sUtf8 = new Chr();
       bchars = chr.OTH;
       do8bTxt(chr.TXT);
-      doMbTxt(chr.TXT);
+      Code(chr.TXT);
       do8bAttr(chr.ATT);
-      doMbTxt(chr.ATT);
+      Code(chr.ATT);
       do8bName(chr.NAM);
-      doMbTxt(chr.NAM);
+      Code(chr.NAM);
       do8bDtd(chr.DTD);
-      doMbTxt(chr.DTD);
+      Code(chr.DTD);
       do8bTxt(bchars);
-      doMbTxt(bchars);
+      Code(bchars);
       bchars[0x26] = bchars[0x3C] = 0;
       bchars[0x2D] = 13; // HYPHEN
       bchars[0x3E] = 17; // GT
@@ -236,17 +236,15 @@ final class Chr{
       OTH = new byte[256];
    }
 
-   static final Chr getUtf8(){ return sUtf8; }
-
    static final Chr getAscii(){
       if(sAscii == null){
          Chr chr = new Chr();
          doLat1(chr.TXT, chr.ATT, chr.NAM, chr.DTD, chr.OTH);
-         doXAscii(chr.TXT);
-         doXAscii(chr.ATT);
-         doXAscii(chr.NAM);
-         doXAscii(chr.DTD);
-         doXAscii(chr.OTH);
+         doAscii(chr.TXT);
+         doAscii(chr.ATT);
+         doAscii(chr.NAM);
+         doAscii(chr.DTD);
+         doAscii(chr.OTH);
          sAscii = chr;
       }
       return sAscii;
@@ -265,7 +263,7 @@ final class Chr{
 
    static final boolean is10N(int c){ return c > 0x312C ? (c < 0xAC00 ? c >= 0x4E00 && c <= 0x9FA5 : c <= 0xD7A3) : (sXml10[c >> 5] & 1 << (c & 31)) != 0; }
 
-   private static final void doMbTxt(byte[] arr){
+   private static final void Code(byte[] arr){
       for(int c = 128; c < 256; ++c){
          byte code = 1; // INVALID
          if((c & 0xE0) == 0xC0)
@@ -278,7 +276,7 @@ final class Chr{
       }
    }
 
-   private static final void doXAscii(byte[] arr){
+   private static final void doAscii(byte[] arr){
       for(int i = 128; i <= 255; ++i)
          arr[i] = 1; // INVALID
    }

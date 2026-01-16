@@ -3,29 +3,28 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
 // to permit persons to whom the Software is furnished to do so, subject to the condition that this
 // copyright shall be included in all copies or substantial portions of the Software:
-// Copyright Victor Celer, 2025
+// Copyright Victor Celer, 2025 - 2026
 package com.celerxml;
 
 import java.io.Reader;
 import java.io.IOException;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.Location;
 
 final class ReaderScanner extends XmlScanner{
 
-   private final static Chr chrTypes = Chr.getLat1();
+   private final static Chr Code = Chr.getLat1();
    private Reader in;
    private char[] inBuf;
    private int inPtr, end, cTmp;
-   private final ChrPN syms;
+   private final cPN syms;
    private Node curr;
 
    ReaderScanner(InputFactoryImpl impl, Reader in, char[] inBuf, int inPtr, int end){
       super(impl);
       this.in = in;
       if(impl.genTab == null)
-         impl.genTab = new ChrPN();
-      syms = new ChrPN(impl.genTab);
+         impl.genTab = new cPN();
+      syms = new cPN(impl.genTab);
       this.inBuf = inBuf;
       this.inPtr = inPtr;
       this.end = end;
@@ -60,15 +59,15 @@ final class ReaderScanner extends XmlScanner{
          assertMore();
       int val = ((chr - 0xD800) << 10) + 0x10000;
       if(chr >= 0xDC00 || (chr = inBuf[inPtr++]) < 0xDC00 || chr >= 0xE000)
-         throwInvalidSurrogate(chr);
+         thSurr(chr);
       if(val > 0x10FFFF)
-         throwInvChr(val);
+         thInvC(val);
       return chr;
    }
 
    @Override
    final void endTok() throws XMLStreamException{
-      incomplete = false;
+      incompl = false;
       switch(currToken){
          case 3:  // PROCESSING_INSTRUCTION
             endPI();
@@ -92,7 +91,7 @@ final class ReaderScanner extends XmlScanner{
 
    @Override
    final int nxtFromProlog(boolean isProlog) throws XMLStreamException{
-      if(incomplete)
+      if(incompl)
          skipTok();
       iniRawOff = bOrC + inPtr;
       startRow = currRow;
@@ -139,20 +138,20 @@ final class ReaderScanner extends XmlScanner{
 
    @Override
    final int nxtFromTree() throws XMLStreamException{
-      if(incomplete){
+      if(incompl){
          if(skipTok()){
             reset();
             return currToken = 9; // ENTITY_REFERENCE
          }
       }else if(currToken == 1){ // START_ELEMENT
-         if(emptyTag){
+         if(empty){
             --depth;
             return currToken = 2; // END_ELEMENT
          }
       }else if(currToken == 2){ // END_ELEMENT
-         curr = curr.mNext;
+         curr = curr.nxt;
          while(lastNs != null && lastNs.lvl >= depth)
-            lastNs = lastNs.unbind();
+            lastNs = lastNs.Code();
       }else if(pending){
          pending = false;
          reset();
@@ -185,7 +184,7 @@ final class ReaderScanner extends XmlScanner{
       }
       cTmp = c;
       if(lazy)
-         incomplete = true;
+         incompl = true;
       else
          endChars();
       return currToken = 4; // CHARACTERS
@@ -200,20 +199,20 @@ final class ReaderScanner extends XmlScanner{
             assertMore();
          if((c = inBuf[inPtr++]) == '-'){
             if(lazy)
-               incomplete = true;
+               incompl = true;
             else
                endComm();
             return currToken = 5; // COMMENT
          }
       }else if(isProlog && c == 'D'){
          handleDtdStart();
-         if(!lazy && incomplete){
+         if(!lazy && incompl){
             endDTD();
-            incomplete = false;
+            incompl = false;
          }
          return 11; // DTD
       }
-      incomplete = true;
+      incompl = true;
       currToken = 4; // CHARACTERS
       throwPlogUnxpChr(isProlog, c);
       return 0;
@@ -228,7 +227,7 @@ final class ReaderScanner extends XmlScanner{
          q = skipInternalWs(true);
          char[] outputBuffer = nameBuf;
          int outPtr = 0;
-         final byte[] TYPES = Chr.PUB;
+         final byte[] TYPES = Chr.Code;
          boolean addSpace = false;
          while(true){
             if(inPtr >= end)
@@ -236,7 +235,7 @@ final class ReaderScanner extends XmlScanner{
             if((c = inBuf[inPtr++]) == q)
                break;
             if(c > 0xFF || TYPES[c] != 1) // PUBID_OK
-               throwUnexpChr(c, " in public identifier");
+               thUnxp(c, " in public identifier");
             if(c <= 0x20){
                addSpace = true;
                continue;
@@ -254,18 +253,18 @@ final class ReaderScanner extends XmlScanner{
             outputBuffer[outPtr++] = c;
          }
          dtdPubId = new String(outputBuffer, 0, outPtr);
-         dtdSysId = parseSystemId(skipInternalWs(true));
+         dtdSysId = Code(skipInternalWs(true));
          c = skipInternalWs(false);
       }else if(c == 'S'){
          matchKW("SYSTEM");
          dtdPubId = null;
-         dtdSysId = parseSystemId(skipInternalWs(true));
+         dtdSysId = Code(skipInternalWs(true));
          c = skipInternalWs(false);
       }else
          dtdPubId = dtdSysId = null;
-      if((incomplete = c == '[') || c == '>')
+      if((incompl = c == '[') || c == '>')
          return currToken = 11; // DTD
-      throwUnexpChr(c, ", expected '[' or '>'");
+      thUnxp(c, ", expected '[' or '>'");
       return 0;
    }
 
@@ -279,7 +278,7 @@ final class ReaderScanner extends XmlScanner{
          if(inBuf[inPtr++] != '-')
             throwInputErr("Expected '-'");
          if(lazy)
-            incomplete = true;
+            incompl = true;
          else
             endComm();
          return currToken = 5; // COMMENT
@@ -293,7 +292,7 @@ final class ReaderScanner extends XmlScanner{
                throwInputErr("Expected '[CDATA['");
          }
          if(lazy)
-            incomplete = true;
+            incompl = true;
          else
             endCData();
          return 12; // CDATA
@@ -326,7 +325,7 @@ final class ReaderScanner extends XmlScanner{
                rowOff = inPtr;
                ++currRow;
             }else if(c != ' ' && c != '\t')
-               throwChr(c);
+               thC(c);
             if(inPtr >= end)
                assertMore();
             if((c = inBuf[inPtr]) > 0x20)
@@ -334,7 +333,7 @@ final class ReaderScanner extends XmlScanner{
             ++inPtr;
          }
          if(lazy)
-            incomplete = true;
+            incompl = true;
          else
             endPI();
       }else{
@@ -345,7 +344,7 @@ final class ReaderScanner extends XmlScanner{
          if((c = inBuf[inPtr++]) != '>')
             throwNoPISpace(c);
          reset();
-         incomplete = false;
+         incompl = false;
       }
       return 3; // PROCESSING_INSTRUCTION
    }
@@ -364,26 +363,26 @@ final class ReaderScanner extends XmlScanner{
             if((c = (char)((c | 0x20) - 0x30)) > 9) // to lowercase
                c -= 0x27;
             if(c < 0 || c > 0xF)
-               throwUnexpChr(c, ", not a hex digit [0-9a-fA-F]");
+               thUnxp(c, ", not a hex digit [0-9a-fA-F]");
             value = value << 4 | c;
          }
       else
          while(c != ';'){
             if(c < '0' || c > '9')
-               throwUnexpChr(c, ", not a decimal number");
+               thUnxp(c, ", not a decimal number");
             value = value * 10 + c - '0';
             if(inPtr >= end)
                assertMore();
             c = inBuf[inPtr++];
          }
       if((value >= 0xD800 && value < 0xE000) || value == 0 || value == 0xFFFE || value == 0xFFFF)
-         throwInvChr(value);
+         thInvC(value);
       return value;
    }
 
    private final int startElem(char c) throws XMLStreamException{
       currToken = 1; // START_ELEMENT
-      currNsCount = 0;
+      nsCnt = 0;
       PN elemName = parsePName(c);
       String prefix = elemName.pfx;
       boolean allBound = true;
@@ -408,21 +407,21 @@ final class ReaderScanner extends XmlScanner{
                   rowOff = inPtr;
                   ++currRow;
                }else if(c != ' ' && c != '\t')
-                  throwChr(c);
+                  thC(c);
                if(inPtr >= end)
                   assertMore();
             }while((c = inBuf[inPtr++]) <= 0x20);
          else if(c != '/' && c != '>')
-            throwUnexpChr(c, ", not space or '>' or '/>'");
+            thUnxp(c, ", not space or '>' or '/>'");
          if(c == '/'){
             if(inPtr >= end)
                assertMore();
             if((c = inBuf[inPtr++]) != '>')
-               throwUnexpChr(c, ", not '>'");
-            emptyTag = true;
+               thUnxp(c, ", not '>'");
+            empty = true;
             break;
          }else if(c == '>'){
-            emptyTag = false;
+            empty = false;
             break;
          }else if(c == '<')
             throwInputErr("Unexpected '<'");
@@ -453,10 +452,10 @@ final class ReaderScanner extends XmlScanner{
                rowOff = inPtr;
                ++currRow;
             }else if(c != ' ' && c != '\t')
-               throwChr(c);
+               thC(c);
          }
          if(c != '=')
-            throwUnexpChr(c, ", not '='");
+            thUnxp(c, ", not '='");
          while(true){
             if(inPtr >= end)
                assertMore();
@@ -473,13 +472,13 @@ final class ReaderScanner extends XmlScanner{
                rowOff = inPtr;
                ++currRow;
             }else if(c != ' ' && c != '\t')
-               throwChr(c);
+               thC(c);
          }
          if(c != '"' && c != '\'')
-            throwUnexpChr(c, ", not a quote");
+            thUnxp(c, ", not a quote");
          if(isNsDecl){
             handleNsDecl(attrName, c);
-            ++currNsCount;
+            ++nsCnt;
          }else
             xx = collectValue(xx, c, attrName);
       }
@@ -489,18 +488,18 @@ final class ReaderScanner extends XmlScanner{
       ++depth;
       if(!allBound){
          if(!elemName.isBound())
-            throwUnbPfx(tokName, false);
+            thUnbPfx(tokName, false);
          for(int i = 0, len = attrCount; i < len; ++i){
             PN attrName = names[i];
             if(!attrName.isBound())
-               throwUnbPfx(attrName, true);
+               thUnbPfx(attrName, true);
          }
       }
       return 1; // START_ELEMENT
    }
 
    private final int collectValue(int attrPtr, char quote, PN attrName) throws XMLStreamException{
-      final byte[] TYPES = chrTypes.ATT;
+      final byte[] TYPES = Code.ATT;
       char[] attrBuffer = startNewV(attrName, attrPtr);
       char c = 0;
       while(true){
@@ -554,9 +553,9 @@ final class ReaderScanner extends XmlScanner{
                      return attrPtr;
                   break;
                case 1:  // INVALID
-                  throwChr(c);
+                  thC(c);
                case 9:  // LT
-                  throwUnexpChr(c, " in attribute value");
+                  thUnxp(c, " in attribute value");
             }
          else if(c >= 0xD800 && c < 0xE000){
             char d = chkSurrgCh(c);
@@ -565,7 +564,7 @@ final class ReaderScanner extends XmlScanner{
                attrBuffer = xpand();
             c = d;
          }else if(c >= 0xFFFE)
-            throwChr(c);
+            thC(c);
          attrBuffer[attrPtr++] = c;
       }
    }
@@ -578,7 +577,7 @@ final class ReaderScanner extends XmlScanner{
             assertMore();
          char c = inBuf[inPtr++];
          if(c == quote){
-            bindNs(name, attrPtr == 0 ? "" : impl.cacheURI(attrBuffer, attrPtr));
+            bindNs(name, attrPtr == 0 ? "" : impl.Code(attrBuffer, attrPtr));
             return;
          }
          if(c == '&'){
@@ -593,7 +592,7 @@ final class ReaderScanner extends XmlScanner{
             }
             c = (char)d;
          }else if(c == '<')
-            throwUnexpChr(c, " in attribute value");
+            thUnxp(c, " in attribute value");
          else if(c < 0x20){
             if(c == '\n'){
                rowOff = inPtr;
@@ -607,7 +606,7 @@ final class ReaderScanner extends XmlScanner{
                ++currRow;
                c = '\n';
             }else if(c != '\t')
-               throwChr(c);
+               thC(c);
          }
          if(attrPtr >= attrBuffer.length)
             nameBuf = attrBuffer = xpand(attrBuffer);
@@ -618,14 +617,14 @@ final class ReaderScanner extends XmlScanner{
    private final int handleEndElement() throws XMLStreamException{
       --depth;
       currToken = 2; // END_ELEMENT
-      tokName = curr.mName;
-      String pname = tokName.pfxdName;
+      tokName = curr.Code;
+      String pname = tokName.Code;
       int i = 0, len = pname.length();
       do{
          if(inPtr >= end)
             assertMore();
          if(inBuf[inPtr++] != pname.charAt(i))
-            throwUnexpEnd(pname);
+            thUnexpEnd(pname);
       }while(++i < len);
       if(inPtr >= end)
          assertMore();
@@ -633,9 +632,9 @@ final class ReaderScanner extends XmlScanner{
       if(c <= ' ')
          c = skipInternalWs(false);
       else if(c == ':' || Chr.is10N(c))
-         throwUnexpEnd(pname);
+         thUnexpEnd(pname);
       if(c != '>')
-         throwUnexpChr(c, ", not space or closing '>'");
+         thUnxp(c, ", not space or closing '>'");
       return 2; // END_ELEMENT
    }
 
@@ -723,7 +722,7 @@ final class ReaderScanner extends XmlScanner{
             }
          }
       }
-      final byte[] TYPES = chrTypes.NAM;
+      final byte[] TYPES = Code.NAM;
       while(c != ';'){
          boolean ok = false;
          if(c <= 0xFF)
@@ -738,22 +737,22 @@ final class ReaderScanner extends XmlScanner{
             }
          else if(c < 0xE000){
             if(c >= 0xDC00)
-               throwInvalidSurrogate(c);
+               thSurr(c);
             if(inPtr >= end)
                assertMore();
             char sec = inBuf[inPtr++];
             if(sec < 0xDC00 || sec >= 0xE000)
-               throwInvalidSurrogate(sec);
+               thSurr(sec);
             int value = ((c - 0xD800) << 10) + 0x10000;
             if(value > 0x10FFFF)
-               throwInvChr(value);
+               thInvC(value);
             if(cix >= cbuf.length)
                nameBuf = cbuf = xpand(cbuf);
             cbuf[cix++] = c;
             c = inBuf[inPtr - 1];
             ok = Chr.is10N(value);
          }else if(c >= 0xFFFE)
-            throwChr(c);
+            thC(c);
          else
             ok = true;
          if(!ok)
@@ -765,7 +764,7 @@ final class ReaderScanner extends XmlScanner{
             assertMore();
          c = inBuf[inPtr++];
       }
-      if(impl.getF(16))
+      if(impl.Code(16))
          throwInputErr("Entity reference in entity expanding mode");
       String pname = new String(cbuf, 0, cix);
       tokName = new PN(pname, null, pname, 0);
@@ -773,7 +772,7 @@ final class ReaderScanner extends XmlScanner{
    }
 
    private final void endComm() throws XMLStreamException{
-      final byte[] TYPES = chrTypes.OTH;
+      final byte[] TYPES = Code.OTH;
       final char[] inputBuffer = inBuf;
       char[] outputBuffer = reset();
       int outPtr = 0;
@@ -822,13 +821,13 @@ final class ReaderScanner extends XmlScanner{
                      if(inPtr >= end)
                         assertMore();
                      if(inBuf[inPtr++] != '>')
-                        throwHyphn();
+                        thHyph();
                      currSize = outPtr;
                      return;
                   }
                   break;
                case 1:  // INVALID
-                  throwChr(c);
+                  thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000){
             char d = chkSurrgCh(c);
@@ -839,13 +838,13 @@ final class ReaderScanner extends XmlScanner{
             }
             c = d;
          }else if(c >= 0xFFFE)
-            throwChr(c);
+            thC(c);
          outputBuffer[outPtr++] = c;
       }
    }
 
    private final void endPI() throws XMLStreamException{
-      final byte[] TYPES = chrTypes.OTH;
+      final byte[] TYPES = Code.OTH;
       final char[] inputBuffer = inBuf;
       char[] outputBuffer = reset();
       int outPtr = 0;
@@ -904,7 +903,7 @@ final class ReaderScanner extends XmlScanner{
             }
             c = d;
          }else if(c >= 0xFFFE)
-            throwChr(c);
+            thC(c);
          outputBuffer[outPtr++] = c;
       }
    }
@@ -912,7 +911,7 @@ final class ReaderScanner extends XmlScanner{
    private final void endDTD() throws XMLStreamException{
       char[] outBuf = reset();
       int outPtr = 0, quoteChar = 0;
-      final byte[] TYPES = chrTypes.DTD;
+      final byte[] TYPES = Code.DTD;
       char c = 0;
       while(true){
          int ptr = inPtr;
@@ -967,12 +966,12 @@ final class ReaderScanner extends XmlScanner{
                   if(!adv && quoteChar == 0){
                      currSize = outPtr;
                      if((c = skipInternalWs(false)) != '>')
-                        throwUnexpChr(c, ", not '>' after internal subset");
+                        thUnxp(c, ", not '>' after internal subset");
                      return;
                   }
                   break;
                case 1:  // INVALID
-                  throwChr(c);
+                  thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000){
             outBuf[outPtr++] = c;
@@ -982,7 +981,7 @@ final class ReaderScanner extends XmlScanner{
                outPtr = 0;
             }
          }else if(c >= 0xFFFE)
-            throwChr(c);
+            thC(c);
          outBuf[outPtr++] = c;
       }
    }
@@ -990,7 +989,7 @@ final class ReaderScanner extends XmlScanner{
    @Override
    final void skipDTD() throws XMLStreamException{
       int quoteChar = 0;
-      final byte[] TYPES = chrTypes.DTD;
+      final byte[] TYPES = Code.DTD;
       char c = 0;
       while(true){
          int ptr = inPtr;
@@ -1036,22 +1035,22 @@ final class ReaderScanner extends XmlScanner{
                case 11: // RBRACKET
                   if(!adv && quoteChar == 0){
                      if((c = skipInternalWs(false)) != '>')
-                        throwUnexpChr(c, ", not '>' after internal subset");
+                        thUnxp(c, ", not '>' after internal subset");
                      return;
                   }
                   continue;
                case 1:  // INVALID
-                  throwChr(c);
+                  thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000)
             chkSurrgCh(c);
          else if(c >= 0xFFFE)
-            throwChr(c);
+            thC(c);
       }
    }
 
    private final void endCData() throws XMLStreamException{
-      final byte[] TYPES = chrTypes.OTH;
+      final byte[] TYPES = Code.OTH;
       final char[] inputBuffer = inBuf;
       char[] outputBuffer = reset();
       int outPtr = 0;
@@ -1122,7 +1121,7 @@ final class ReaderScanner extends XmlScanner{
                   }
                   break;
                case 1:  // INVALID
-                  throwChr(c);
+                  thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000){
             char d = chkSurrgCh(c);
@@ -1133,7 +1132,7 @@ final class ReaderScanner extends XmlScanner{
             }
             c = d;
          }else if(c >= 0xFFFE)
-            throwChr(c);
+            thC(c);
          outputBuffer[outPtr++] = c;
       }
    }
@@ -1155,7 +1154,7 @@ final class ReaderScanner extends XmlScanner{
          outputBuffer = currSeg;
       }else
          outputBuffer = reset();
-      final byte[] TYPES = chrTypes.TXT;
+      final byte[] TYPES = Code.TXT;
       final char[] inputBuffer = inBuf;
       char c = 0;
 outl: while(true){
@@ -1224,7 +1223,7 @@ outl: while(true){
                      ++count;
                   }
                   if(c == '>' && count > 1)
-                     throwCDataEnd();
+                     thCDEnd();
                   while(count > 1){
                      outputBuffer[outPtr++] = ']';
                      if(outPtr >= outputBuffer.length){
@@ -1236,7 +1235,7 @@ outl: while(true){
                   c = ']';
                   break;
                case 1:  // INVALID
-                  throwChr(c);
+                  thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000){
             char d = chkSurrgCh(c);
@@ -1247,7 +1246,7 @@ outl: while(true){
             }
             c = d;
          }else if(c >= 0xFFFE)
-            throwChr(c);
+            thC(c);
          outputBuffer[outPtr++] = c;
       }
       currSize = outPtr;
@@ -1298,7 +1297,7 @@ outl: while(true){
             c = '\n';
          }else if(c != ' ' && c != '\t'){
             inPtr = ptr;
-            throwChr(c);
+            thC(c);
          }
          if(outPtr >= outputBuffer.length){
             outputBuffer = endSeg();
@@ -1334,7 +1333,7 @@ outl: while(true){
    }
 
    private final void endClsCData() throws XMLStreamException{
-      final byte[] TYPES = chrTypes.OTH;
+      final byte[] TYPES = Code.OTH;
       final char[] inputBuffer = inBuf;
       char[] outputBuffer = currSeg;
       int outPtr = currSize;
@@ -1403,7 +1402,7 @@ outl: while(true){
                   }
                   break;
                case 1:  // INVALID
-                  throwChr(c);
+                  thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000){
             char d = chkSurrgCh(c);
@@ -1414,13 +1413,13 @@ outl: while(true){
             }
             c = d;
          }else if(c >= 0xFFFE)
-            throwChr(c);
+            thC(c);
          outputBuffer[outPtr++] = c;
       }
    }
 
    private final void endClsChars() throws XMLStreamException{
-      final byte[] TYPES = chrTypes.TXT;
+      final byte[] TYPES = Code.TXT;
       final char[] inputBuffer = inBuf;
       char[] outputBuffer = currSeg;
       int outPtr = currSize;
@@ -1491,7 +1490,7 @@ outl: while(true){
                      ++count;
                   }
                   if(c == '>' && count > 1)
-                     throwCDataEnd();
+                     thCDEnd();
                   while(count > 1){
                      outputBuffer[outPtr++] = ']';
                      if(outPtr >= outputBuffer.length){
@@ -1503,7 +1502,7 @@ outl: while(true){
                   c = ']';
                   break;
                case 1:  // INVALID
-                  throwChr(c);
+                  thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000){
             char d = chkSurrgCh(c);
@@ -1514,7 +1513,7 @@ outl: while(true){
             }
             c = d;
          }else if(c >= 0xFFFE)
-            throwChr(c);
+            thC(c);
          outputBuffer[outPtr++] = c;
       }
       currSize = outPtr;
@@ -1543,7 +1542,7 @@ outl: while(true){
 
    @Override
    final void skipComm() throws XMLStreamException{
-      final byte[] TYPES = chrTypes.OTH;
+      final byte[] TYPES = Code.OTH;
       final char[] inputBuffer = inBuf;
       char c = 0;
       while(true){
@@ -1581,19 +1580,19 @@ outl: while(true){
                      if(inPtr >= end)
                         assertMore();
                      if(inBuf[inPtr++] != '>')
-                        throwHyphn();
+                        thHyph();
                      return;
                   }
                   continue;
                case 1:  // INVALID
-                  throwChr(c);
+                  thC(c);
             }
       }
    }
 
    @Override
    final void skipPI() throws XMLStreamException{
-      final byte[] TYPES = chrTypes.OTH;
+      final byte[] TYPES = Code.OTH;
       final char[] inputBuffer = inBuf;
       char c = 0;
       while(true){
@@ -1634,13 +1633,13 @@ outl: while(true){
          else if(c >= 0xD800 && c < 0xE000)
             chkSurrgCh(c);
          else if(c >= 0xFFFE)
-            throwChr(c);
+            thC(c);
       }
    }
 
    @Override
    final boolean skipChars() throws XMLStreamException{
-      final byte[] TYPES = chrTypes.TXT;
+      final byte[] TYPES = Code.TXT;
       final char[] inputBuffer = inBuf;
       char c = 0;
       while(true){
@@ -1688,21 +1687,21 @@ outl: while(true){
                      ncount = true;
                   }
                   if(c == '>' && ncount)
-                     throwCDataEnd();
+                     thCDEnd();
                   continue;
                case 1:  // INVALID
-                  throwChr(c);
+                  thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000)
             chkSurrgCh(c);
          else if(c >= 0xFFFE)
-            throwChr(c);
+            thC(c);
       }
    }
 
    @Override
    final void skipCData() throws XMLStreamException{
-      final byte[] TYPES = chrTypes.OTH;
+      final byte[] TYPES = Code.OTH;
       final char[] inputBuffer = inBuf;
       char c = 0;
       while(true){
@@ -1746,12 +1745,12 @@ outl: while(true){
                      --inPtr;
                   continue;
                case 1:  // INVALID
-                  throwChr(c);
+                  thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000)
             chkSurrgCh(c);
          else if(c >= 0xFFFE)
-            throwChr(c);
+            thC(c);
       }
    }
 
@@ -1783,7 +1782,7 @@ outl: while(true){
             ++currRow;
          }else if(c != ' ' && c != '\t'){
             inPtr = ptr;
-            throwChr(c);
+            thC(c);
          }
       }
       inPtr = ptr;
@@ -1796,7 +1795,7 @@ outl: while(true){
       if(c > 0x20){
          if(!reqd)
             return c;
-         throwUnexpChr(c, ", expected white space");
+         thUnxp(c, ", expected white space");
       }
       do{
          if(c == '\n'){
@@ -1810,7 +1809,7 @@ outl: while(true){
             rowOff = inPtr;
             ++currRow;
          }else if(c != ' ' && c != '\t')
-            throwChr(c);
+            thC(c);
          if(inPtr >= end)
             assertMore();
       }while((c = inBuf[inPtr++]) <= 0x20);
@@ -1823,7 +1822,7 @@ outl: while(true){
             assertMore();
          char c = inBuf[inPtr++];
          if(c != kw.charAt(i))
-            throwUnexpChr(c, new StrB(18).a(", expected ").a(kw).toString());
+            thUnxp(c, new StrB(18).a(", expected ").a(kw).toString());
       }
    }
 
@@ -1910,7 +1909,7 @@ outl: while(true){
 
    private final PN parsePName(char c) throws XMLStreamException{
       if(c < 'A')
-         throwUnexpChr(c, ", not a name start char");
+         thUnxp(c, ", not a name start char");
       char[] nameBuffer = nameBuf;
       nameBuffer[0] = c;
       int hash = c, ptr = 1;
@@ -1920,7 +1919,7 @@ outl: while(true){
          if((c = inBuf[inPtr]) < 45 || (c > 58 && c < 65) || c == 47){
             PN n = syms.find(nameBuffer, ptr, hash);
             if(n == null)
-               n = addPName(nameBuffer, ptr, hash);
+               n = Code(nameBuffer, ptr, hash);
             return n;
          }
          ++inPtr;
@@ -1931,7 +1930,7 @@ outl: while(true){
       }
    }
 
-   private final PN addPName(char[] nameBuffer, int nameLen, int hash) throws XMLStreamException{
+   private final PN Code(char[] nameBuffer, int nameLen, int hash) throws XMLStreamException{
       char c = nameBuffer[0];
       int namePtr = 1, last_colon = -1;
       if(c < 0xD800 || c >= 0xE000){
@@ -1939,8 +1938,8 @@ outl: while(true){
             throwInvNChr(c);
       }else{
          if(nameLen == 1)
-            throwInvalidSurrogate(c);
-         chkSurrgNameCh(c, nameBuffer[1]);
+            thSurr(c);
+         Code(c, nameBuffer[1]);
          ++namePtr;
       }
       for(; namePtr < nameLen; ++namePtr)
@@ -1953,16 +1952,16 @@ outl: while(true){
                throwInvNChr(c);
          }else{
             if(namePtr + 1 >= nameLen)
-               throwInvalidSurrogate(c);
-            chkSurrgNameCh(c, nameBuffer[namePtr + 1]);
+               thSurr(c);
+            Code(c, nameBuffer[namePtr + 1]);
          }
       return syms.add(nameBuffer, nameLen, hash);
    }
 
-   private final String parseSystemId(char quote) throws XMLStreamException{
+   private final String Code(char quote) throws XMLStreamException{
       char[] outputBuffer = nameBuf;
       int outPtr = 0;
-      final byte[] TYPES = chrTypes.ATT;
+      final byte[] TYPES = Code.ATT;
       while(true){
          if(inPtr >= end)
             assertMore();
@@ -1981,7 +1980,7 @@ outl: while(true){
                ++currRow;
                break;
             case 1: // INVALID
-               throwChr(c);
+               thC(c);
          }
          if(outPtr >= outputBuffer.length)
             nameBuf = outputBuffer = xpand(outputBuffer);
@@ -1989,22 +1988,18 @@ outl: while(true){
       }
    }
 
-   private final void chkSurrgNameCh(char chr, char sec) throws XMLStreamException{
+   private final void Code(char chr, char sec) throws XMLStreamException{
       int val = ((chr - 0xD800) << 10) + 0x10000;
       if(chr >= 0xDC00 || (chr = sec) < 0xDC00 || chr >= 0xE000)
-         throwInvalidSurrogate(chr);
+         thSurr(chr);
       if(val > 0x10FFFF)
-         throwInvChr(val);
+         thInvC(val);
    }
 
-   private final void throwInvalidSurrogate(char ch) throws XMLStreamException{
-      throwInputErr(new StrB(28).a("Invalid surrogate char ").apos((int)ch).toString());
-   }
+   private final void thSurr(char ch) throws XMLStreamException{ throwInputErr(new StrB(23).a("Invalid surrogate ").apos((int)ch).toString()); }
 
    @Override
-   final Location getCurLoc(){
-      return new LocImpl(impl.pubId, impl.sysId, inPtr - rowOff, currRow, bOrC + inPtr);
-   }
+   final javax.xml.stream.Location loc(){ return new LocImpl(impl.pubId, impl.sysId, inPtr - rowOff, currRow, bOrC + inPtr); }
 
    private final boolean loadNRet() throws XMLStreamException{
       if(in == null)
@@ -2030,17 +2025,6 @@ outl: while(true){
    }
 
    @Override
-   final void freeBufs(){
-      super.freeBufs();
-      if(syms.dirty)
-         impl.genTab.upd(syms);
-      if(inBuf != null){
-         impl.setCB3(inBuf);
-         inBuf = null;
-      }
-   }
-
-   @Override
    final void close() throws IOException{
       if(in != null){
          in.close();
@@ -2049,5 +2033,16 @@ outl: while(true){
    }
 
    @Override
-   final int getCol(){ return inPtr - iniRawOff; }
+   final int col(){ return inPtr - iniRawOff; }
+
+   @Override
+   final void Code(){
+      super.Code();
+      if(syms.dirty)
+         impl.genTab.Code(syms);
+      if(inBuf != null){
+         impl.setCB3(inBuf);
+         inBuf = null;
+      }
+   }
 }

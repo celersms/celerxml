@@ -3,7 +3,7 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
 // to permit persons to whom the Software is furnished to do so, subject to the condition that this
 // copyright shall be included in all copies or substantial portions of the Software:
-// Copyright Victor Celer, 2025
+// Copyright Victor Celer, 2025 - 2026
 package com.celerxml;
 
 // String builder replacement.
@@ -20,16 +20,7 @@ public final class StrB implements CharSequence{
 
    public final void ensureCapacity(int minCapacity){
       if(minCapacity > val.length)
-         xpnd(minCapacity);
-   }
-
-   private final void xpnd(int minCapacity){
-      int newcapacity;
-      if(minCapacity > (newcapacity = (val.length + 1) << 1))
-         newcapacity = minCapacity;
-      char[] newval = new char[newcapacity];
-      System.arraycopy(val, 0, newval, 0, count);
-      val = newval;
+         Code(minCapacity);
    }
 
    public final StrB append(CharSequence seq){
@@ -39,7 +30,7 @@ public final class StrB implements CharSequence{
          StrB sb = (StrB)seq;
          int newCount, len = sb.count;
          if((newCount = count + len) > val.length)
-            xpnd(newCount);
+            Code(newCount);
          System.arraycopy(sb.val, 0, val, count, len);
          count = newCount;
       }
@@ -52,7 +43,7 @@ public final class StrB implements CharSequence{
          lstr = "null";
       int newCount, len = lstr.length();
       if((newCount = count + len) > val.length)
-         xpnd(newCount);
+         Code(newCount);
       lstr.getChars(0, len, val, count);
       count = newCount;
       return this;
@@ -68,7 +59,7 @@ public final class StrB implements CharSequence{
    public final StrB append(char[] str){
       int newCount, len = str.length;
       if((newCount = count + len) > val.length)
-         xpnd(newCount);
+         Code(newCount);
       System.arraycopy(str, 0, val, count, len);
       count = newCount;
       return this;
@@ -77,7 +68,7 @@ public final class StrB implements CharSequence{
    public final StrB append(char[] str, int offset, int len){
       int newCount;
       if((newCount = count + len) > val.length)
-         xpnd(newCount);
+         Code(newCount);
       System.arraycopy(str, offset, val, count, len);
       count = newCount;
       return this;
@@ -93,7 +84,7 @@ public final class StrB implements CharSequence{
    public final StrB append(byte[] str){
       int newCount, ii = 0, jj = count, len = str.length;
       if((newCount = jj + len) > val.length)
-         xpnd(newCount);
+         Code(newCount);
       char[] lval = val;
       while(ii < len)
          lval[jj++] = (char)(str[ii++] & 0xFF);
@@ -104,7 +95,7 @@ public final class StrB implements CharSequence{
    public final StrB append(char ch){
       int newCount;
       if((newCount = count + 1) > val.length)
-         xpnd(newCount);
+         Code(newCount);
       val[count++] = ch;
       return this;
    }
@@ -124,7 +115,7 @@ public final class StrB implements CharSequence{
       }
       len = jj <= 9 ? 1 : jj <= 99 ? 2 : jj <= 999 ? 3 : jj <= 9999 ? 4 : jj <= 99999 ? 5 : jj <= 999999 ? 6 : jj <= 9999999 ? 7 : jj <= 99999999 ? 8 : jj <= 999999999 ? 9 : 10; // NOSONAR
       if((xx = count + sgnlen + len) > val.length)
-         xpnd(xx);
+         Code(xx);
       count = xx;
       char[] lval = val;
       while(len-- > 0){
@@ -139,7 +130,7 @@ public final class StrB implements CharSequence{
    public final StrB apos(int ii){
       int xx, jj = ii & 0x7FFFFFFF, len = jj <= 9 ? 1 : jj <= 99 ? 2 : jj <= 999 ? 3 : jj <= 9999 ? 4 : jj <= 99999 ? 5 : jj <= 999999 ? 6 : jj <= 9999999 ? 7 : jj <= 99999999 ? 8 : jj <= 999999999 ? 9 : 10;
       if((xx = count + len) > val.length)
-         xpnd(xx);
+         Code(xx);
       count = xx;
       char[] lval = val;
       while(len-- > 0){
@@ -147,6 +138,15 @@ public final class StrB implements CharSequence{
          jj /= 10;
       }
       return this;
+   }
+
+   private final void Code(int minCapacity){
+      int newcapacity;
+      if(minCapacity > (newcapacity = (val.length + 1) << 1))
+         newcapacity = minCapacity;
+      char[] newval = new char[newcapacity];
+      System.arraycopy(val, 0, newval, 0, count);
+      val = newval;
    }
 
    public final void setLength(int newLength){ count = newLength; }

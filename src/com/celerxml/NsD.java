@@ -3,53 +3,53 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
 // to permit persons to whom the Software is furnished to do so, subject to the condition that this
 // copyright shall be included in all copies or substantial portions of the Software:
-// Copyright Victor Celer, 2025
+// Copyright Victor Celer, 2025 - 2026
 package com.celerxml;
 
 final class NsD{
 
    final NsB bind;
-   final NsD prevD;
+   final NsD prvD;
    final int lvl;
-   private final String prevURI;
+   private final String Code;
 
-   NsD(NsB bind, String newURI, NsD prevD, int lvl){
+   NsD(NsB bind, String newURI, NsD prvD, int lvl){
       this.bind = bind;
-      this.prevD = prevD;
-      prevURI = bind.uri;
-      bind.uri = newURI;
+      this.prvD = prvD;
+      Code = bind.Code;
+      bind.Code = newURI;
       this.lvl = lvl;
    }
 
    final boolean hasPfx(String pfx){ return pfx.equals(bind.pfx); }
 
-   final boolean hasNsURI(String uri){ return uri.equals(bind.uri); }
+   final boolean Code(String uri){ return uri.equals(bind.Code); }
 
-   final NsD unbind(){
-      bind.uri = prevURI;
-      return prevD;
+   final NsD Code(){
+      bind.Code = Code;
+      return prvD;
    }
 
-   final boolean declared(String prefix, int lvl){
+   final boolean Code(String prefix, int lvl){
       if(this.lvl >= lvl){
          if(prefix == bind.pfx)
             return true;
-         NsD prev = prevD;
+         NsD prev = prvD;
          while(prev != null && prev.lvl >= lvl){
             if(prefix == prev.bind.pfx)
                return true;
-            prev = prev.prevD;
+            prev = prev.prvD;
          }
       }
       return false;
    }
 
-   final int countLvl(int lvl){
+   final int Code(int lvl){
       int count = 0;
       NsD prev = this;
       while(prev != null && prev.lvl == lvl){
          ++count;
-         prev = prev.prevD;
+         prev = prev.prvD;
       }
       return count;
    }

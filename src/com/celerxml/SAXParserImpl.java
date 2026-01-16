@@ -3,7 +3,7 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
 // to permit persons to whom the Software is furnished to do so, subject to the condition that this
 // copyright shall be included in all copies or substantial portions of the Software:
-// Copyright Victor Celer, 2025
+// Copyright Victor Celer, 2025 - 2026
 package com.celerxml;
 
 import java.io.File;
@@ -24,16 +24,14 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.SAXNotRecognizedException;
-import org.xml.sax.ext.Attributes2;
 import org.xml.sax.ext.DeclHandler;
 import org.xml.sax.ext.LexicalHandler;
-import org.xml.sax.ext.Locator2;
 import org.xml.sax.helpers.DefaultHandler;
 
 @SuppressWarnings("deprecation")
-final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLReader, Attributes2, Locator2{
+final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLReader, org.xml.sax.ext.Attributes2, org.xml.sax.ext.Locator2{
 
-   private final InputFactoryImpl factory;
+   private final InputFactoryImpl Code;
    private XmlScanner scan;
    private ContentHandler cntH;
    private ErrorHandler errH;
@@ -43,7 +41,7 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
    private EntityResolver eRes;
    private int attrc;
 
-   SAXParserImpl(InputFactoryImpl factory){ this.factory = factory; }
+   SAXParserImpl(InputFactoryImpl factory){ Code = factory; }
 
    @Override
    public final org.xml.sax.Parser getParser(){ return this; }
@@ -53,7 +51,7 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
 
    @Override
    public Object getProperty(String name) throws SAXNotRecognizedException{
-      switch(stdProp(name)){
+      switch(Code(name)){
          case 0xDB4F95F7: // "declaration-handler"
             return dclH;
          case 0x3698DB70: // "document-xml-version"
@@ -70,7 +68,7 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
 
    @Override
    public final void setProperty(String name, Object value) throws SAXNotRecognizedException{
-      switch(stdProp(name)){
+      switch(Code(name)){
          case 0xDB4F95F7: // "declaration-handler"
             dclH = (DeclHandler)value;
             return;
@@ -130,7 +128,7 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
    public final ErrorHandler getErrorHandler(){ return errH; }
 
    @Override
-   public final boolean getFeature(String name) throws SAXNotRecognizedException{ return SAXParserFactoryImpl.fixdFeat(name); }
+   public final boolean getFeature(String name) throws SAXNotRecognizedException{ return SAXParserFactoryImpl.fix(name); }
 
    @Override
    public final void setContentHandler(ContentHandler cntH){ this.cntH = cntH; }
@@ -147,13 +145,11 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
    @Override
    public final void setFeature(String name, boolean val){ /* NOOP */ }
 
-   private static final int stdProp(String s){ return s.startsWith("http://xml.org/sax/properties/") ? s.substring(30).hashCode() : 0; }
-
    @Override
    public final void parse(InputSource input) throws SAXException{
       String str = input.getSystemId();
-      InputFactoryImpl impl = new InputFactoryImpl(input.getPublicId(), str, input.getEncoding(), factory, false);
-      impl.setF(256, false);
+      InputFactoryImpl impl = new InputFactoryImpl(input.getPublicId(), str, input.getEncoding(), Code, false);
+      impl.Code(256, false);
       InputStream is = null;
       Reader r = input.getCharacterStream();
       if(r == null && (is = input.getByteStream()) == null){
@@ -186,10 +182,10 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
          cntH.startDocument();
       }
       try{
-         scan = r != null ? new InputSrc(impl, r).wrap() : new ByteSrc(impl, is).wrap();
+         scan = r != null ? new InSrc(impl, r).w() : new bSrc(impl, is).w();
          int type;
          while((type = scan.nxtFromProlog(true)) != 1) // START_ELEMENT
-            fireAuxEvent(type, false);
+            auxEvt(type, false);
          attrc = scan.attrCount;
          scan.startElement(cntH, this);
          int depth = 1;
@@ -205,10 +201,10 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
             }else if(type == 4) // CHARACTERS
                scan.chrEvents(cntH);
             else
-               fireAuxEvent(type, true);
+               auxEvt(type, true);
          while((type = scan.nxtFromProlog(false)) != -1) // EOI
             if(type != 6) // SPACE
-               fireAuxEvent(type, false);
+               auxEvt(type, false);
       }catch(XMLStreamException ex){
          SAXParseException se = new SAXParseException(ex.getMessage(), (Locator)this, ex);
          if(errH != null)
@@ -235,7 +231,7 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
    @Override
    public final void parse(String systemId) throws SAXException{ parse(new InputSource(systemId)); }
 
-   private final void fireAuxEvent(int type, boolean inTree) throws SAXException, XMLStreamException{
+   private final void auxEvt(int type, boolean inTree) throws SAXException, XMLStreamException{
       switch(type){
          case 5:  // COMMENT
             scan.commentEvent(lexH);
@@ -250,7 +246,7 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
             break;
          case 11: // DTD
             if(lexH != null){
-               lexH.startDTD(scan.tokName.pfxdName, scan.dtdPubId, scan.dtdSysId);
+               lexH.startDTD(scan.tokName.Code, scan.dtdPubId, scan.dtdSysId);
                lexH.endDTD();
             }
             break;
@@ -263,7 +259,7 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
             break;
          default:
             if(type == -1){ // EOI
-               SAXParseException se = new SAXParseException(inTree ? "Unexpected EOI in tree" : "Unexpected EOI in prolog", (Locator)this);
+               SAXParseException se = new SAXParseException("Unexpected EOI", (Locator)this);
                if(errH != null)
                   errH.fatalError(se);
                throw se;
@@ -291,7 +287,7 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
    public final String getLocalName(int idx){ return idx < 0 || idx >= attrc ? null : scan.names[idx].ln; }
 
    @Override
-   public final String getQName(int idx){ return idx < 0 || idx >= attrc ? null : scan.names[idx].pfxdName; }
+   public final String getQName(int idx){ return idx < 0 || idx >= attrc ? null : scan.names[idx].Code; }
 
    @Override
    public final String getType(int idx){ return idx < 0 || idx >= attrc ? null : "CDATA"; }
@@ -344,7 +340,7 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
    public final boolean isSpecified(String uri, String lName){ return true; }
 
    @Override
-   public final int getColumnNumber(){ return scan.getCol(); }
+   public final int getColumnNumber(){ return scan.col(); }
 
    @Override
    public final int getLineNumber(){ return scan.currRow + 1; }
@@ -373,38 +369,40 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
    @Override
    public boolean isValidating(){ return false; }
 
+   private static final int Code(String s){ return s.startsWith("http://xml.org/sax/properties/") ? s.substring(30).hashCode() : 0; }
+
    final static class DocHandlerW implements ContentHandler, org.xml.sax.AttributeList{
 
-      private final org.xml.sax.DocumentHandler docH;
+      private final org.xml.sax.DocumentHandler Code;
       private Attributes attrs;
 
-      DocHandlerW(org.xml.sax.DocumentHandler docH){ this.docH = docH; }
+      DocHandlerW(org.xml.sax.DocumentHandler docH){ Code = docH; }
 
       @Override
-      public final void characters(char[] ch, int start, int len) throws SAXException{ docH.characters(ch, start, len); }
+      public final void characters(char[] ch, int start, int len) throws SAXException{ Code.characters(ch, start, len); }
 
       @Override
-      public final void startDocument() throws SAXException{ docH.startDocument(); }
+      public final void startDocument() throws SAXException{ Code.startDocument(); }
 
       @Override
-      public final void endDocument() throws SAXException{ docH.endDocument(); }
+      public final void endDocument() throws SAXException{ Code.endDocument(); }
 
       @Override
-      public final void endElement(String uri, String lName, String qName) throws SAXException{ docH.endElement(qName == null ? lName : qName); }
+      public final void endElement(String uri, String lName, String qName) throws SAXException{ Code.endElement(qName == null ? lName : qName); }
 
       @Override
-      public final void ignorableWhitespace(char[] ch, int start, int len) throws SAXException{ docH.ignorableWhitespace(ch, start, len); }
+      public final void ignorableWhitespace(char[] ch, int start, int len) throws SAXException{ Code.ignorableWhitespace(ch, start, len); }
 
       @Override
-      public final void processingInstruction(String tgt, String data) throws SAXException{ docH.processingInstruction(tgt, data); }
+      public final void processingInstruction(String tgt, String data) throws SAXException{ Code.processingInstruction(tgt, data); }
 
       @Override
-      public final void setDocumentLocator(Locator loc){ docH.setDocumentLocator(loc); }
+      public final void setDocumentLocator(Locator loc){ Code.setDocumentLocator(loc); }
 
       @Override
       public final void startElement(String uri, String lName, String qName, Attributes attrs) throws SAXException{
          this.attrs = attrs;
-         docH.startElement(qName == null ? lName : qName, this);
+         Code.startElement(qName == null ? lName : qName, this);
       }
 
       @Override

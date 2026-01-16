@@ -3,32 +3,30 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
 // to permit persons to whom the Software is furnished to do so, subject to the condition that this
 // copyright shall be included in all copies or substantial portions of the Software:
-// Copyright Victor Celer, 2025
+// Copyright Victor Celer, 2025 - 2026
 package com.celerxml;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
 
-public final class SAXParserFactoryImpl extends SAXParserFactory{
+public final class SAXParserFactoryImpl extends javax.xml.parsers.SAXParserFactory{
 
-   private final InputFactoryImpl factory;
+   private final InputFactoryImpl Code;
 
-   public SAXParserFactoryImpl(){ factory = new InputFactoryImpl(); }
+   public SAXParserFactoryImpl(){ Code = new InputFactoryImpl(); }
 
    public static final SAXParserFactoryImpl newInstance(){ return new SAXParserFactoryImpl(); }
 
    @Override
-   public final SAXParser newSAXParser(){ return new SAXParserImpl(factory); }
+   public final javax.xml.parsers.SAXParser newSAXParser(){ return new SAXParserImpl(Code); }
 
    @Override
-   public final boolean getFeature(String name) throws SAXNotRecognizedException{ return fixdFeat(name); }
+   public final boolean getFeature(String n) throws SAXNotRecognizedException{ return fix(n); }
 
    @Override
-   public final void setFeature(String name, boolean enabled) throws SAXNotRecognizedException, SAXNotSupportedException{
+   public final void setFeature(String n, boolean enabled) throws SAXNotRecognizedException, SAXNotSupportedException{
       boolean ok = false;
-      switch(stdFeat(name)){
+      switch(Code(n)){
          case 0x8BF31EFE: // "xml-1.1"
          case 0xFD674879: // "validation"
          case 0xF8A166F2: // "namespace-prefixes"
@@ -49,22 +47,20 @@ public final class SAXParserFactoryImpl extends SAXParserFactory{
             ok = enabled;
             break;
          default:
-            throw new SAXNotRecognizedException(new StrB(22 + name.length()).a("Unrecognized feature ").a(name).toString());
+            throw new SAXNotRecognizedException(new StrB(22 + n.length()).a("Unrecognized feature ").a(n).toString());
       }
       if(!ok)
-         throw new SAXNotSupportedException(new StrB(31 + name.length()).a("Not supported setting ").a(name).a(" to ").a(enabled ? "true" : "false").toString());
+         throw new SAXNotSupportedException(new StrB(29 + n.length()).a("Unsupported setting ").a(n).a(enabled ? " to true" : " to false").toString());
    }
 
    @Override
    public final void setValidating(boolean value){
       if(value)
-         throw new IllegalArgumentException("Validating mode not implemented");
+         throw new IllegalArgumentException("Validating mode not supported");
    }
 
-   private static final int stdFeat(String s){ return s.startsWith("http://xml.org/sax/features/") ? s.substring(28).hashCode() : 0; }
-
-   static final boolean fixdFeat(String name) throws SAXNotRecognizedException{
-      switch(stdFeat(name)){
+   static final boolean fix(String name) throws SAXNotRecognizedException{
+      switch(Code(name)){
          case 0x8BF31EFE: // "xml-1.1"
          case 0xFD674879: // "validation"
          case 0x52F273A1: // "resolve-dtd-uris"
@@ -86,4 +82,6 @@ public final class SAXParserFactoryImpl extends SAXParserFactory{
             throw new SAXNotRecognizedException(new StrB(22 + name.length()).a("Unrecognized feature ").a(name).toString());
       }
    }
+
+   private static final int Code(String s){ return s.startsWith("http://xml.org/sax/features/") ? s.substring(28).hashCode() : 0; }
 }

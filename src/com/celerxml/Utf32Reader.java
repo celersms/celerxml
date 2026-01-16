@@ -3,7 +3,7 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
 // to permit persons to whom the Software is furnished to do so, subject to the condition that this
 // copyright shall be included in all copies or substantial portions of the Software:
-// Copyright Victor Celer, 2025
+// Copyright Victor Celer, 2025 - 2026
 package com.celerxml;
 
 import java.io.Reader;
@@ -35,7 +35,7 @@ final class Utf32Reader extends Reader{
       InputStream in = mIn;
       if(in != null){
          mIn = null;
-         freeBufs();
+         Code();
          in.close();
       }
    }
@@ -71,7 +71,7 @@ final class Utf32Reader extends Reader{
             if((xx = mIn.read(mBuf)) < 1){
                mLen = 0;
                if(xx < 0){
-                  freeBufs();
+                  Code();
                   return -1;
                }
                throw new IOException("Stream read 0");
@@ -81,7 +81,7 @@ final class Utf32Reader extends Reader{
          while(mLen < 4){
             if((xx = mIn.read(mBuf, mLen, 4096 - mLen)) < 1){
                if(xx < 0){
-                  freeBufs();
+                  Code();
                   throw new CharConversionException(new StrB(48).a("EOF reading UTF32 char: got ").apos(mLen).a(" bytes, not 4").toString());
                }
                throw new IOException("Stream read 0");
@@ -115,7 +115,7 @@ parseUTF32:
       return len = outPtr - start;
    }
 
-   private final void freeBufs(){
+   private final void Code(){
       if(mBuf != null){
          impl.setBB(mBuf);
          mBuf = null;

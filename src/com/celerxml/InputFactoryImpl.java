@@ -3,7 +3,7 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
 // to permit persons to whom the Software is furnished to do so, subject to the condition that this
 // copyright shall be included in all copies or substantial portions of the Software:
-// Copyright Victor Celer, 2025
+// Copyright Victor Celer, 2025 - 2026
 package com.celerxml;
 
 import java.lang.ref.SoftReference;
@@ -19,8 +19,6 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.EventFilter;
-import javax.xml.stream.StreamFilter;
 import javax.xml.stream.XMLReporter;
 import javax.xml.stream.XMLResolver;
 import javax.xml.stream.util.XMLEventAllocator;
@@ -33,23 +31,23 @@ import org.xml.sax.InputSource;
 public final class InputFactoryImpl extends XMLInputFactory{
 
    private int flags;
-   private BytePN utf8Tab, lat1Tab, asciiTab;
+   private bPN utf8T, lat1T, asciiT;
    private LinkedHashMap mURIs;
    private XMLEventAllocator alloc;
-   private ShBuf recycler;
+   private ShBuf rcclr;
 
    final String pubId, sysId, extEnc;
-   ChrPN genTab;
+   cPN genTab;
    String enc, declVer, declEnc;
    XMLReporter rep;
    XMLResolver res;
    byte bStand;
-   final static HashMap sProps;
-   final static ThreadLocal softRef;
+   final static HashMap Code;
+   final static ThreadLocal softR;
 
    static{
-       softRef = new ThreadLocal();
-       HashMap pp = sProps = new HashMap();
+       softR = new ThreadLocal();
+       HashMap pp = Code = new HashMap();
        pp.put(XMLInputFactory.IS_NAMESPACE_AWARE, Boolean.TRUE);
        pp.put(XMLInputFactory.IS_VALIDATING, Integer.valueOf(8));                   // DTD_VALIDATING
        pp.put(XMLInputFactory.IS_COALESCING, Integer.valueOf(2));                   // COALESCING
@@ -71,18 +69,18 @@ public final class InputFactoryImpl extends XMLInputFactory{
       this.sysId = sysId;
       this.extEnc = extEnc;
       this.flags = impl.flags;
-      this.utf8Tab = impl.utf8Tab;
-      this.lat1Tab = impl.lat1Tab;
-      this.asciiTab = impl.asciiTab;
+      this.utf8T = impl.utf8T;
+      this.lat1T = impl.lat1T;
+      this.asciiT = impl.asciiT;
       this.genTab = impl.genTab;
       this.rep = impl.rep;
       this.res = impl.res;
       this.mURIs = impl.mURIs;
-      SoftReference ref = (SoftReference)softRef.get();
+      SoftReference ref = (SoftReference)softR.get();
       if(ref != null)
-         recycler = (ShBuf)ref.get();
+         rcclr = (ShBuf)ref.get();
       if(forceAutoClose)
-         setF(8192, true);
+         Code(8192, true);
    }
 
    @Override
@@ -90,7 +88,7 @@ public final class InputFactoryImpl extends XMLInputFactory{
 
    @Override
    public final XMLStreamReader createXMLStreamReader(InputStream in, String enc) throws XMLStreamException{
-      return new ReaderImpl(new ByteSrc(new InputFactoryImpl(null, null, enc, this, false), in).wrap());
+      return new ReaderImpl(new bSrc(new InputFactoryImpl(null, null, enc, this, false), in).w());
    }
 
    @Override
@@ -98,7 +96,7 @@ public final class InputFactoryImpl extends XMLInputFactory{
 
    @Override
    public final XMLStreamReader createXMLStreamReader(String systemId, Reader reader) throws XMLStreamException{
-      return new ReaderImpl(new InputSrc(new InputFactoryImpl(null, systemId, null, this, false), reader).wrap());
+      return new ReaderImpl(new InSrc(new InputFactoryImpl(null, systemId, null, this, false), reader).w());
    }
 
    @Override
@@ -126,9 +124,9 @@ public final class InputFactoryImpl extends XMLInputFactory{
       }else
          throw new IllegalArgumentException("Unrecognized source");
       if(in != null)
-         return new ReaderImpl(new ByteSrc(new InputFactoryImpl(pubId, sysId, encoding, this, false), in).wrap());
+         return new ReaderImpl(new bSrc(new InputFactoryImpl(pubId, sysId, encoding, this, false), in).w());
       if(r != null)
-         return new ReaderImpl(new InputSrc(new InputFactoryImpl(pubId, sysId, encoding, this, false), r).wrap());
+         return new ReaderImpl(new InSrc(new InputFactoryImpl(pubId, sysId, encoding, this, false), r).w());
       if(sysId == null || sysId.length() == 0)
          throw new XMLStreamException("Can't create reader");
       try{
@@ -152,7 +150,7 @@ public final class InputFactoryImpl extends XMLInputFactory{
          }
          if(in == null)
             in = url.openStream();
-         return new ReaderImpl(new ByteSrc(new InputFactoryImpl(pubId, sysId, encoding, this, true), in).wrap());
+         return new ReaderImpl(new bSrc(new InputFactoryImpl(pubId, sysId, encoding, this, true), in).w());
       }catch(Exception ex){
          throw new XMLStreamException(ex);
       }
@@ -160,7 +158,7 @@ public final class InputFactoryImpl extends XMLInputFactory{
 
    @Override
    public final XMLStreamReader createXMLStreamReader(String systemId, InputStream in) throws XMLStreamException{
-      return new ReaderImpl(new ByteSrc(new InputFactoryImpl(null, systemId, null, this, false), in).wrap());
+      return new ReaderImpl(new bSrc(new InputFactoryImpl(null, systemId, null, this, false), in).w());
    }
 
    @Override
@@ -168,12 +166,12 @@ public final class InputFactoryImpl extends XMLInputFactory{
 
    @Override
    public final void setProperty(String name, Object value){
-      Object ob = sProps.get(name);
+      Object ob = Code.get(name);
       if(ob == null || ob instanceof Boolean)
          return;
       if(!(ob instanceof Integer))
          throw new RuntimeException("Internal error");
-      setF(((Integer)ob).intValue(), ((Boolean)value).booleanValue());
+      Code(((Integer)ob).intValue(), ((Boolean)value).booleanValue());
    }
 
    @Override
@@ -186,7 +184,7 @@ public final class InputFactoryImpl extends XMLInputFactory{
    public final XMLResolver getXMLResolver(){ return res; }
 
    @Override
-   public final boolean isPropertySupported(String name){ return sProps.containsKey(name); }
+   public final boolean isPropertySupported(String name){ return Code.containsKey(name); }
 
    @Override
    public final void setEventAllocator(XMLEventAllocator alloc){ this.alloc = alloc; }
@@ -197,21 +195,10 @@ public final class InputFactoryImpl extends XMLInputFactory{
    @Override
    public final void setXMLResolver(XMLResolver res){ this.res = res; }
 
-   final void setXmlDeclInfo(int ver, String xmlDeclEnc, String standalone){
-      if(ver == 0x100)
-         declVer = InputSrc.V10;
-      else if(ver == 0x110)
-         declVer = InputSrc.V11;
-      else
-         declVer = null;
-      declEnc = xmlDeclEnc;
-      bStand = standalone == InputSrc.YES ? 1 : standalone == InputSrc.NO ? (byte)2 : 0;
-   }
-
    final Object getProperty(String name, boolean isMandatory){
-      Object ob = sProps.get(name);
+      Object ob = Code.get(name);
       if(ob == null){
-         if(sProps.containsKey(name))
+         if(Code.containsKey(name))
             return null;
          if("http://java.sun.com/xml/stream/properties/implementation-name".equals(name))
             return "celerxml";
@@ -223,22 +210,119 @@ public final class InputFactoryImpl extends XMLInputFactory{
          return ((Boolean)ob).booleanValue();
       if(!(ob instanceof Integer))
          throw new RuntimeException("Unrecognized property type");
-      return getF(((Integer)ob).intValue());
+      return Code(((Integer)ob).intValue());
    }
 
-   final boolean getF(int mask){ return (flags & mask) != 0; }
+   final boolean doTxt(){ return Code(2) || !Code(2048); }
 
-   final void setF(int mask, boolean state){
+   final char[] getCB1(){
+      if(rcclr != null){
+         char[] result = rcclr.getCB1();
+         if(result != null)
+            return result;
+      }
+      return new char[60];
+   }
+
+   final void setCB1(char[] buf){
+      if(rcclr == null)
+         rcclr = getSBuf();
+      rcclr.cb1 = buf;
+   }
+
+   final char[] getCB2(){
+      if(rcclr != null){
+         char[] result = rcclr.getCB2();
+         if(result != null)
+            return result;
+      }
+      return new char[500];
+   }
+
+   final void setCB2(char[] buf){
+      if(rcclr == null)
+         rcclr = getSBuf();
+      rcclr.cb2 = buf;
+   }
+
+   final char[] getCB3(){
+      if(rcclr != null){
+         char[] result = rcclr.getCB3();
+         if(result != null)
+            return result;
+      }
+      return new char[4096];
+   }
+
+   final void setCB3(char[] buf){
+      if(rcclr == null)
+         rcclr = getSBuf();
+      rcclr.cb3 = buf;
+   }
+
+   final byte[] getBB(){
+      if(rcclr != null){
+         byte[] result = rcclr.getBB();
+         if(result != null)
+            return result;
+      }
+      return new byte[4096];
+   }
+
+   final void setBB(byte[] buf){
+      if(rcclr == null)
+         rcclr = getSBuf();
+      rcclr.bb = buf;
+   }
+
+   private final ShBuf getSBuf(){
+      ShBuf rcclr = new ShBuf();
+      softR.set(new SoftReference(rcclr));
+      return rcclr;
+   }
+
+   final bPN getSyms(){
+      String enc;
+      bPN tab;
+      if((enc = this.enc) == InSrc.UTF8){
+         if(utf8T == null)
+            utf8T = new bPN();
+         tab = utf8T;
+      }else if(enc == InSrc.LAT1){
+         if(lat1T == null)
+            lat1T = new bPN();
+         tab = lat1T;
+      }else if(enc == InSrc.ASCII){
+         if(asciiT == null)
+            asciiT = new bPN();
+         tab = asciiT;
+      }else
+         throw new Error(new StrB(28).a("Unknown encoding ").append(enc).toString());
+      return new bPN(tab);
+   }
+
+   final boolean Code(int mask){ return (flags & mask) != 0; }
+
+   final void Code(int mask, boolean state){
       if(state)
          flags |= mask;
       else
          flags &= ~mask;
    }
 
-   final boolean doTxt(){ return getF(2) || !getF(2048); }
+   final void Code(int ver, String xmlDeclEnc, String standalone){
+      if(ver == 0x100)
+         declVer = InSrc.V10;
+      else if(ver == 0x110)
+         declVer = InSrc.V11;
+      else
+         declVer = null;
+      declEnc = xmlDeclEnc;
+      bStand = standalone == InSrc.YES ? 1 : standalone == InSrc.NO ? (byte)2 : 0;
+   }
 
    @SuppressWarnings("unchecked")
-   synchronized final String cacheURI(char[] buf, int len){
+   synchronized final String Code(char[] buf, int len){
       String res;
       Key key = new Key(buf, len);
       if(mURIs == null)
@@ -252,118 +336,32 @@ public final class InputFactoryImpl extends XMLInputFactory{
       return res;
    }
 
-   final char[] getCB1(){
-      if(recycler != null){
-         char[] result = recycler.getCB1();
-         if(result != null)
-            return result;
-      }
-      return new char[60];
-   }
-
-   final void setCB1(char[] buf){
-      if(recycler == null)
-         recycler = getShBuf();
-      recycler.cb1 = buf;
-   }
-
-   final char[] getCB2(){
-      if(recycler != null){
-         char[] result = recycler.getCB2();
-         if(result != null)
-            return result;
-      }
-      return new char[500];
-   }
-
-   final void setCB2(char[] buf){
-      if(recycler == null)
-         recycler = getShBuf();
-      recycler.cb2 = buf;
-   }
-
-   final char[] getCB3(){
-      if(recycler != null){
-         char[] result = recycler.getCB3();
-         if(result != null)
-            return result;
-      }
-      return new char[4096];
-   }
-
-   final void setCB3(char[] buf){
-      if(recycler == null)
-         recycler = getShBuf();
-      recycler.cb3 = buf;
-   }
-
-   final byte[] getBB(){
-      if(recycler != null){
-         byte[] result = recycler.getBB();
-         if(result != null)
-            return result;
-      }
-      return new byte[4096];
-   }
-
-   final void setBB(byte[] buf){
-      if(recycler == null)
-         recycler = getShBuf();
-      recycler.bb = buf;
-   }
-
-   private final ShBuf getShBuf(){
-      ShBuf recycler = new ShBuf();
-      softRef.set(new SoftReference(recycler));
-      return recycler;
-   }
-
-   final BytePN getBBSyms(){
-      String enc;
-      BytePN tab;
-      if((enc = this.enc) == InputSrc.UTF8){
-         if(utf8Tab == null)
-            utf8Tab = new BytePN();
-         tab = utf8Tab;
-      }else if(enc == InputSrc.LATN1){
-         if(lat1Tab == null)
-            lat1Tab = new BytePN();
-         tab = lat1Tab;
-      }else if(enc == InputSrc.ASCII){
-         if(asciiTab == null)
-            asciiTab = new BytePN();
-         tab = asciiTab;
-      }else
-         throw new Error(new StrB(28).a("Unknown encoding ").append(enc).toString());
-      return new BytePN(tab);
-   }
-
-   final void updBBSyms(BytePN sym){
-      if(enc == InputSrc.UTF8)
-         utf8Tab.upd(sym);
-      else if(enc == InputSrc.LATN1)
-         lat1Tab.upd(sym);
-      else if(enc == InputSrc.ASCII)
-         asciiTab.upd(sym);
+   final void Code(bPN sym){
+      if(enc == InSrc.UTF8)
+         utf8T.Code(sym);
+      else if(enc == InSrc.LAT1)
+         lat1T.Code(sym);
+      else if(enc == InSrc.ASCII)
+         asciiT.Code(sym);
       else
          throw new Error(new StrB(28).a("Unknown encoding ").append(enc).toString());
    }
 
-   final Chr getChr(){
-      if(enc == InputSrc.UTF8)
-         return Chr.getUtf8();
-      if(enc == InputSrc.LATN1)
+   final Chr Code(){
+      if(enc == InSrc.UTF8)
+         return Chr.sUtf8;
+      if(enc == InSrc.LAT1)
          return Chr.getLat1();
-      if(enc == InputSrc.ASCII)
+      if(enc == InSrc.ASCII)
          return Chr.getAscii();
       throw new Error(new StrB(28).a("Unknown encoding ").append(enc).toString());
    }
 
    @Override
-   public final XMLEventReader createFilteredReader(XMLEventReader reader, EventFilter filter){ return null; }
+   public final XMLEventReader createFilteredReader(XMLEventReader reader, javax.xml.stream.EventFilter filter){ return null; }
 
    @Override
-   public final XMLStreamReader createFilteredReader(XMLStreamReader reader, StreamFilter filter){ return null; }
+   public final XMLStreamReader createFilteredReader(XMLStreamReader reader, javax.xml.stream.StreamFilter filter){ return null; }
 
    @Override
    public final XMLEventReader createXMLEventReader(InputStream in){ return null; }
