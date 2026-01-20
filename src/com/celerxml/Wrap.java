@@ -13,33 +13,33 @@ final class Wrap extends InputStream{
 
    private final InputFactoryImpl impl;
    private final InputStream mIn;
-   private byte[] buf;
+   private byte[] Code;
    private int off;
    private final int end;
 
    Wrap(InputFactoryImpl impl, InputStream mIn, byte[] buf, int off, int end){
       this.impl = impl;
       this.mIn = mIn;
-      this.buf = buf;
+      Code = buf;
       this.off = off;
       this.end = end;
    }
 
    @Override
-   public final int available() throws IOException{ return buf != null ? end - off : mIn.available(); }
+   public final int available() throws IOException{ return Code != null ? end - off : mIn.available(); }
 
    @Override
    public final void close() throws IOException{
-      freeBuf();
+      Code();
       mIn.close();
    }
 
    @Override
    public final int read() throws IOException{
-      if(buf != null){
-         int c = buf[off++] & 0xFF;
+      if(Code != null){
+         int c = Code[off++] & 0xFF;
          if(off >= end)
-            freeBuf();
+            Code();
          return c;
       }
       return mIn.read();
@@ -50,23 +50,23 @@ final class Wrap extends InputStream{
 
    @Override
    public final int read(byte[] b, int off, int len) throws IOException{
-      if(buf != null){
+      if(Code != null){
          int avail = end - off;
          if(len > avail)
             len = avail;
-         System.arraycopy(buf, off, b, off, len);
+         System.arraycopy(Code, off, b, off, len);
          off += len;
          if(off >= end)
-            freeBuf();
+            Code();
          return len;
       }
       return mIn.read(b, off, len);
    }
 
-   private final void freeBuf(){
-      if(buf != null){
-         byte[] data = buf;
-         buf = null;
+   private final void Code(){
+      if(Code != null){
+         byte[] data = Code;
+         Code = null;
          if(impl != null)
             impl.setBB(data);
       }
