@@ -6,10 +6,7 @@
 // Copyright Victor Celer, 2025 - 2026
 package com.celerxml;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
-final class SIterator implements Iterator{
+final class SIterator implements java.util.Iterator{
 
    private final String val;
    private boolean done;
@@ -25,7 +22,7 @@ final class SIterator implements Iterator{
    @Override
    public final Object next(){
       if(done)
-         throw new NoSuchElementException();
+         throw new java.util.NoSuchElementException();
       done = true;
       return val;
    }

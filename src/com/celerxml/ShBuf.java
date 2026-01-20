@@ -7,31 +7,6 @@
 package com.celerxml;
 
 final class ShBuf{
-
    char[] cb1, cb2, cb3;
-   byte[] bb;
-
-   final char[] getCB1(){
-      char[] res = cb1;
-      cb1 = null;
-      return res;
-   }
-
-   final char[] getCB2(){
-      char[] res = cb2;
-      cb2 = null;
-      return res;
-   }
-
-   final char[] getCB3(){
-      char[] res = cb3;
-      cb3 = null;
-      return res;
-   }
-
-   final byte[] getBB(){
-      byte[] res = bb;
-      bb = null;
-      return res;
-   }
+   byte[] Code;
 }
