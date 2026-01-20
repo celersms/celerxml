@@ -14,18 +14,18 @@ final class ReaderScanner extends XmlScanner{
 
    private final static Chr Code = Chr.getLat1();
    private Reader in;
-   private char[] inBuf;
+   private char[] buf;
    private int inPtr, end, cTmp;
    private final cPN syms;
    private Node curr;
 
-   ReaderScanner(InputFactoryImpl impl, Reader in, char[] inBuf, int inPtr, int end){
+   ReaderScanner(InputFactoryImpl impl, Reader in, char[] buf, int inPtr, int end){
       super(impl);
       this.in = in;
       if(impl.genTab == null)
          impl.genTab = new cPN();
       syms = new cPN(impl.genTab);
-      this.inBuf = inBuf;
+      this.buf = buf;
       this.inPtr = inPtr;
       this.end = end;
    }
@@ -40,11 +40,11 @@ final class ReaderScanner extends XmlScanner{
       bOrC += end;
       rowOff -= end;
       try{
-         int count = in.read(inBuf, 0, 4096);
+         int count = in.read(buf, 0, 4096);
          if(count < 1){
             end = 0;
             if(count == 0)
-               throwInputErr("Reader returned 0");
+               thInErr("Reader returned 0");
             return false;
          }
          end = count;
@@ -58,7 +58,7 @@ final class ReaderScanner extends XmlScanner{
       if(inPtr >= end)
          assertMore();
       int val = ((chr - 0xD800) << 10) + 0x10000;
-      if(chr >= 0xDC00 || (chr = inBuf[inPtr++]) < 0xDC00 || chr >= 0xE000)
+      if(chr >= 0xDC00 || (chr = buf[inPtr++]) < 0xDC00 || chr >= 0xE000)
          thSurr(chr);
       if(val > 0x10FFFF)
          thInvC(val);
@@ -73,7 +73,7 @@ final class ReaderScanner extends XmlScanner{
             endPI();
             return;
          case 4:  // CHARACTERS
-            endChars();
+            endC();
             return;
          case 5:  // COMMENT
             endComm();
@@ -103,16 +103,16 @@ final class ReaderScanner extends XmlScanner{
             startCol = -rowOff;
             return -1;
          }
-         switch(c = inBuf[inPtr++]){
+         switch(c = buf[inPtr++]){
             case '<':
                if(inPtr >= end)
                   assertMore();
-               if((c = inBuf[inPtr++]) == '!')
+               if((c = buf[inPtr++]) == '!')
                   return doPrologDecl(isProlog);
                if(c == '?')
-                  return handlePIStart();
+                  return doPIStart();
                if(c == '/' || !isProlog)
-                  throwUnexpRoot(isProlog, c);
+                  thRoot(isProlog, c);
                return startElem(c);
             case ' ':
             case '\t':
@@ -124,14 +124,14 @@ final class ReaderScanner extends XmlScanner{
                   startRow = ++currRow;
                   return -1;
                }
-               if(inBuf[inPtr] == '\n')
+               if(buf[inPtr] == '\n')
                   ++inPtr;
             case '\n':
                rowOff = inPtr;
                ++currRow;
                break;
             default:
-               throwPlogUnxpChr(isProlog, c);
+               thPlogUnxpCh(isProlog, c);
          }
       }
    }
@@ -165,16 +165,16 @@ final class ReaderScanner extends XmlScanner{
          startCol = -rowOff;
          return -1;
       }
-      int c = inBuf[inPtr];
+      int c = buf[inPtr];
       if(c == '<'){
          if(++inPtr >= end && !more())
-            throwInputErr(EOI);
-         if((c = inBuf[inPtr++]) == '!')
+            thInErr(EOI);
+         if((c = buf[inPtr++]) == '!')
             return commOrCdataStart();
          if(c == '?')
-            return handlePIStart();
+            return doPIStart();
          if(c == '/')
-            return handleEndElement();
+            return doEndE();
          return startElem((char)c);
       }
       if(c == '&'){
@@ -186,18 +186,18 @@ final class ReaderScanner extends XmlScanner{
       if(lazy)
          incompl = true;
       else
-         endChars();
+         endC();
       return currToken = 4; // CHARACTERS
    }
 
    private final int doPrologDecl(boolean isProlog) throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      char c = inBuf[inPtr++];
+      char c = buf[inPtr++];
       if(c == '-'){
          if(inPtr >= end)
             assertMore();
-         if((c = inBuf[inPtr++]) == '-'){
+         if((c = buf[inPtr++]) == '-'){
             if(lazy)
                incompl = true;
             else
@@ -205,7 +205,7 @@ final class ReaderScanner extends XmlScanner{
             return currToken = 5; // COMMENT
          }
       }else if(isProlog && c == 'D'){
-         handleDtdStart();
+         doDtdStart();
          if(!lazy && incompl){
             endDTD();
             incompl = false;
@@ -214,17 +214,17 @@ final class ReaderScanner extends XmlScanner{
       }
       incompl = true;
       currToken = 4; // CHARACTERS
-      throwPlogUnxpChr(isProlog, c);
+      thPlogUnxpCh(isProlog, c);
       return 0;
    }
 
-   private final int handleDtdStart() throws XMLStreamException{
-      matchKW("DOCTYPE");
+   private final int doDtdStart() throws XMLStreamException{
+      Code("DOCTYPE");
       char q, c;
-      tokName = parsePName(skipInternalWs(true));
-      if((c = skipInternalWs(false)) == 'P'){
-         matchKW("PUBLIC");
-         q = skipInternalWs(true);
+      tokName = parsePN(Code(true));
+      if((c = Code(false)) == 'P'){
+         Code("PUBLIC");
+         q = Code(true);
          char[] outputBuffer = nameBuf;
          int outPtr = 0;
          final byte[] TYPES = Chr.Code;
@@ -232,10 +232,10 @@ final class ReaderScanner extends XmlScanner{
          while(true){
             if(inPtr >= end)
                assertMore();
-            if((c = inBuf[inPtr++]) == q)
+            if((c = buf[inPtr++]) == q)
                break;
             if(c > 0xFF || TYPES[c] != 1) // PUBID_OK
-               thUnxp(c, " in public identifier");
+               thUnxp(c, " in public ID");
             if(c <= 0x20){
                addSpace = true;
                continue;
@@ -253,13 +253,13 @@ final class ReaderScanner extends XmlScanner{
             outputBuffer[outPtr++] = c;
          }
          dtdPubId = new String(outputBuffer, 0, outPtr);
-         dtdSysId = Code(skipInternalWs(true));
-         c = skipInternalWs(false);
+         dtdSysId = Code(Code(true));
+         c = Code(false);
       }else if(c == 'S'){
-         matchKW("SYSTEM");
+         Code("SYSTEM");
          dtdPubId = null;
-         dtdSysId = Code(skipInternalWs(true));
-         c = skipInternalWs(false);
+         dtdSysId = Code(Code(true));
+         c = Code(false);
       }else
          dtdPubId = dtdSysId = null;
       if((incompl = c == '[') || c == '>')
@@ -271,12 +271,12 @@ final class ReaderScanner extends XmlScanner{
    private final int commOrCdataStart() throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      char c = inBuf[inPtr++];
+      char c = buf[inPtr++];
       if(c == '-'){
          if(inPtr >= end)
             assertMore();
-         if(inBuf[inPtr++] != '-')
-            throwInputErr("Expected '-'");
+         if(buf[inPtr++] != '-')
+            thInErr("Expected '-'");
          if(lazy)
             incompl = true;
          else
@@ -288,8 +288,8 @@ final class ReaderScanner extends XmlScanner{
          for(int i = 0; i < 6; ++i){
             if(inPtr >= end)
                assertMore();
-            if(inBuf[inPtr++] != CDATA.charAt(i))
-               throwInputErr("Expected '[CDATA['");
+            if(buf[inPtr++] != CDATA.charAt(i))
+               thInErr("Expected '[CDATA['");
          }
          if(lazy)
             incompl = true;
@@ -297,21 +297,21 @@ final class ReaderScanner extends XmlScanner{
             endCData();
          return 12; // CDATA
       }
-      throwInputErr("Expected '-' or '[CDATA['");
+      thInErr("Expected '-' or '[CDATA['");
       return 0;
    }
 
-   private final int handlePIStart() throws XMLStreamException{
+   private final int doPIStart() throws XMLStreamException{
       currToken = 3; // PROCESSING_INSTRUCTION
       if(inPtr >= end)
          assertMore();
-      tokName = parsePName(inBuf[inPtr++]);
+      tokName = parsePN(buf[inPtr++]);
       String ln = tokName.ln;
       if(ln.length() == 3 && ln.equalsIgnoreCase("xml") && tokName.pfx == null)
-         throwInputErr("Target 'xml' reserved");
+         thInErr("Target 'xml' reserved");
       if(inPtr >= end)
          assertMore();
-      char c = inBuf[inPtr++];
+      char c = buf[inPtr++];
       if(c <= 0x20){
          while(true){
             if(c == '\n'){
@@ -320,7 +320,7 @@ final class ReaderScanner extends XmlScanner{
             }else if(c == '\r'){
                if(inPtr >= end)
                   assertMore();
-               if(inBuf[inPtr] == '\n')
+               if(buf[inPtr] == '\n')
                   ++inPtr;
                rowOff = inPtr;
                ++currRow;
@@ -328,7 +328,7 @@ final class ReaderScanner extends XmlScanner{
                thC(c);
             if(inPtr >= end)
                assertMore();
-            if((c = inBuf[inPtr]) > 0x20)
+            if((c = buf[inPtr]) > 0x20)
                break;
             ++inPtr;
          }
@@ -338,11 +338,11 @@ final class ReaderScanner extends XmlScanner{
             endPI();
       }else{
          if(c != (int)'?')
-            throwNoPISpace(c);
+            thNoPISp(c);
          if(inPtr >= end)
             assertMore();
-         if((c = inBuf[inPtr++]) != '>')
-            throwNoPISpace(c);
+         if((c = buf[inPtr++]) != '>')
+            thNoPISp(c);
          reset();
          incompl = false;
       }
@@ -352,13 +352,13 @@ final class ReaderScanner extends XmlScanner{
    private final int chrEnt() throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      char c = inBuf[inPtr++];
+      char c = buf[inPtr++];
       int value = 0;
       if(c == 'x')
          while(true){
             if(inPtr >= end)
                assertMore();
-            if((c = inBuf[inPtr++]) == ';')
+            if((c = buf[inPtr++]) == ';')
                break;
             if((c = (char)((c | 0x20) - 0x30)) > 9) // to lowercase
                c -= 0x27;
@@ -373,7 +373,7 @@ final class ReaderScanner extends XmlScanner{
             value = value * 10 + c - '0';
             if(inPtr >= end)
                assertMore();
-            c = inBuf[inPtr++];
+            c = buf[inPtr++];
          }
       if((value >= 0xD800 && value < 0xE000) || value == 0 || value == 0xFFFE || value == 0xFFFF)
          thInvC(value);
@@ -383,7 +383,7 @@ final class ReaderScanner extends XmlScanner{
    private final int startElem(char c) throws XMLStreamException{
       currToken = 1; // START_ELEMENT
       nsCnt = 0;
-      PN elemName = parsePName(c);
+      PN elemName = parsePN(c);
       String prefix = elemName.pfx;
       boolean allBound = true;
       if(prefix != null)
@@ -394,7 +394,7 @@ final class ReaderScanner extends XmlScanner{
       while(true){
          if(inPtr >= end)
             assertMore();
-         if((c = inBuf[inPtr++]) <= 0x20)
+         if((c = buf[inPtr++]) <= 0x20)
             do{
                if(c == '\n'){
                   rowOff = inPtr;
@@ -402,7 +402,7 @@ final class ReaderScanner extends XmlScanner{
                }else if(c == '\r'){
                   if(inPtr >= end)
                      assertMore();
-                  if(inBuf[inPtr] == '\n')
+                  if(buf[inPtr] == '\n')
                      ++inPtr;
                   rowOff = inPtr;
                   ++currRow;
@@ -410,13 +410,13 @@ final class ReaderScanner extends XmlScanner{
                   thC(c);
                if(inPtr >= end)
                   assertMore();
-            }while((c = inBuf[inPtr++]) <= 0x20);
+            }while((c = buf[inPtr++]) <= 0x20);
          else if(c != '/' && c != '>')
             thUnxp(c, ", not space or '>' or '/>'");
          if(c == '/'){
             if(inPtr >= end)
                assertMore();
-            if((c = inBuf[inPtr++]) != '>')
+            if((c = buf[inPtr++]) != '>')
                thUnxp(c, ", not '>'");
             empty = true;
             break;
@@ -424,8 +424,8 @@ final class ReaderScanner extends XmlScanner{
             empty = false;
             break;
          }else if(c == '<')
-            throwInputErr("Unexpected '<'");
-         PN attrName = parsePName(c);
+            thInErr("Unexpected '<'");
+         PN attrName = parsePN(c);
          prefix = attrName.pfx;
          boolean isNsDecl = true;
          if(prefix == null)
@@ -439,7 +439,7 @@ final class ReaderScanner extends XmlScanner{
          while(true){
             if(inPtr >= end)
                assertMore();
-            if((c = inBuf[inPtr++]) > 0x20)
+            if((c = buf[inPtr++]) > 0x20)
                break;
             if(c == '\n'){
                rowOff = inPtr;
@@ -447,7 +447,7 @@ final class ReaderScanner extends XmlScanner{
             }else if(c == '\r'){
                if(inPtr >= end)
                   assertMore();
-               if(inBuf[inPtr] == '\n')
+               if(buf[inPtr] == '\n')
                   ++inPtr;
                rowOff = inPtr;
                ++currRow;
@@ -459,7 +459,7 @@ final class ReaderScanner extends XmlScanner{
          while(true){
             if(inPtr >= end)
                assertMore();
-            if((c = inBuf[inPtr++]) > 0x20)
+            if((c = buf[inPtr++]) > 0x20)
                break;
             if(c == '\n'){
                rowOff = inPtr;
@@ -467,7 +467,7 @@ final class ReaderScanner extends XmlScanner{
             }else if(c == '\r'){
                if(inPtr >= end)
                   assertMore();
-               if(inBuf[inPtr] == '\n')
+               if(buf[inPtr] == '\n')
                   ++inPtr;
                rowOff = inPtr;
                ++currRow;
@@ -477,13 +477,13 @@ final class ReaderScanner extends XmlScanner{
          if(c != '"' && c != '\'')
             thUnxp(c, ", not a quote");
          if(isNsDecl){
-            handleNsDecl(attrName, c);
+            Code(attrName, c);
             ++nsCnt;
          }else
-            xx = collectValue(xx, c, attrName);
+            xx = Code(xx, c, attrName);
       }
       if((xx = endLastV(xx)) < 0)
-         throwInputErr(errMsg);
+         thInErr(errMsg);
       attrCount = xx;
       ++depth;
       if(!allBound){
@@ -498,7 +498,7 @@ final class ReaderScanner extends XmlScanner{
       return 1; // START_ELEMENT
    }
 
-   private final int collectValue(int attrPtr, char quote, PN attrName) throws XMLStreamException{
+   private final int Code(int attrPtr, char quote, PN attrName) throws XMLStreamException{
       final byte[] TYPES = Code.ATT;
       char[] attrBuffer = startNewV(attrName, attrPtr);
       char c = 0;
@@ -516,7 +516,7 @@ final class ReaderScanner extends XmlScanner{
             if(max2 < max)
                max = max2;
             while(ptr < max){
-               if((c = inBuf[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
+               if((c = buf[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
                   adv = false;
                   break;
                }
@@ -529,7 +529,7 @@ final class ReaderScanner extends XmlScanner{
                case 2:  // WS_CR
                   if(ptr >= end)
                      assertMore();
-                  if(inBuf[inPtr] == '\n')
+                  if(buf[inPtr] == '\n')
                      ++inPtr;
                case 3:  // WS_LF
                   rowOff = inPtr;
@@ -539,7 +539,7 @@ final class ReaderScanner extends XmlScanner{
                   break;
                case 10: // AMP
                   if((ptr = entInTxt()) == 0)
-                     throwUnexpandEnt();
+                     thEnt();
                   if((ptr >> 16) != 0){
                      attrBuffer[attrPtr++] = (char)(0xD800 | (ptr -= 0x10000) >> 10);
                      ptr = 0xDC00 | ptr & 0x3FF;
@@ -569,13 +569,13 @@ final class ReaderScanner extends XmlScanner{
       }
    }
 
-   private final void handleNsDecl(PN name, char quote) throws XMLStreamException{
+   private final void Code(PN name, char quote) throws XMLStreamException{
       int attrPtr = 0;
       char[] attrBuffer = nameBuf;
       while(true){
          if(inPtr >= end)
             assertMore();
-         char c = inBuf[inPtr++];
+         char c = buf[inPtr++];
          if(c == quote){
             bindNs(name, attrPtr == 0 ? "" : impl.Code(attrBuffer, attrPtr));
             return;
@@ -583,7 +583,7 @@ final class ReaderScanner extends XmlScanner{
          if(c == '&'){
             int d = entInTxt();
             if(d == 0)
-               throwUnexpandEnt();
+               thEnt();
             if((d >> 16) != 0){
                if(attrPtr >= attrBuffer.length)
                   nameBuf = attrBuffer = xpand(attrBuffer);
@@ -600,7 +600,7 @@ final class ReaderScanner extends XmlScanner{
             }else if(c == '\r'){
                if(inPtr >= end)
                   assertMore();
-               if(inBuf[inPtr] == '\n')
+               if(buf[inPtr] == '\n')
                   ++inPtr;
                rowOff = inPtr;
                ++currRow;
@@ -614,7 +614,7 @@ final class ReaderScanner extends XmlScanner{
       }
    }
 
-   private final int handleEndElement() throws XMLStreamException{
+   private final int doEndE() throws XMLStreamException{
       --depth;
       currToken = 2; // END_ELEMENT
       tokName = curr.Code;
@@ -623,14 +623,14 @@ final class ReaderScanner extends XmlScanner{
       do{
          if(inPtr >= end)
             assertMore();
-         if(inBuf[inPtr++] != pname.charAt(i))
+         if(buf[inPtr++] != pname.charAt(i))
             thUnexpEnd(pname);
       }while(++i < len);
       if(inPtr >= end)
          assertMore();
-      char c = inBuf[inPtr++];
+      char c = buf[inPtr++];
       if(c <= ' ')
-         c = skipInternalWs(false);
+         c = Code(false);
       else if(c == ':' || Chr.is10N(c))
          thUnexpEnd(pname);
       if(c != '>')
@@ -641,7 +641,7 @@ final class ReaderScanner extends XmlScanner{
    private final int entInTxt() throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      char c = inBuf[inPtr++];
+      char c = buf[inPtr++];
       if(c == '#')
          return chrEnt();
       char[] cbuf = nameBuf;
@@ -650,30 +650,30 @@ final class ReaderScanner extends XmlScanner{
          if(inPtr >= end)
             assertMore();
          cbuf[cix++] = c;
-         if((c = inBuf[inPtr++]) == 'm'){
+         if((c = buf[inPtr++]) == 'm'){
             if(inPtr >= end)
                assertMore();
             cbuf[cix++] = c;
-            if((c = inBuf[inPtr++]) == 'p'){
+            if((c = buf[inPtr++]) == 'p'){
                if(inPtr >= end)
                   assertMore();
                cbuf[cix++] = c;
-               if((c = inBuf[inPtr++]) == ';')
+               if((c = buf[inPtr++]) == ';')
                   return '&';
             }
          }else if(c == 'p'){
             if(inPtr >= end)
                assertMore();
             cbuf[cix++] = c;
-            if((c = inBuf[inPtr++]) == 'o'){
+            if((c = buf[inPtr++]) == 'o'){
                if(inPtr >= end)
                   assertMore();
                cbuf[cix++] = c;
-               if((c = inBuf[inPtr++]) == 's'){
+               if((c = buf[inPtr++]) == 's'){
                   if(inPtr >= end)
                      assertMore();
                   cbuf[cix++] = c;
-                  if((c = inBuf[inPtr++]) == ';')
+                  if((c = buf[inPtr++]) == ';')
                      return '\'';
                }
             }
@@ -682,41 +682,41 @@ final class ReaderScanner extends XmlScanner{
          if(inPtr >= end)
             assertMore();
          cbuf[cix++] = c;
-         if((c = inBuf[inPtr++]) == 't'){
+         if((c = buf[inPtr++]) == 't'){
             if(inPtr >= end)
                assertMore();
             cbuf[cix++] = c;
-            if((c = inBuf[inPtr++]) == ';')
+            if((c = buf[inPtr++]) == ';')
                return '<';
          }
       }else if(c == 'g'){
          if(inPtr >= end)
             assertMore();
          cbuf[cix++] = c;
-         if((c = inBuf[inPtr++]) == 't'){
+         if((c = buf[inPtr++]) == 't'){
             if(inPtr >= end)
                assertMore();
             cbuf[cix++] = c;
-            if((c = inBuf[inPtr++]) == ';')
+            if((c = buf[inPtr++]) == ';')
                return '>';
          }
       }else if(c == 'q'){
          if(inPtr >= end)
             assertMore();
          cbuf[cix++] = c;
-         if((c = inBuf[inPtr++]) == 'u'){
+         if((c = buf[inPtr++]) == 'u'){
             if(inPtr >= end)
                assertMore();
             cbuf[cix++] = c;
-            if((c = inBuf[inPtr++]) == 'o'){
+            if((c = buf[inPtr++]) == 'o'){
                if(inPtr >= end)
                   assertMore();
                cbuf[cix++] = c;
-               if((c = inBuf[inPtr++]) == 't'){
+               if((c = buf[inPtr++]) == 't'){
                   if(inPtr >= end)
                      assertMore();
                   cbuf[cix++] = c;
-                  if((c = inBuf[inPtr++]) == ';')
+                  if((c = buf[inPtr++]) == ';')
                      return '"';
                }
             }
@@ -740,7 +740,7 @@ final class ReaderScanner extends XmlScanner{
                thSurr(c);
             if(inPtr >= end)
                assertMore();
-            char sec = inBuf[inPtr++];
+            char sec = buf[inPtr++];
             if(sec < 0xDC00 || sec >= 0xE000)
                thSurr(sec);
             int value = ((c - 0xD800) << 10) + 0x10000;
@@ -749,23 +749,23 @@ final class ReaderScanner extends XmlScanner{
             if(cix >= cbuf.length)
                nameBuf = cbuf = xpand(cbuf);
             cbuf[cix++] = c;
-            c = inBuf[inPtr - 1];
+            c = buf[inPtr - 1];
             ok = Chr.is10N(value);
          }else if(c >= 0xFFFE)
             thC(c);
          else
             ok = true;
          if(!ok)
-            throwInvNChr(c);
+            thInvNCh(c);
          if(cix >= cbuf.length)
             nameBuf = cbuf = xpand(cbuf);
          cbuf[cix++] = c;
          if(inPtr >= end)
             assertMore();
-         c = inBuf[inPtr++];
+         c = buf[inPtr++];
       }
       if(impl.Code(16))
-         throwInputErr("Entity reference in entity expanding mode");
+         thInErr("Entity ref. in entity expanding mode");
       String pname = new String(cbuf, 0, cix);
       tokName = new PN(pname, null, pname, 0);
       return 0;
@@ -773,7 +773,7 @@ final class ReaderScanner extends XmlScanner{
 
    private final void endComm() throws XMLStreamException{
       final byte[] TYPES = Code.OTH;
-      final char[] inputBuffer = inBuf;
+      final char[] inputBuffer = buf;
       char[] outputBuffer = reset();
       int outPtr = 0;
       char c = 0;
@@ -816,11 +816,11 @@ final class ReaderScanner extends XmlScanner{
                case 13: // HYPHEN
                   if(ptr >= end)
                      assertMore();
-                  if(inBuf[inPtr] == '-'){
+                  if(buf[inPtr] == '-'){
                      ++inPtr;
                      if(inPtr >= end)
                         assertMore();
-                     if(inBuf[inPtr++] != '>')
+                     if(buf[inPtr++] != '>')
                         thHyph();
                      currSize = outPtr;
                      return;
@@ -845,7 +845,7 @@ final class ReaderScanner extends XmlScanner{
 
    private final void endPI() throws XMLStreamException{
       final byte[] TYPES = Code.OTH;
-      final char[] inputBuffer = inBuf;
+      final char[] inputBuffer = buf;
       char[] outputBuffer = reset();
       int outPtr = 0;
       char c = 0;
@@ -888,7 +888,7 @@ final class ReaderScanner extends XmlScanner{
                case 12: // QMARK
                   if(ptr >= end)
                      assertMore();
-                  if(inBuf[inPtr] == '>'){
+                  if(buf[inPtr] == '>'){
                      ++inPtr;
                      currSize = outPtr;
                      return;
@@ -929,7 +929,7 @@ final class ReaderScanner extends XmlScanner{
             if(max2 < max)
                max = max2;
             while(ptr < max){
-               if((c = inBuf[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
+               if((c = buf[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
                   adv = false;
                   break;
                }
@@ -942,7 +942,7 @@ final class ReaderScanner extends XmlScanner{
                case 2:  // WS_CR
                   if(ptr >= end)
                      assertMore();
-                  if(inBuf[inPtr] == '\n')
+                  if(buf[inPtr] == '\n')
                      ++inPtr;
                   c = '\n';
                case 3:  // WS_LF
@@ -965,7 +965,7 @@ final class ReaderScanner extends XmlScanner{
                case 11: // RBRACKET
                   if(!adv && quoteChar == 0){
                      currSize = outPtr;
-                     if((c = skipInternalWs(false)) != '>')
+                     if((c = Code(false)) != '>')
                         thUnxp(c, ", not '>' after internal subset");
                      return;
                   }
@@ -1001,7 +1001,7 @@ final class ReaderScanner extends XmlScanner{
             }
             int max = end;
             while(ptr < max)
-               if((c = inBuf[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
+               if((c = buf[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
                   adv = false;
                   break;
                }
@@ -1012,7 +1012,7 @@ final class ReaderScanner extends XmlScanner{
                case 2:  // WS_CR
                   if(ptr >= end)
                      assertMore();
-                  if(inBuf[inPtr] == '\n')
+                  if(buf[inPtr] == '\n')
                      ++inPtr;
                case 3:  // WS_LF
                   rowOff = inPtr;
@@ -1034,7 +1034,7 @@ final class ReaderScanner extends XmlScanner{
                   continue;
                case 11: // RBRACKET
                   if(!adv && quoteChar == 0){
-                     if((c = skipInternalWs(false)) != '>')
+                     if((c = Code(false)) != '>')
                         thUnxp(c, ", not '>' after internal subset");
                      return;
                   }
@@ -1051,7 +1051,7 @@ final class ReaderScanner extends XmlScanner{
 
    private final void endCData() throws XMLStreamException{
       final byte[] TYPES = Code.OTH;
-      final char[] inputBuffer = inBuf;
+      final char[] inputBuffer = buf;
       char[] outputBuffer = reset();
       int outPtr = 0;
       char c = 0;
@@ -1097,7 +1097,7 @@ final class ReaderScanner extends XmlScanner{
                   do{
                      if(inPtr >= end)
                         assertMore();
-                     if((d = inBuf[inPtr]) != ']')
+                     if((d = buf[inPtr]) != ']')
                         break;
                      ++inPtr;
                      ++count;
@@ -1137,7 +1137,7 @@ final class ReaderScanner extends XmlScanner{
       }
    }
 
-   private final void endChars() throws XMLStreamException{
+   private final void endC() throws XMLStreamException{
       char[] outputBuffer;
       int outPtr = 0, t = cTmp;
       if(t < 0){
@@ -1149,13 +1149,13 @@ final class ReaderScanner extends XmlScanner{
          outputBuffer[outPtr++] = (char)t;
       }else if(t == '\r' || t == '\n'){
          ++inPtr;
-         if((outPtr = inTreeIndent((char)t)) < 0)
+         if((outPtr = inTree((char)t)) < 0)
             return;
          outputBuffer = currSeg;
       }else
          outputBuffer = reset();
       final byte[] TYPES = Code.TXT;
-      final char[] inputBuffer = inBuf;
+      final char[] inputBuffer = buf;
       char c = 0;
 outl: while(true){
          int ptr = inPtr;
@@ -1259,7 +1259,7 @@ outl: while(true){
       char[] outputBuffer;
       int outPtr = 1;
       if(tmp == '\r' || tmp == '\n'){
-         if((outPtr = prologIndent(tmp)) < 0)
+         if((outPtr = prolog(tmp)) < 0)
             return;
          outputBuffer = currSeg;
       }else
@@ -1271,7 +1271,7 @@ outl: while(true){
                break;
             ptr = 0;
          }
-         char c = inBuf[ptr];
+         char c = buf[ptr];
          if(c > 0x20)
             break;
          ++ptr;
@@ -1290,7 +1290,7 @@ outl: while(true){
                }
                ptr = 0;
             }
-            if(inBuf[ptr] == '\n')
+            if(buf[ptr] == '\n')
                ++ptr;
             rowOff = ptr;
             ++currRow;
@@ -1313,19 +1313,19 @@ outl: while(true){
       while(true){
          if(inPtr >= end && !more())
             return;
-         if(inBuf[inPtr] == '<'){
-            if((inPtr + 3 >= end && !loadNRet()) || inBuf[inPtr + 1] != '!' || inBuf[inPtr + 2] != '[')
+         if(buf[inPtr] == '<'){
+            if((inPtr + 3 >= end && !loadNRet()) || buf[inPtr + 1] != '!' || buf[inPtr + 2] != '[')
                return;
             inPtr += 3;
             for(int i = 0; i < 6; ++i){
                if(inPtr >= end)
                   assertMore();
-               if(inBuf[inPtr++] != CDATA.charAt(i))
-                  throwInputErr("Expected '[CDATA['");
+               if(buf[inPtr++] != CDATA.charAt(i))
+                  thInErr("Expected '[CDATA['");
             }
             endClsCData();
          }else{
-            endClsChars();
+            endClsC();
             if(pending)
                return;
          }
@@ -1334,7 +1334,7 @@ outl: while(true){
 
    private final void endClsCData() throws XMLStreamException{
       final byte[] TYPES = Code.OTH;
-      final char[] inputBuffer = inBuf;
+      final char[] inputBuffer = buf;
       char[] outputBuffer = currSeg;
       int outPtr = currSize;
       char c = 0;
@@ -1380,7 +1380,7 @@ outl: while(true){
                   do{
                      if(inPtr >= end)
                         assertMore();
-                     if((d = inBuf[inPtr]) != ']')
+                     if((d = buf[inPtr]) != ']')
                         break;
                      ++inPtr;
                      ++count;
@@ -1418,9 +1418,9 @@ outl: while(true){
       }
    }
 
-   private final void endClsChars() throws XMLStreamException{
+   private final void endClsC() throws XMLStreamException{
       final byte[] TYPES = Code.TXT;
-      final char[] inputBuffer = inBuf;
+      final char[] inputBuffer = buf;
       char[] outputBuffer = currSeg;
       int outPtr = currSize;
       char c = 0;
@@ -1524,15 +1524,15 @@ outl: while(true){
       while(true){
          if(inPtr >= end && !more())
             return false;
-         if(inBuf[inPtr] == '<'){
-            if((inPtr + 3 >= end && !loadNRet()) || inBuf[inPtr + 1] != '!' || inBuf[inPtr + 2] != '[')
+         if(buf[inPtr] == '<'){
+            if((inPtr + 3 >= end && !loadNRet()) || buf[inPtr + 1] != '!' || buf[inPtr + 2] != '[')
                return false;
             inPtr += 3;
             for(int i = 0; i < 6; ++i){
                if(inPtr >= end)
                   assertMore();
-               if(inBuf[inPtr++] != CDATA.charAt(i))
-                  throwInputErr("Expected '[CDATA['");
+               if(buf[inPtr++] != CDATA.charAt(i))
+                  thInErr("Expected '[CDATA['");
             }
             skipCData();
          }else if(skipChars())
@@ -1543,7 +1543,7 @@ outl: while(true){
    @Override
    final void skipComm() throws XMLStreamException{
       final byte[] TYPES = Code.OTH;
-      final char[] inputBuffer = inBuf;
+      final char[] inputBuffer = buf;
       char c = 0;
       while(true){
          int ptr = inPtr, max = end;
@@ -1575,11 +1575,11 @@ outl: while(true){
                case 13: // HYPHEN
                   if(ptr >= max)
                      assertMore();
-                  if(inBuf[inPtr] == '-'){
+                  if(buf[inPtr] == '-'){
                      ++inPtr;
                      if(inPtr >= end)
                         assertMore();
-                     if(inBuf[inPtr++] != '>')
+                     if(buf[inPtr++] != '>')
                         thHyph();
                      return;
                   }
@@ -1593,7 +1593,7 @@ outl: while(true){
    @Override
    final void skipPI() throws XMLStreamException{
       final byte[] TYPES = Code.OTH;
-      final char[] inputBuffer = inBuf;
+      final char[] inputBuffer = buf;
       char c = 0;
       while(true){
          int ptr = inPtr, max = end;
@@ -1625,7 +1625,7 @@ outl: while(true){
                case 12: // QMARK
                   if(ptr >= max)
                      assertMore();
-                  if(inBuf[inPtr] == '>'){
+                  if(buf[inPtr] == '>'){
                      ++inPtr;
                      return;
                   }
@@ -1640,7 +1640,7 @@ outl: while(true){
    @Override
    final boolean skipChars() throws XMLStreamException{
       final byte[] TYPES = Code.TXT;
-      final char[] inputBuffer = inBuf;
+      final char[] inputBuffer = buf;
       char c = 0;
       while(true){
          int ptr = inPtr, max = end;
@@ -1702,7 +1702,7 @@ outl: while(true){
    @Override
    final void skipCData() throws XMLStreamException{
       final byte[] TYPES = Code.OTH;
-      final char[] inputBuffer = inBuf;
+      final char[] inputBuffer = buf;
       char c = 0;
       while(true){
          int ptr = inPtr, max = end;
@@ -1737,7 +1737,7 @@ outl: while(true){
                      if(inPtr >= end)
                         assertMore();
                      ++count;
-                  }while((c = inBuf[inPtr++]) == ']');
+                  }while((c = buf[inPtr++]) == ']');
                   if(c == '>'){
                      if(count > 1)
                         return;
@@ -1755,7 +1755,7 @@ outl: while(true){
    }
 
    @Override
-   final void skipSpace() throws XMLStreamException{
+   final void skipWS() throws XMLStreamException{
       int ptr = inPtr;
       while(true){
          if(ptr >= end){
@@ -1763,7 +1763,7 @@ outl: while(true){
                break;
             ptr = 0;
          }
-         char c = inBuf[ptr];
+         char c = buf[ptr];
          if(c > ' ')
             break;
          ++ptr;
@@ -1776,7 +1776,7 @@ outl: while(true){
                   break;
                ptr = 0;
             }
-            if(inBuf[ptr] == '\n')
+            if(buf[ptr] == '\n')
                ++ptr;
             rowOff = ptr;
             ++currRow;
@@ -1788,10 +1788,10 @@ outl: while(true){
       inPtr = ptr;
    }
 
-   private final char skipInternalWs(boolean reqd) throws XMLStreamException{
+   private final char Code(boolean reqd) throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      char c = inBuf[inPtr++];
+      char c = buf[inPtr++];
       if(c > 0x20){
          if(!reqd)
             return c;
@@ -1804,7 +1804,7 @@ outl: while(true){
          }else if(c == '\r'){
             if(inPtr >= end)
                assertMore();
-            if(inBuf[inPtr] == '\n')
+            if(buf[inPtr] == '\n')
                ++inPtr;
             rowOff = inPtr;
             ++currRow;
@@ -1812,36 +1812,36 @@ outl: while(true){
             thC(c);
          if(inPtr >= end)
             assertMore();
-      }while((c = inBuf[inPtr++]) <= 0x20);
+      }while((c = buf[inPtr++]) <= 0x20);
       return c;
    }
 
-   private final void matchKW(String kw) throws XMLStreamException{
+   private final void Code(String kw) throws XMLStreamException{
       for(int i = 1, len = kw.length(); i < len; ++i){
          if(inPtr >= end)
             assertMore();
-         char c = inBuf[inPtr++];
+         char c = buf[inPtr++];
          if(c != kw.charAt(i))
             thUnxp(c, new StrB(18).a(", expected ").a(kw).toString());
       }
    }
 
-   private final int inTreeIndent(char c) throws XMLStreamException{
+   private final int inTree(char c) throws XMLStreamException{
       if(c == '\r'){
          if(inPtr >= end && !more()){
-            doIndent(0, ' ');
+            indent(0, ' ');
             return -1;
          }
-         if(inBuf[inPtr] == '\n')
+         if(buf[inPtr] == '\n')
             ++inPtr;
       }
       rowOff = inPtr;
       ++currRow;
       if(inPtr >= end)
          assertMore();
-      if((c = inBuf[inPtr]) != ' ' && c != '\t'){
-         if(c == '<' && inPtr + 1 < end && inBuf[inPtr + 1] != '!'){
-            doIndent(0, ' ');
+      if((c = buf[inPtr]) != ' ' && c != '\t'){
+         if(c == '<' && inPtr + 1 < end && buf[inPtr + 1] != '!'){
+            indent(0, ' ');
             return -1;
          }
          reset()[0] = '\n';
@@ -1852,10 +1852,10 @@ outl: while(true){
       while(count <= max){
          if(inPtr >= end)
             assertMore();
-         char c2 = inBuf[inPtr];
+         char c2 = buf[inPtr];
          if(c2 != c){
-            if(c2 == '<' && inPtr + 1 < end && inBuf[inPtr + 1] != '!'){
-               doIndent(count, c);
+            if(c2 == '<' && inPtr + 1 < end && buf[inPtr + 1] != '!'){
+               indent(count, c);
                return -1;
             }
             break;
@@ -1870,31 +1870,31 @@ outl: while(true){
       return currSize = ++count;
    }
 
-   private final int prologIndent(char c) throws XMLStreamException{
+   private final int prolog(char c) throws XMLStreamException{
       if(c == '\r'){
          if(inPtr >= end && !more()){
-            doIndent(0, ' ');
+            indent(0, ' ');
             return -1;
          }
-         if(inBuf[inPtr] == '\n')
+         if(buf[inPtr] == '\n')
             ++inPtr;
       }
       rowOff = inPtr;
       ++currRow;
       if(inPtr >= end && !more()){
-         doIndent(0, ' ');
+         indent(0, ' ');
          return -1;
       }
-      if((c = inBuf[inPtr]) != ' ' && c != '\t'){
+      if((c = buf[inPtr]) != ' ' && c != '\t'){
          if(c == '<'){
-            doIndent(0, ' ');
+            indent(0, ' ');
             return -1;
          }
          reset()[0] = '\n';
          return currSize = 1;
       }
       int count = 1, max = c == ' ' ? 32 : 8;
-      while((++inPtr < end || more()) && inBuf[inPtr] == c)
+      while((++inPtr < end || more()) && buf[inPtr] == c)
          if(++count >= max){
             char[] outputBuffer = reset();
             outputBuffer[0] = '\n';
@@ -1903,11 +1903,11 @@ outl: while(true){
             ++inPtr;
             return currSize = ++count;
          }
-      doIndent(count, c);
+      indent(count, c);
       return -1;
    }
 
-   private final PN parsePName(char c) throws XMLStreamException{
+   private final PN parsePN(char c) throws XMLStreamException{
       if(c < 'A')
          thUnxp(c, ", not a name start char");
       char[] nameBuffer = nameBuf;
@@ -1916,7 +1916,7 @@ outl: while(true){
       while(true){
          if(inPtr >= end)
             assertMore();
-         if((c = inBuf[inPtr]) < 45 || (c > 58 && c < 65) || c == 47){
+         if((c = buf[inPtr]) < 45 || (c > 58 && c < 65) || c == 47){
             PN n = syms.find(nameBuffer, ptr, hash);
             if(n == null)
                n = Code(nameBuffer, ptr, hash);
@@ -1935,7 +1935,7 @@ outl: while(true){
       int namePtr = 1, last_colon = -1;
       if(c < 0xD800 || c >= 0xE000){
          if(!Chr.is10NS(c))
-            throwInvNChr(c);
+            thInvNCh(c);
       }else{
          if(nameLen == 1)
             thSurr(c);
@@ -1946,10 +1946,10 @@ outl: while(true){
          if((c = nameBuffer[namePtr]) < 0xD800 || c >= 0xE000){
             if(c == ':'){
                if(last_colon >= 0)
-                  throwInputErr("Multiple colons");
+                  thInErr("Multiple ':'");
                last_colon = namePtr;
             }else if(!Chr.is10N(c))
-               throwInvNChr(c);
+               thInvNCh(c);
          }else{
             if(namePtr + 1 >= nameLen)
                thSurr(c);
@@ -1965,14 +1965,14 @@ outl: while(true){
       while(true){
          if(inPtr >= end)
             assertMore();
-         char c = inBuf[inPtr++];
+         char c = buf[inPtr++];
          if(c == quote)
             return new String(outputBuffer, 0, outPtr);
          switch(TYPES[c]){
             case 2: // WS_CR
                if(inPtr >= end)
                   assertMore();
-               if(inBuf[inPtr] == '\n')
+               if(buf[inPtr] == '\n')
                   ++inPtr;
                c = '\n';
             case 3: // WS_LF
@@ -1996,7 +1996,7 @@ outl: while(true){
          thInvC(val);
    }
 
-   private final void thSurr(char ch) throws XMLStreamException{ throwInputErr(new StrB(23).a("Invalid surrogate ").apos((int)ch).toString()); }
+   private final void thSurr(char ch) throws XMLStreamException{ thInErr(new StrB(23).a("Invalid surrogate ").apos((int)ch).toString()); }
 
    @Override
    final javax.xml.stream.Location loc(){ return new LocImpl(impl.pubId, impl.sysId, inPtr - rowOff, currRow, bOrC + inPtr); }
@@ -2007,14 +2007,14 @@ outl: while(true){
       bOrC += inPtr;
       rowOff -= inPtr;
       int xx = end - inPtr;
-      System.arraycopy(inBuf, inPtr, inBuf, 0, xx);
+      System.arraycopy(buf, inPtr, buf, 0, xx);
       inPtr = 0;
       end = xx;
       try{
          do
-            if((xx = in.read(inBuf, end, 4096 - end)) < 1){
+            if((xx = in.read(buf, end, 4096 - end)) < 1){
                if(xx == 0)
-                  throwInputErr("Reader returned 0");
+                  thInErr("Reader returned 0");
                return false;
             }
          while((end += xx) < 3);
@@ -2040,9 +2040,9 @@ outl: while(true){
       super.Code();
       if(syms.dirty)
          impl.genTab.Code(syms);
-      if(inBuf != null){
-         impl.setCB3(inBuf);
-         inBuf = null;
+      if(buf != null){
+         impl.setCB3(buf);
+         buf = null;
       }
    }
 }

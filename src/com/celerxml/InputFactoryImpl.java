@@ -217,7 +217,8 @@ public final class InputFactoryImpl extends XMLInputFactory{
 
    final char[] getCB1(){
       if(rcclr != null){
-         char[] result = rcclr.getCB1();
+         char[] result = rcclr.cb1;
+         rcclr.cb1 = null;
          if(result != null)
             return result;
       }
@@ -232,7 +233,8 @@ public final class InputFactoryImpl extends XMLInputFactory{
 
    final char[] getCB2(){
       if(rcclr != null){
-         char[] result = rcclr.getCB2();
+         char[] result = rcclr.cb2;
+         rcclr.cb2 = null;
          if(result != null)
             return result;
       }
@@ -247,7 +249,8 @@ public final class InputFactoryImpl extends XMLInputFactory{
 
    final char[] getCB3(){
       if(rcclr != null){
-         char[] result = rcclr.getCB3();
+         char[] result = rcclr.cb3;
+         rcclr.cb3 = null;
          if(result != null)
             return result;
       }
@@ -262,7 +265,8 @@ public final class InputFactoryImpl extends XMLInputFactory{
 
    final byte[] getBB(){
       if(rcclr != null){
-         byte[] result = rcclr.getBB();
+         byte[] result = rcclr.Code;
+         rcclr.Code = null;
          if(result != null)
             return result;
       }
@@ -272,7 +276,7 @@ public final class InputFactoryImpl extends XMLInputFactory{
    final void setBB(byte[] buf){
       if(rcclr == null)
          rcclr = getSBuf();
-      rcclr.bb = buf;
+      rcclr.Code = buf;
    }
 
    private final ShBuf getSBuf(){

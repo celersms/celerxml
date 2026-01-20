@@ -154,7 +154,7 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
       Reader r = input.getCharacterStream();
       if(r == null && (is = input.getByteStream()) == null){
          if(str == null)
-            throw new SAXException("Bad source: neither char or byte stream, nor system id");
+            throw new SAXException("Source neither char or byte stream, nor system id");
          try{
             URL url;
             int ix = str.indexOf(':', 0);
@@ -199,7 +199,7 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
                if(--depth < 1)
                   break;
             }else if(type == 4) // CHARACTERS
-               scan.chrEvents(cntH);
+               scan.chrEvts(cntH);
             else
                auxEvt(type, true);
          while((type = scan.nxtFromProlog(false)) != -1) // EOI
@@ -239,10 +239,10 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
          case 12: // CDATA
             if(lexH != null){
                lexH.startCDATA();
-               scan.chrEvents(cntH);
+               scan.chrEvts(cntH);
                lexH.endCDATA();
             }else
-               scan.chrEvents(cntH);
+               scan.chrEvts(cntH);
             break;
          case 11: // DTD
             if(lexH != null){
@@ -255,7 +255,7 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
             break;
          case 6:  // SPACE
             if(inTree)
-               scan.spaceEvents(cntH);
+               scan.spaceEvts(cntH);
             break;
          default:
             if(type == -1){ // EOI
