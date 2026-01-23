@@ -483,7 +483,7 @@ final class ReaderScanner extends XmlScanner{
             xx = Code(xx, c, attrName);
       }
       if((xx = endLastV(xx)) < 0)
-         thInErr(errMsg);
+         thInErr(err);
       attrCount = xx;
       ++depth;
       if(!allBound){
@@ -1115,7 +1115,7 @@ final class ReaderScanner extends XmlScanner{
                   if(ok){
                      ++inPtr;
                      currSize = outPtr;
-                     if(coalescing && !pending)
+                     if(cls && !pending)
                         endClsTxt();
                      return;
                   }
@@ -1250,7 +1250,7 @@ outl: while(true){
          outputBuffer[outPtr++] = c;
       }
       currSize = outPtr;
-      if(coalescing && !pending)
+      if(cls && !pending)
          endClsTxt();
    }
 

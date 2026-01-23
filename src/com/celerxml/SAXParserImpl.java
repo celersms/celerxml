@@ -293,16 +293,10 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
    public final String getType(int idx){ return idx < 0 || idx >= attrc ? null : "CDATA"; }
 
    @Override
-   public final String getType(String qName){
-      int ix = getIndex(qName);
-      return ix < 0 ? null : "CDATA";
-   }
+   public final String getType(String qName){ return getIndex(qName) < 0 ? null : "CDATA"; }
 
    @Override
-   public final String getType(String uri, String lName){
-      int ix = getIndex(uri, lName);
-      return ix < 0 ? null : "CDATA";
-   }
+   public final String getType(String uri, String lName){ return getIndex(uri, lName) < 0 ? null : "CDATA"; }
 
    @Override
    public final String getURI(int idx){

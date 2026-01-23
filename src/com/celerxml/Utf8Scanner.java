@@ -36,7 +36,6 @@ public final class Utf8Scanner extends XmlScanner{
       ++currRow;
    }
 
-   @Override
    final boolean more() throws XMLStreamException{
       bOrC += end;
       rowOff -= end;
@@ -173,7 +172,6 @@ public final class Utf8Scanner extends XmlScanner{
       return syms.add(hash, baseName, last_colon, quads, qlen);
    }
 
-   @Override
    public final int nxtFromProlog(boolean isProlog) throws XMLStreamException{
       if(incompl)
          skipTok();
@@ -216,7 +214,6 @@ public final class Utf8Scanner extends XmlScanner{
       }
    }
 
-   @Override
    public final int nxtFromTree() throws XMLStreamException{
       if(incompl){
          if(skipTok()){
@@ -756,7 +753,7 @@ public final class Utf8Scanner extends XmlScanner{
          byte b2 = inBuf[inPtr];
          if(b2 != b){
             if(b2 == (byte)'<' && inPtr + 1 < end && inBuf[inPtr + 1] != (byte)'!'){
-               indent(count, (char) b);
+               indent(count, (char)b);
                return -1;
             }
             break;
@@ -844,7 +841,6 @@ public final class Utf8Scanner extends XmlScanner{
       }
    }
 
-   @Override
    final void endTok() throws XMLStreamException{
       incompl = false;
       switch(currToken){
@@ -971,7 +967,7 @@ public final class Utf8Scanner extends XmlScanner{
       }
       int act = endLastV(attrPtr);
       if(act < 0)
-         thInErr(errMsg);
+         thInErr(err);
       attrCount = act;
       ++depth;
       if(!allBound){
@@ -1252,10 +1248,8 @@ public final class Utf8Scanner extends XmlScanner{
       }
    }
 
-   @Override
    final boolean skipChars() throws XMLStreamException{
-      final byte[] TYPES = chrT.TXT;
-      final byte[] inputBuffer = inBuf;
+      final byte[] TYPES = chrT.TXT, inputBuffer = inBuf;
       int c = 0;
       while(true){
          int ptr = inPtr, max = end;
@@ -1320,10 +1314,8 @@ public final class Utf8Scanner extends XmlScanner{
       }
    }
 
-   @Override
    final void skipComm() throws XMLStreamException{
-      final byte[] TYPES = chrT.OTH;
-      final byte[] inputBuffer = inBuf;
+      final byte[] TYPES = chrT.OTH, inputBuffer = inBuf;
       int c = 0;
       while(true){
          int ptr = inPtr, max = end;
@@ -1378,10 +1370,8 @@ public final class Utf8Scanner extends XmlScanner{
       }
    }
 
-   @Override
    final void skipCData() throws XMLStreamException{
-      final byte[] TYPES = chrT.OTH;
-      final byte[] inputBuffer = inBuf;
+      final byte[] TYPES = chrT.OTH, inputBuffer = inBuf;
       int c = 0;
       while(true){
          int ptr = inPtr, max = end;
@@ -1439,10 +1429,8 @@ public final class Utf8Scanner extends XmlScanner{
       }
    }
 
-   @Override
    final void skipPI() throws XMLStreamException{
-      final byte[] TYPES = chrT.OTH;
-      final byte[] inputBuffer = inBuf;
+      final byte[] TYPES = chrT.OTH, inputBuffer = inBuf;
       int c = 0;
       while(true){
          int ptr = inPtr, max = end;
@@ -1494,7 +1482,6 @@ public final class Utf8Scanner extends XmlScanner{
       }
    }
 
-   @Override
    final void skipWS() throws XMLStreamException{
       final byte[] inputBuffer = inBuf;
       int ptr = inPtr;
@@ -1576,8 +1563,7 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    private final void endCData() throws XMLStreamException{
-      final byte[] TYPES = chrT.OTH;
-      final byte[] inputBuffer = inBuf;
+      final byte[] TYPES = chrT.OTH, inputBuffer = inBuf;
       char[] outputBuffer = reset();
       int outPtr = 0, c = 0;
       while(true){
@@ -1653,7 +1639,7 @@ public final class Utf8Scanner extends XmlScanner{
                if(ok){
                   ++inPtr;
                   currSize = outPtr;
-                  if(coalescing && !pending)
+                  if(cls && !pending)
                      endClsTxt();
                   return;
                }
@@ -1687,8 +1673,7 @@ public final class Utf8Scanner extends XmlScanner{
          outputBuffer = reset();
          outPtr = 0;
       }
-      final byte[] TYPES = chrT.TXT;
-      final byte[] inputBuffer = inBuf;
+      final byte[] TYPES = chrT.TXT, inputBuffer = inBuf;
       while(true){
          int ptr = inPtr;
          boolean adv = true;
@@ -1740,14 +1725,14 @@ public final class Utf8Scanner extends XmlScanner{
             case 9:  // LT
                --inPtr;
                currSize = outPtr;
-               if(coalescing && !pending)
+               if(cls && !pending)
                   endClsTxt();
                return;
             case 10: // AMP
                if((c = entInTxt()) == 0){
                   pending = true;
                   currSize = outPtr;
-                  // if(coalescing && !pending)
+                  // if(cls && !pending)
                   //    endClsTxt();
                   return;
                }
@@ -1792,8 +1777,7 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    private final void endComm() throws XMLStreamException{
-      final byte[] TYPES = chrT.OTH;
-      final byte[] inputBuffer = inBuf;
+      final byte[] TYPES = chrT.OTH, inputBuffer = inBuf;
       char[] outputBuffer = reset();
       int outPtr = 0, c = 0;
       while(true){
@@ -1949,7 +1933,6 @@ public final class Utf8Scanner extends XmlScanner{
       }
    }
 
-   @Override
    final void skipDTD() throws XMLStreamException{
       int outPtr = 0, quoteChar = 0, c = 0;
       final byte[] TYPES = chrT.DTD;
@@ -2018,8 +2001,7 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    private final void endPI() throws XMLStreamException{
-      final byte[] TYPES = chrT.OTH;
-      final byte[] inputBuffer = inBuf;
+      final byte[] TYPES = chrT.OTH, inputBuffer = inBuf;
       char[] outputBuffer = reset();
       int c = 0, outPtr = 0;
       while(true){
@@ -2170,8 +2152,7 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    private final void endClsC() throws XMLStreamException{
-      final byte[] TYPES = chrT.TXT;
-      final byte[] inputBuffer = inBuf;
+      final byte[] TYPES = chrT.TXT, inputBuffer = inBuf;
       char[] outputBuffer = currSeg;
       int c = 0, outPtr = currSize;
       while(true){
@@ -2273,8 +2254,7 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    private final void endClsCData() throws XMLStreamException{
-      final byte[] TYPES = chrT.OTH;
-      final byte[] inputBuffer = inBuf;
+      final byte[] TYPES = chrT.OTH, inputBuffer = inBuf;
       char[] outputBuffer = currSeg;
       int c = 0, outPtr = currSize;
       while(true){
@@ -2363,7 +2343,6 @@ public final class Utf8Scanner extends XmlScanner{
       }
    }
 
-   @Override
    final boolean skipCTxt() throws XMLStreamException{
       while(true){
          if(inPtr >= end && !more())
@@ -2521,10 +2500,8 @@ public final class Utf8Scanner extends XmlScanner{
       return c;
    }
 
-   @Override
    public Location loc(){ return new LocImpl(impl.pubId, impl.sysId, inPtr - rowOff, currRow, bOrC + inPtr); }
 
-   @Override
    final void close() throws IOException{
       if(in != null){
          in.close();
@@ -2532,7 +2509,6 @@ public final class Utf8Scanner extends XmlScanner{
       }
    }
 
-   @Override
    final void Code(){
       super.Code();
       if(!syms.hashSh)
@@ -2545,6 +2521,5 @@ public final class Utf8Scanner extends XmlScanner{
 
    private final void badUTF(int mask) throws XMLStreamException{ thInErr(new StrB(12).a("Bad UTF8 ").apos(mask & 0xFF).toString()); }
 
-   @Override
    final int col(){ return inPtr - iniRawOff; }
 }

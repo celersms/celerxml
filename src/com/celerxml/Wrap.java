@@ -25,16 +25,13 @@ final class Wrap extends InputStream{
       this.end = end;
    }
 
-   @Override
    public final int available() throws IOException{ return Code != null ? end - off : mIn.available(); }
 
-   @Override
    public final void close() throws IOException{
       Code();
       mIn.close();
    }
 
-   @Override
    public final int read() throws IOException{
       if(Code != null){
          int c = Code[off++] & 0xFF;
@@ -45,10 +42,8 @@ final class Wrap extends InputStream{
       return mIn.read();
    }
     
-   @Override
    public final int read(byte[] b) throws IOException{ return read(b, 0, b.length); }
 
-   @Override
    public final int read(byte[] b, int off, int len) throws IOException{
       if(Code != null){
          int avail = end - off;

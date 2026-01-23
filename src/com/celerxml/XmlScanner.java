@@ -27,14 +27,14 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
    private NsB[] nsBind;
    private PN[] nsCache;
    private ArrayList segments;
-   private int bindingCnt, bindMiss, segSize, resultLen, hashSize, spillEnd;
+   private int bindingCnt, bindMiss, segSize, rLen, hashSize, spillEnd;
    private char[] arr, vals;
-   private String result, attrVals;
+   private String result, attrV;
    private boolean indent, doRst;
    private int[] attrMap, offsets;
    PN[] names;
-   String errMsg, dtdSysId, dtdPubId;
-   final boolean coalescing, lazy;
+   String err, dtdSysId, dtdPubId;
+   final boolean cls, lazy;
 
    static final String EOI = "Unexpected end-of-input", CDATA = "CDATA[";
    private static final String NULL = "Illegal null argument";
@@ -46,7 +46,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
 
    XmlScanner(InputFactoryImpl impl){
       this.impl = impl;
-      coalescing = impl.Code(2);
+      cls = impl.Code(2);
       lazy = impl.Code(256);
       nameBuf = impl.getCB1();
       defNs = new NsB(null);
@@ -72,7 +72,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
             skipPI();
             break;
          case 4:  // CHARACTERS
-            if(skipChars() || (coalescing && skipCTxt())){
+            if(skipChars() || (cls && skipCTxt())){
                currToken = 9; // ENTITY_REFERENCE
                return true;
             }
@@ -85,7 +85,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
             break;
          case 12: // CDATA
             skipCData();
-            if(coalescing){
+            if(cls){
                skipCTxt();
                if(pending){
                   currToken = 9; // ENTITY_REFERENCE
@@ -124,7 +124,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
       if(incompl)
          endTok();
       int size = currSize;
-      return size < 0 ? resultLen : size + segSize;
+      return size < 0 ? rLen : size + segSize;
    }
 
    private final char[] buildR(){
@@ -132,7 +132,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
          return result.toCharArray();
       else{
          int size = currSize;
-         if((size = size < 0 ? resultLen : size + segSize) < 1)
+         if((size = size < 0 ? rLen : size + segSize) < 1)
             return arr0;
          int offset = 0;
          char[] res = new char[size];
@@ -411,7 +411,7 @@ findOrCreate:
       currSize = -1;
       indent = true;
       String text;
-      int strlen = resultLen = indCharCount + 1;
+      int strlen = rLen = indCharCount + 1;
       if(indChar == '\t'){
          arr = sIndTabsArray;
          if((text = sIndTabsStrings[indCharCount]) == null)
@@ -441,7 +441,7 @@ findOrCreate:
       if(doRst){
          doRst = false;
          attrs = count = 0;
-         attrVals = null;
+         attrV = null;
          if(vals == null){
             names = new PN[12];
             vals = new char[120];
@@ -496,13 +496,13 @@ findOrCreate:
          if(oldNameIdx == 0)
             map[index] = i + 1;
          else{
-            if(names[--oldNameIdx].Code(newName) && errMsg == null)
+            if(names[--oldNameIdx].Code(newName) && err == null)
                dupAttr(oldNameIdx, i);
             if(hashCount + 1 >= map.length)
                map = xpand(map, 8);
             // for(int j = hashCount; j < spillIndex; j += 2)
             //   if(map[j] == hash && names[oldNameIdx = map[j + 1]].Code(newName)){
-            //      if(errMsg == null)
+            //      if(err == null)
             //         dupAttr(oldNameIdx, i);
             //      break;
             //   }
@@ -512,7 +512,7 @@ findOrCreate:
       }
       spillEnd = hashCount;
       attrMap = map;
-      return errMsg == null ? count : -1;
+      return err == null ? count : -1;
    }
 
    final char[] xpand(){ return vals = xpand(vals); }
@@ -540,11 +540,11 @@ findOrCreate:
 
    final String getV(int idx){
       int xx, yy;
-      if(attrVals == null)
-         attrVals = (xx = offsets[attrs - 1]) == 0 ? "" : new String(vals, 0, xx);
+      if(attrV == null)
+         attrV = (xx = offsets[attrs - 1]) == 0 ? "" : new String(vals, 0, xx);
       if(idx == 0)
-         return attrs == 1 ? attrVals : (xx = offsets[0]) == 0 ? "" : attrVals.substring(0, xx);
-      return (yy = offsets[idx - 1]) == (xx = offsets[idx]) ? "" : attrVals.substring(yy, xx);
+         return attrs == 1 ? attrV : (xx = offsets[0]) == 0 ? "" : attrV.substring(0, xx);
+      return (yy = offsets[idx - 1]) == (xx = offsets[idx]) ? "" : attrV.substring(yy, xx);
    }
 
    final String getV(String nsUri, String name){
@@ -576,7 +576,7 @@ findOrCreate:
          if(incompl)
             endTok();
          if(arr != null)
-            h.characters(arr, 0, resultLen);
+            h.characters(arr, 0, rLen);
          else{
             if(segments != null)
                for(int i = 0, len = segments.size(); i < len; ++i){
@@ -594,7 +594,7 @@ findOrCreate:
          if(incompl)
             endTok();
          if(arr != null)
-            h.ignorableWhitespace(arr, 0, resultLen);
+            h.ignorableWhitespace(arr, 0, rLen);
          else{
             if(segments != null)
                for(int i = 0, len = segments.size(); i < len; ++i){
@@ -650,7 +650,7 @@ findOrCreate:
          if(incompl)
             endTok();
          if(arr != null)
-            h.comment(arr, 0, resultLen);
+            h.comment(arr, 0, rLen);
          else if(segments != null && segments.size() > 0){
             char[] ch = arr;
             if(ch == null)
@@ -707,7 +707,7 @@ findOrCreate:
    abstract int col();
 
    private final void dupAttr(int idx1, int idx2){
-      errMsg = new StrB(48).a("Duplicate '").append(names[idx1].toString()).append('\'').append('@').apos(idx1
+      err = new StrB(48).a("Duplicate '").append(names[idx1].toString()).append('\'').append('@').apos(idx1
          ).append(", '").append(names[idx2].toString()).append('\'').append('@').apos(idx2).toString();
    }
 

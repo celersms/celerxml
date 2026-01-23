@@ -30,7 +30,6 @@ final class Utf32Reader extends Reader{
       this.bigEnd = bigEnd;
    }
 
-   @Override
    public final void close() throws IOException{
       InputStream in = mIn;
       if(in != null){
@@ -40,14 +39,12 @@ final class Utf32Reader extends Reader{
       }
    }
 
-   @Override
    public final int read() throws IOException{
       if(mTmp == null)
          mTmp = new char[1];
       return read(mTmp, 0, 1) < 1 ? -1 : mTmp[0];
    }
 
-   @Override
    public final int read(char[] cbuf, int start, int len) throws IOException{
       if(mBuf == null)
          return -1;
