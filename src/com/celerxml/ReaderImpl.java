@@ -162,7 +162,7 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
    public final int getNamespaceCount(){
       if(Code > 2) // END_ELEMENT
          throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT");
-      return scan.getNsCount();
+      return scan.getNC();
    }
 
    @Override

@@ -27,7 +27,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
    private NsB[] nsBind;
    private PN[] nsCache;
    private ArrayList segments;
-   private int bindingCnt, bindMiss, segSize, rLen, hashSize, spillEnd;
+   private int bCnt, bindMiss, segSize, rLen, hashSize, spillEnd;
    private char[] arr, vals;
    private String result, attrV;
    private boolean indent, doRst;
@@ -36,7 +36,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
    String err, dtdSysId, dtdPubId;
    final boolean cls, lazy;
 
-   static final String EOI = "Unexpected end-of-input", CDATA = "CDATA[";
+   static final String EOI = "Unexpected EOI", CDATA = "CDATA[";
    private static final String NULL = "Illegal null argument";
    private static final char[] arr0 = new char[0];
    private static final String sIndSpaces = "\n                                 ", sIndTabs = "\n\t\t\t\t\t\t\t\t\t";
@@ -130,20 +130,18 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
    private final char[] buildR(){
       if(result != null)
          return result.toCharArray();
-      else{
-         int size = currSize;
-         if((size = size < 0 ? rLen : size + segSize) < 1)
-            return arr0;
-         int offset = 0;
-         char[] res = new char[size];
-         for(int i = 0, len = segments.size(); i < len; ++i){
-            char[] curr = (char[])segments.get(i);
-            System.arraycopy(curr, 0, res, offset, size = curr.length);
-            offset += size;
-         }
-         System.arraycopy(currSeg, 0, res, offset, currSize);
-         return res;
+      int size = currSize;
+      if((size = size < 0 ? rLen : size + segSize) < 1)
+         return arr0;
+      int offset = 0;
+      char[] res = new char[size];
+      for(int i = 0, len = segments.size(); i < len; ++i){
+         char[] curr = (char[])segments.get(i);
+         System.arraycopy(curr, 0, res, offset, size = curr.length);
+         offset += size;
       }
+      System.arraycopy(currSeg, 0, res, offset, currSize);
+      return res;
    }
 
    final char[] getTextCharacters() throws XMLStreamException{
@@ -199,20 +197,14 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
          if(buf[i] > 0x20)
             return false;
       if(segments != null)
-         for(int i = 0, len = segments.size(); i < len; ++i){
-            buf = (char[])segments.get(i);
-            for(int j = 0, len2 = buf.length; j < len2; ++j)
+         for(int i = 0, len = segments.size(); i < len; ++i)
+            for(int j = 0, len2 = (buf = (char[])segments.get(i)).length; j < len2; ++j)
                if(buf[j] > 0x20)
                   return false;
-         }
       return true;
    }
 
-   final int getNsCount(){
-      if(currToken == 1) // START_ELEMENT
-         return nsCnt;
-      return lastNs == null ? 0 : lastNs.Code(depth);
-   }
+   final int getNC(){ return currToken == 1 ? nsCnt : (lastNs == null ? 0 : lastNs.Code(depth)); } // START_ELEMENT
 
    final NsD findCurrNsDecl(int idx){
       NsD nsDecl = lastNs;
@@ -277,16 +269,16 @@ loop_pfx:
 
    @Override
    @SuppressWarnings("unchecked")
-   public final Iterator<String> getPrefixes(String nsURI){
+   public final Iterator getPrefixes(String nsURI){
       if(nsURI == null)
          throw new IllegalArgumentException(NULL);
       if(nsURI.equals(XMLConstants.XML_NS_URI))
          return new SIterator(XMLConstants.XML_NS_PREFIX, false);
       if(nsURI.equals(XMLConstants.XMLNS_ATTRIBUTE_NS_URI))
          return new SIterator(XMLConstants.XMLNS_ATTRIBUTE, false);
-      ArrayList<String> l = null;
+      ArrayList larr = null;
       if(nsURI.equals(defNs.Code))
-         (l = new ArrayList<String>()).add("");
+         (larr = new ArrayList()).add("");
       String pfx;
 loop_pfx:
       for(NsD nsDecl = lastNs; nsDecl != null; nsDecl = nsDecl.prvD)
@@ -294,15 +286,15 @@ loop_pfx:
             for(NsD decl2 = lastNs; decl2 != nsDecl; decl2 = decl2.prvD)
                if(decl2.hasPfx(pfx))
                   continue loop_pfx;
-            if(l == null)
-               l = new ArrayList<String>();
-            l.add(pfx);
+            if(larr == null)
+               larr = new ArrayList();
+            larr.add(pfx);
          }
-      if(l == null)
+      if(larr == null)
          return s1Empty;
-      if(l.size() == 1)
-         return new SIterator(l.get(0), false);
-      return l.iterator();
+      if(larr.size() == 1)
+         return new SIterator((String)larr.get(0), false);
+      return larr.iterator();
    }
 
    final PN bindName(PN name, String pfx){
@@ -311,7 +303,7 @@ loop_pfx:
          if(cn != null && cn.Code == name.Code)
             return cn;
       }
-      for(int i = 0, len = bindingCnt; i < len; ++i){
+      for(int i = 0, len = bCnt; i < len; ++i){
          NsB b = nsBind[i];
          if(b.pfx != pfx)
             continue;
@@ -325,18 +317,17 @@ loop_pfx:
                return bn;
              nsCache = new PN[0x40];
          }
-         nsCache[bn.Code.hashCode() & 0x3F] = bn;
-         return bn;
+         return nsCache[bn.Code.hashCode() & 0x3F] = bn;
       }
       if(pfx == "xml")
          return name.Code(NsB.XML_B);
       ++bindMiss;
       NsB b = new NsB(pfx);
-      if(bindingCnt == 0)
+      if(bCnt == 0)
          nsBind = new NsB[16];
-      else if(bindingCnt >= nsBind.length)
+      else if(bCnt >= nsBind.length)
          nsBind = xpand(nsBind);
-      nsBind[bindingCnt++] = b;
+      nsBind[bCnt++] = b;
       return name.Code(b);
    }
 
@@ -349,7 +340,7 @@ loop_pfx:
          pfx = name.ln;
 findOrCreate:
          {
-            for(int i = 0, len = bindingCnt; i < len; ++i)
+            for(int i = 0, len = bCnt; i < len; ++i)
                if((ns = nsBind[i]).pfx == pfx){
                   if(i > 0){
                      nsBind[i] = nsBind[i - 1];
@@ -363,11 +354,11 @@ findOrCreate:
                ns = NsB.XMLNS_B;
             else{
                ns = new NsB(pfx);
-               if(bindingCnt == 0)
+               if(bCnt == 0)
                   nsBind = new NsB[16];
-               else if(bindingCnt >= nsBind.length)
+               else if(bCnt >= nsBind.length)
                   nsBind = xpand(nsBind);
-               nsBind[bindingCnt++] = ns;
+               nsBind[bCnt++] = ns;
             }
          }
          if(pfx != null && ns.Code() && (pfx != "xml" || !uri.equals(XMLConstants.XML_NS_URI)))
@@ -518,23 +509,20 @@ findOrCreate:
    final char[] xpand(){ return vals = xpand(vals); }
 
    static final int[] xpand(int[] arr, int more){
-      int[] old = arr;
       int len = arr.length;
-      System.arraycopy(old, 0, arr = new int[len + more], 0, len);
+      System.arraycopy(arr, 0, arr = new int[len + more], 0, len);
       return arr;
    }
 
    static final char[] xpand(char[] arr){
-      char[] old = arr;
       int len = arr.length;
-      System.arraycopy(old, 0, arr = new char[len + len], 0, len);
+      System.arraycopy(arr, 0, arr = new char[len + len], 0, len);
       return arr;
    }
 
    static final NsB[] xpand(NsB[] arr){
-      NsB[] old = arr;
       int len = arr.length;
-      System.arraycopy(old, 0, arr = new NsB[len + len], 0, len);
+      System.arraycopy(arr, 0, arr = new NsB[len + len], 0, len);
       return arr;
    }
 
@@ -542,9 +530,7 @@ findOrCreate:
       int xx, yy;
       if(attrV == null)
          attrV = (xx = offsets[attrs - 1]) == 0 ? "" : new String(vals, 0, xx);
-      if(idx == 0)
-         return attrs == 1 ? attrV : (xx = offsets[0]) == 0 ? "" : attrV.substring(0, xx);
-      return (yy = offsets[idx - 1]) == (xx = offsets[idx]) ? "" : attrV.substring(yy, xx);
+      return idx == 0 ? (attrs == 1 ? attrV : (xx = offsets[0]) == 0 ? "" : attrV.substring(0, xx)) : (yy = offsets[idx - 1]) == (xx = offsets[idx]) ? "" : attrV.substring(yy, xx);
    }
 
    final String getV(String nsUri, String name){
@@ -742,7 +728,7 @@ findOrCreate:
 
    final void thUnexpEnd(String n) throws XMLStreamException{ thInErr(new StrB(24 + n.length()).a("Unexpected end tag, not ").a(n).toString()); }
 
-   final void thCDEnd() throws XMLStreamException{ thInErr("']]>' allowed only as the end CDATA marker"); }
+   final void thCDEnd() throws XMLStreamException{ thInErr("']]>' allowed only to close CDATA"); }
 
    final void thUnxp(int ch, String msg) throws XMLStreamException{
       if(ch < 32 && ch != '\r' && ch != '\n' && ch != '\t')
