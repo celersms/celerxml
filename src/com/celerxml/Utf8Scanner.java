@@ -468,12 +468,12 @@ public final class Utf8Scanner extends XmlScanner{
       for(int qix = 0; qix < size; ++qix)
          if((buf[ptr++] << 24 | (buf[ptr++] & 0xFF) << 16 | (buf[ptr++] & 0xFF) << 8 | buf[ptr++] & 0xFF) != tokName.Code(qix)){
             inPtr = ptr;
-            thUnexpEnd(tokName.Code);
+            thUnxp(tokName.Code);
          }
       int lastQ = tokName.Code(size), q = buf[ptr++] & 0xFF;
       if(q != lastQ && (q = q << 8 | buf[ptr++] & 0xFF) != lastQ && (q = q << 8 | buf[ptr++] & 0xFF) != lastQ && (q << 8 | buf[ptr++] & 0xFF) != lastQ){
          inPtr = ptr;
-         thUnexpEnd(tokName.Code);
+         thUnxp(tokName.Code);
       }
       q = inBuf[ptr] & 0xFF;
       inPtr = ptr + 1;
@@ -508,7 +508,7 @@ public final class Utf8Scanner extends XmlScanner{
             q = q << 8 | inBuf[inPtr++] & 0xFF;
          }
          if(q != tokName.Code(qix))
-            thUnexpEnd(tokName.Code);
+            thUnxp(tokName.Code);
       }
       int lastQ = tokName.Code(size), q = 0, i = 0;
       while(true){
@@ -539,7 +539,7 @@ public final class Utf8Scanner extends XmlScanner{
             return 2; // END_ELEMENT
          }
          if(++i > 3)
-            thUnexpEnd(tokName.Code);
+            thUnxp(tokName.Code);
       }
    }
 

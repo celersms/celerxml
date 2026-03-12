@@ -624,7 +624,7 @@ final class ReaderScanner extends XmlScanner{
          if(inPtr >= end)
             assertMore();
          if(buf[inPtr++] != pname.charAt(i))
-            thUnexpEnd(pname);
+            thUnxp(pname);
       }while(++i < len);
       if(inPtr >= end)
          assertMore();
@@ -632,7 +632,7 @@ final class ReaderScanner extends XmlScanner{
       if(c <= ' ')
          c = Code(false);
       else if(c == ':' || Chr.is10N(c))
-         thUnexpEnd(pname);
+         thUnxp(pname);
       if(c != '>')
          thUnxp(c, ", not space or closing '>'");
       return 2; // END_ELEMENT

@@ -726,15 +726,15 @@ findOrCreate:
       thInErr(new StrB(48).a("Unbound prefix ").append(name.pfx).append(isAttr ? ", attribute " : ", element ").append(name.Code).toString());
    }
 
-   final void thUnexpEnd(String n) throws XMLStreamException{ thInErr(new StrB(24 + n.length()).a("Unexpected end tag, not ").a(n).toString()); }
+   final void thUnxp(String n) throws XMLStreamException{ thInErr(new StrB(24 + n.length()).a("Unexpected end tag, not ").a(n).toString()); }
 
    final void thCDEnd() throws XMLStreamException{ thInErr("']]>' allowed only to close CDATA"); }
 
    final void thUnxp(int ch, String msg) throws XMLStreamException{
       if(ch < 32 && ch != '\r' && ch != '\n' && ch != '\t')
          thC(ch);
-      thInErr(new StrB(28 + msg.length()).a("Unexpected char. ").apos(ch).a(msg).toString());
+      thInErr(new StrB(28 + msg.length()).a("Unexpected char ").apos(ch).a(msg).toString());
    }
 
-   final void thC(int ch) throws XMLStreamException{ thInErr(new StrB(24).a("Illegal char. ").apos(ch).toString()); }
+   final void thC(int ch) throws XMLStreamException{ thInErr(new StrB(24).a("Illegal char ").apos(ch).toString()); }
 }
