@@ -7,6 +7,9 @@ SET JDK9=\Tools\jdk-16.0.2
 REM The JDK 6 or later installation path (optional)
 SET JDK6=\Tools\jdk1.8.0_202
 
+REM Current CelerXML version
+SET LIB_VER=1.0.1
+
 REM === CONFIG END ==================================
 TITLE Rebuilding CelerXML...
 PUSHD "%~dp0\.."
@@ -59,10 +62,58 @@ IF %ERRORLEVEL% NEQ 0 GOTO EXIT
 IF %ERRORLEVEL% NEQ 0 GOTO EXIT
 
 REM Create the jar
-"%JDK6%\bin\jar" cMf lib\celerxml-1.0.1.jar -C classes\celerxml .
+"%JDK6%\bin\jar" cMf lib\celerxml-%LIB_VER%.jar -C classes\celerxml .
+
+REM Create the bundle for Maven Central
+SET MVN_BUNDLE=mvn\com\celersms\celerxml\%LIB_VER%
+rd /s /q mvn >nul 2>nul
+mkdir %MVN_BUNDLE%
+copy /Y /B lib\celerxml-%LIB_VER%.jar %MVN_BUNDLE%\celerxml-%LIB_VER%.jar 2>nul
+(
+ECHO ^<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org"^>
+ECHO  ^<modelVersion^>4.0.0^</modelVersion^>
+ECHO  ^<groupId^>com.celersms^</groupId^>
+ECHO  ^<artifactId^>celerxml^</artifactId^>
+ECHO  ^<version^>%LIB_VER%^</version^>
+ECHO  ^<packaging^>jar^</packaging^>
+ECHO  ^<name^>CelerXML^</name^>
+ECHO  ^<description^>Lightweight open-source Java library implementing the standard XML parsers: SAX, SAX2, StAX.^</description^>
+ECHO  ^<url^>https://www.celersms.com/CelerXML.htm^</url^>
+ECHO  ^<licenses^>
+ECHO   ^<license^>
+ECHO    ^<name^>BSD 3-Clause^</name^>
+ECHO    ^<url^>https://github.com/celersms/celerxml/blob/main/LICENSE^</url^>
+ECHO   ^</license^>
+ECHO  ^</licenses^>
+ECHO  ^<developers^>
+ECHO   ^<developer^>
+ECHO    ^<name^>Victor Celer^</name^>
+ECHO    ^<email^>admin@celersms.com^</email^>
+ECHO    ^<organization^>CelerSMS^</organization^>
+ECHO    ^<organizationUrl^>https://www.celersms.com^</organizationUrl^>
+ECHO   ^</developer^>
+ECHO  ^</developers^>
+ECHO  ^<scm^>
+ECHO   ^<connection^>scm:git:https://github.com/celersms/celerxml.git^</connection^>
+ECHO   ^<developerConnection^>scm:git:https://github.com/celersms/celerxml.git^</developerConnection^>
+ECHO   ^<url^>https://github.com/celersms/celerxml^</url^>
+ECHO  ^</scm^>
+ECHO ^</project^>
+) >%MVN_BUNDLE%\celerxml-%LIB_VER%.pom
+
+REM Sign the files and package the Maven bundle
+SET /P GPG_PWD=Enter GPG passphrase: 
+FOR %%F IN (celerxml-%LIB_VER%.jar celerxml-%LIB_VER%.pom) DO CALL :SGN %%F
+"%JDK6%\bin\jar" cMf lib\celerxml-%LIB_VER%-bundle.zip -C mvn .
 
 :EXIT
-rd /s /q classes >nul
+rd /s /q classes mvn >nul
 pause
 POPD
 @echo on
+GOTO :EOF
+
+:SGN
+echo %GPG_PWD%|gpg --batch --pinentry-mode loopback --passphrase-fd 0 --yes --detach-sign --armor -o %MVN_BUNDLE%\%1.asc %MVN_BUNDLE%\%1
+@certutil -hashfile %MVN_BUNDLE%\%1 MD5  | findstr /v ":" >%MVN_BUNDLE%\%1.md5
+@certutil -hashfile %MVN_BUNDLE%\%1 SHA1 | findstr /v ":" >%MVN_BUNDLE%\%1.sha1
