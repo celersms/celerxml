@@ -100,10 +100,12 @@ ECHO   ^<url^>https://github.com/celersms/celerxml^</url^>
 ECHO  ^</scm^>
 ECHO ^</project^>
 ) >%MVN_BUNDLE%\celerxml-%LIB_VER%.pom
+"%JDK6%\bin\jar" cMf %MVN_BUNDLE%\celerxml-%LIB_VER%-sources.jar -C src com
 
 REM Sign the files and package the Maven bundle
+ECHO.
 SET /P GPG_PWD=Enter GPG passphrase: 
-FOR %%F IN (celerxml-%LIB_VER%.jar celerxml-%LIB_VER%.pom) DO CALL :SGN %%F
+FOR %%F IN (celerxml-%LIB_VER%.jar celerxml-%LIB_VER%.pom celerxml-%LIB_VER%-sources.jar) DO CALL :SGN %%F
 "%JDK6%\bin\jar" cMf lib\celerxml-%LIB_VER%-bundle.zip -C mvn .
 
 :EXIT
