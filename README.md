@@ -8,7 +8,7 @@ CelerXML is free even for commercial use and redistribution of any kind, as long
 
 # Installation
 
-Just add `celerxml-1.0.0.jar` to the classpath. If the classpath contains other SAX or StAX processors, the following system properties can be used to select the current implementation:  
+Just add `celerxml-1.0.1.jar` to the classpath. If the classpath contains other SAX or StAX processors, the following system properties can be used to select the current implementation:  
 
 Configure the **SAX** processor to use the CelerXML implementation:  
 ```-Djavax.xml.parsers.SAXParserFactory=com.celerxml.SAXParserFactoryImpl```
@@ -17,3 +17,14 @@ Configure the **StAX** processor to use the CelerXML implementation:
 ```-Djavax.xml.stream.XMLInputFactory=com.celerxml.InputFactoryImpl```
 
 There are no dependencies. There is no need to recompile the user Java application to switch from the default SAX or StAX implementation to CelerXML.  
+
+# Maven
+
+If you use Maven, you can include the CelerXML dependency by adding the following lines to your `pom.xml`:  
+```
+    <dependency>
+      <groupId>com.celersms</groupId>
+      <artifactId>celerxml</artifactId>
+      <version>1.0.1</version>
+    </dependency>
+```
