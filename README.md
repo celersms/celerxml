@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19078412.svg)](https://doi.org/10.5281/zenodo.19078412) 
+
 # Overview
 
 **CelerXML** is a lightweight implementation of the standard Java XML parsers: *Simple API for XML* (**SAX** and **SAX2**) and *Streaming API for XML* (**StAX**). It can be used as a drop-in replacement for other
