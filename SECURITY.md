@@ -14,7 +14,7 @@ The following security policies are applicable to the **CelerXML** source code, 
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.0.X   | :x:                |
+| 1.0.X   | :white_check_mark: |
 
 ## Reporting a Vulnerability
 
