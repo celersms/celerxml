@@ -1,4 +1,5 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19078412.svg)](https://doi.org/10.5281/zenodo.19078412) 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19078412.svg)](https://doi.org/10.5281/zenodo.19078412)
+[![SWH](https://archive.softwareheritage.org/badge/swh:1:dir:ec4b8cbb86771d4a5934552fb90af3bc4918224e/)](https://archive.softwareheritage.org/swh:1:dir:ec4b8cbb86771d4a5934552fb90af3bc4918224e;origin=https://doi.org/10.5281/zenodo.19078412)
 
 # Overview
 
