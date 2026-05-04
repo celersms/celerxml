@@ -43,8 +43,6 @@ final class ReaderScanner extends XmlScanner{
          int count = in.read(buf, 0, 4096);
          if(count < 1){
             end = 0;
-            if(count == 0)
-               thInErr("Reader returned 0");
             return false;
          }
          end = count;
@@ -1918,9 +1916,32 @@ outl: while(true){
             assertMore();
          if((c = buf[inPtr]) < 45 || (c > 58 && c < 65) || c == 47){
             PN n = syms.find(nameBuffer, ptr, hash);
-            if(n == null)
-               n = Code(nameBuffer, ptr, hash);
-            return n;
+            if(n != null)
+               return n;
+            int namePtr = 1, lastColon = -1;
+            if((c = nameBuffer[0]) < 0xD800 || c >= 0xE000){
+               if(!Chr.is10NS(c))
+                  thInvNCh(c);
+            }else{
+               if(ptr == 1)
+                  thSurr(c);
+               Code(c, nameBuffer[1]);
+               ++namePtr;
+            }
+            for(; namePtr < ptr; ++namePtr)
+               if((c = nameBuffer[namePtr]) < 0xD800 || c >= 0xE000){
+                  if(c == ':'){
+                     if(lastColon >= 0)
+                        thInErr("Multiple ':'");
+                     lastColon = namePtr;
+                  }else if(!Chr.is10N(c))
+                     thInvNCh(c);
+               }else{
+                  if(namePtr + 1 >= ptr)
+                     thSurr(c);
+                  Code(c, nameBuffer[namePtr + 1]);
+               }
+            return syms.add(nameBuffer, ptr, hash);
          }
          ++inPtr;
          if(ptr >= nameBuffer.length)
@@ -1928,34 +1949,6 @@ outl: while(true){
          nameBuffer[ptr++] = c;
          hash = hash * 31 + c;
       }
-   }
-
-   private final PN Code(char[] nameBuffer, int nameLen, int hash) throws XMLStreamException{
-      char c = nameBuffer[0];
-      int namePtr = 1, last_colon = -1;
-      if(c < 0xD800 || c >= 0xE000){
-         if(!Chr.is10NS(c))
-            thInvNCh(c);
-      }else{
-         if(nameLen == 1)
-            thSurr(c);
-         Code(c, nameBuffer[1]);
-         ++namePtr;
-      }
-      for(; namePtr < nameLen; ++namePtr)
-         if((c = nameBuffer[namePtr]) < 0xD800 || c >= 0xE000){
-            if(c == ':'){
-               if(last_colon >= 0)
-                  thInErr("Multiple ':'");
-               last_colon = namePtr;
-            }else if(!Chr.is10N(c))
-               thInvNCh(c);
-         }else{
-            if(namePtr + 1 >= nameLen)
-               thSurr(c);
-            Code(c, nameBuffer[namePtr + 1]);
-         }
-      return syms.add(nameBuffer, nameLen, hash);
    }
 
    private final String Code(char quote) throws XMLStreamException{
@@ -2004,19 +1997,14 @@ outl: while(true){
    private final boolean loadNRet() throws XMLStreamException{
       if(in == null)
          return false;
-      bOrC += inPtr;
-      rowOff -= inPtr;
-      int xx = end - inPtr;
-      System.arraycopy(buf, inPtr, buf, 0, xx);
-      inPtr = 0;
-      end = xx;
+      int xx = inPtr;
+      bOrC += xx;
+      rowOff -= xx;
+      System.arraycopy(buf, xx, buf, inPtr = 0, end -= xx);
       try{
          do
-            if((xx = in.read(buf, end, 4096 - end)) < 1){
-               if(xx == 0)
-                  thInErr("Reader returned 0");
+            if((xx = in.read(buf, end, 4096 - end)) < 1)
                return false;
-            }
          while((end += xx) < 3);
          return true;
       }catch(IOException ioe){

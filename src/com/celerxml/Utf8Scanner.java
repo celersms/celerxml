@@ -48,8 +48,6 @@ public final class Utf8Scanner extends XmlScanner{
          int count = in.read(inBuf, 0, 4096);
          if(count < 1){
             end = 0;
-            if(count == 0)
-               thInErr("InputStream returned 0");
             return false;
          }
          end = count;
@@ -828,11 +826,8 @@ public final class Utf8Scanner extends XmlScanner{
       end = xx;
       try{
          do{
-            if((xx = in.read(inBuf, end, 4096 - end)) < 1){
-               if(xx == 0)
-                  thInErr("InputStream returned 0");
+            if((xx = in.read(inBuf, end, 4096 - end)) < 1)
                return false;
-            }
             end += xx;
          }while(end < 3);
          return true;
