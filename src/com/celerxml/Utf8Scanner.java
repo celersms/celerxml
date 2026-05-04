@@ -16,7 +16,7 @@ public final class Utf8Scanner extends XmlScanner{
    private final Chr chrT;
    private InputStream in;
    private byte[] inBuf;
-   private int inPtr, end, cTmp;
+   private int end, cTmp;
    private final bPN syms;
    private Node curr;
    private int[] qBuf = new int[32];
@@ -40,17 +40,11 @@ public final class Utf8Scanner extends XmlScanner{
       bOrC += end;
       rowOff -= end;
       inPtr = 0;
-      if(in == null){
-         end = 0;
-         return false;
-      }
       try{
-         int count = in.read(inBuf, 0, 4096);
-         if(count < 1){
+         if(in == null || (end = in.read(inBuf, 0, 4096)) < 1){
             end = 0;
             return false;
          }
-         end = count;
          return true;
       }catch(IOException ioe){
          throw new XMLStreamException(ioe);
@@ -108,7 +102,7 @@ public final class Utf8Scanner extends XmlScanner{
       if(!ok)
          thInvNCh(ch);
       cbuf[cix++] = (char)ch;
-      int last_colon = -1;
+      int lastColon = -1;
       while(ix < byteLen){
          switch(TYPES[ch = (quads[ix >> 2] >> ((ix++ & 3 ^ 3) << 3)) & 0xFF]){
             case 0:  // NAME_NONE
@@ -116,9 +110,9 @@ public final class Utf8Scanner extends XmlScanner{
                ok = false;
                break;
             case 1:  // NAME_COLON
-               if(last_colon >= 0)
+               if(lastColon >= 0)
                   thInErr("Multiple ':'");
-               last_colon = cix;
+               lastColon = cix;
             case 2:  // NAME_NONFIRST
             case 3:  // NAME_ANY
                ok = true;
@@ -164,10 +158,9 @@ public final class Utf8Scanner extends XmlScanner{
             nameBuf = cbuf = xpand(cbuf);
          cbuf[cix++] = (char)ch;
       }
-      String baseName = new String(cbuf, 0, cix);
       if(lastQuadBytes < 4)
          quads[qlen - 1] = lastQuad;
-      return syms.add(hash, baseName, last_colon, quads, qlen);
+      return syms.add(hash, new String(cbuf, 0, cix), lastColon, quads, qlen);
    }
 
    public final int nxtFromProlog(boolean isProlog) throws XMLStreamException{
@@ -437,13 +430,13 @@ public final class Utf8Scanner extends XmlScanner{
             if((c = (((int)b | 0x20) - 0x30)) > 9) // to lowercase
                c -= 0x27;
             if(c < 0 || c > 0xF)
-               thUnxp(decChr(b), ", not a hex digit [0-9a-fA-F]");
+               thUnxp(decChr(b), ", not a hex digit");
             value = value << 4 | c;
          }
       else
          while(b != (byte)';'){
             if(b < (byte)'0' || b > (byte)'9')
-               thUnxp(decChr(b), ", not a decimal number");
+               thUnxp(decChr(b), ", not a dec digit");
             value = value * 10 + b - '0';
             if(inPtr >= end)
                assertMore();
@@ -546,7 +539,7 @@ public final class Utf8Scanner extends XmlScanner{
          return parsePNSlow(b);
       int q = b & 0xFF;
       if(q < 'A')
-         thUnxp(q, ", not a name start char");
+         thUnxp(q, ", not a name start");
       int i2 = (int)inBuf[inPtr++] & 0xFF;
       if(i2 < 45 || (i2 > 58 && i2 < 65) || i2 == 47)
          return findPName(q, 1);
@@ -604,7 +597,7 @@ public final class Utf8Scanner extends XmlScanner{
    private final PN parsePNSlow(byte b) throws XMLStreamException{
       int q = b & 0xFF;
       if(q < 'A')
-         thUnxp(q, ", not a name start char");
+         thUnxp(q, ", not a name start");
       int[] quads = qBuf;
       int qix = 0, firstQuad = 0;
       while(true){
@@ -2359,15 +2352,15 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    private final int decMB(int c, int ptr) throws XMLStreamException{
-      int needed = 1;
+      int needed = 0;
       if((c & 0xE0) == 0xC0)
          c &= 0x1F;
       else if((c & 0xF0) == 0xE0){
          c &= 0xF;
-         needed = 2;
+         needed = 1;
       }else if((c & 0xF8) == 0xF0){
          c &= 7;
-         needed = 3;
+         needed = 2;
       }else
          badUTF(c);
       if(ptr >= end){
@@ -2380,7 +2373,7 @@ public final class Utf8Scanner extends XmlScanner{
          badUTF(d);
       }
       c = c << 6 | d & 0x3F;
-      if(needed > 1){
+      if(needed > 0){
          if(ptr >= end){
             assertMore();
             ptr = 0;
@@ -2390,7 +2383,7 @@ public final class Utf8Scanner extends XmlScanner{
             badUTF(d);
          }
          c = c << 6 | d & 0x3F;
-         if(needed > 2){
+         if(needed > 1){
             if(ptr >= end){
                assertMore();
                ptr = 0;
@@ -2465,28 +2458,27 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    private final int decChr(byte b) throws XMLStreamException{
-      int d, c = (int)b;
+      int d, c = (int)b, needed = 0;
       if(c >= 0)
          return c;
-      int needed = 1;
       if((c & 0xE0) == 0xC0)        // 2 bytes
          c &= 0x1F;
       else if((c & 0xF0) == 0xE0){  // 3 bytes
          c &= 0xF;
-         needed = 2;
+         needed = 1;
       }else if((c & 0xF8) == 0xF0){ // 4 bytes
          c &= 7;
-         needed = 3;
+         needed = 2;
       }else
          badUTF(c);
       if(((d = nxtB()) & 0xC0) != 0x80)
          badUTF(d);
       c = c << 6 | d & 0x3F;
-      if(needed > 1){
+      if(needed > 0){
          if(((d = nxtB()) & 0xC0) != 0x80)
             badUTF(d);
          c = c << 6 | d & 0x3F;
-         if(needed > 2){
+         if(needed > 1){
             if(((d = nxtB()) & 0xC0) != 0x80)
                badUTF(d);
             c = c << 6 | d & 0x3F;
@@ -2515,6 +2507,4 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    private final void badUTF(int mask) throws XMLStreamException{ thInErr(new StrB(12).a("Bad UTF8 ").apos(mask & 0xFF).toString()); }
-
-   final int col(){ return inPtr - iniRawOff; }
 }

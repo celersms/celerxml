@@ -19,7 +19,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
 
    final InputFactoryImpl impl;
    boolean incompl, pending, empty;
-   int depth, nsCnt, attrCount, currSize, attrs, currToken, currRow, rowOff, bOrC, iniRawOff, startRow, startCol;
+   int depth, nsCnt, attrCount, currSize, attrs, currToken, currRow, rowOff, bOrC, iniRawOff, startRow, startCol, inPtr;
    char[] nameBuf, currSeg;
    PN tokName;
    NsD lastNs;
@@ -690,7 +690,7 @@ findOrCreate:
 
    abstract boolean more() throws XMLStreamException;
 
-   abstract int col();
+   final int col(){ return inPtr - iniRawOff; }
 
    private final void dupAttr(int idx1, int idx2){
       err = new StrB(48).a("Duplicate '").append(names[idx1].toString()).append('\'').append('@').apos(idx1

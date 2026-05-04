@@ -15,7 +15,7 @@ final class ReaderScanner extends XmlScanner{
    private final static Chr Code = Chr.getLat1();
    private Reader in;
    private char[] buf;
-   private int inPtr, end, cTmp;
+   private int end, cTmp;
    private final cPN syms;
    private Node curr;
 
@@ -30,22 +30,15 @@ final class ReaderScanner extends XmlScanner{
       this.end = end;
    }
 
-   @Override
    final boolean more() throws XMLStreamException{
       inPtr = 0;
-      if(in == null){
-         end = 0;
-         return false;
-      }
       bOrC += end;
       rowOff -= end;
       try{
-         int count = in.read(buf, 0, 4096);
-         if(count < 1){
+         if(in == null || (end = in.read(buf, 0, 4096)) < 1){
             end = 0;
             return false;
          }
-         end = count;
          return true;
       }catch(IOException ioe){
          throw new XMLStreamException(ioe);
@@ -361,13 +354,13 @@ final class ReaderScanner extends XmlScanner{
             if((c = (char)((c | 0x20) - 0x30)) > 9) // to lowercase
                c -= 0x27;
             if(c < 0 || c > 0xF)
-               thUnxp(c, ", not a hex digit [0-9a-fA-F]");
+               thUnxp(c, ", not a hex digit");
             value = value << 4 | c;
          }
       else
          while(c != ';'){
             if(c < '0' || c > '9')
-               thUnxp(c, ", not a decimal number");
+               thUnxp(c, ", not a dec digit");
             value = value * 10 + c - '0';
             if(inPtr >= end)
                assertMore();
@@ -1907,10 +1900,9 @@ outl: while(true){
 
    private final PN parsePN(char c) throws XMLStreamException{
       if(c < 'A')
-         thUnxp(c, ", not a name start char");
+         thUnxp(c, ", not a name start");
       char[] nameBuffer = nameBuf;
-      nameBuffer[0] = c;
-      int hash = c, ptr = 1;
+      int hash = nameBuffer[0] = c, ptr = 1;
       while(true){
          if(inPtr >= end)
             assertMore();
@@ -2019,9 +2011,6 @@ outl: while(true){
          in = null;
       }
    }
-
-   @Override
-   final int col(){ return inPtr - iniRawOff; }
 
    @Override
    final void Code(){
