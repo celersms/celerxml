@@ -3,7 +3,7 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
 // to permit persons to whom the Software is furnished to do so, subject to the condition that this
 // copyright shall be included in all copies or substantial portions of the Software:
-// Copyright Victor Celer, 2025
+// Copyright Victor Celer, 2025 - 2026
 
 import java.io.StringReader;
 import java.io.ByteArrayInputStream;
@@ -20,12 +20,12 @@ public final class test_StAX_Entities{
    private static final String test_xml =
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
       "<test>\n" +
-      "   <message>Text containing entities: &lt;&gt;&apos;&amp;&quot;</message>\n" +
+      "   <message>Text containing entities: &lt;&gt;&apos;&amp;&quot;&#x26;&#x0026;&#38;</message>\n" +
       "</test>";
 
    private static final String expected_result =
       "<?xml version='1.0' encoding='UTF-8' standalone='no'?><:test>\n" +
-      "   <:message>Text containing entities: <>'&\"</:message>\n" +
+      "   <:message>Text containing entities: <>'&\"&&&</:message>\n" +
       "</:test>";
 
    public static final void main(String[] args) throws Exception{
