@@ -422,9 +422,8 @@ findOrCreate:
       segments.add(currSeg);
       int oldLen = currSeg.length;
       segSize += oldLen;
-      char[] curr = new char[Math.min(oldLen + (oldLen < 8000 ? oldLen : oldLen >> 1), 0x40000)];
       currSize = 0;
-      return currSeg = curr;
+      return currSeg = new char[Math.min(oldLen + (oldLen < 8000 ? oldLen : oldLen >> 1), 0x40000)];
    }
 
    final char[] startNewV(PN attrName, int currOffset){
@@ -603,29 +602,27 @@ findOrCreate:
 
    final void startElement(ContentHandler h, org.xml.sax.Attributes attrs) throws SAXException{
       if(h != null){
+         String ss;
          NsD nsDecl = lastNs;
          int level = depth - 1;
          while(nsDecl != null && nsDecl.lvl == level){
-            String pfx = nsDecl.bind.pfx;
-            h.startPrefixMapping(pfx == null ? "" : pfx, nsDecl.bind.Code);
+            h.startPrefixMapping((ss = nsDecl.bind.pfx) == null ? "" : ss, nsDecl.bind.Code);
             nsDecl = nsDecl.prvD;
          }
          PN n = tokName;
-         String uri = n.getNsUri();
-         h.startElement(uri == null ? "" : uri, n.ln, n.Code, attrs);
+         h.startElement((ss = n.getNsUri()) == null ? "" : ss, n.ln, n.Code, attrs);
       }
    }
 
    final void endElement(ContentHandler h) throws SAXException{
       if(h != null){
          PN n = tokName;
-         String uri = n.getNsUri();
-         h.endElement(uri == null ? "" : uri, n.ln, n.Code);
+         String ss = n.getNsUri();
+         h.endElement(ss == null ? "" : ss, n.ln, n.Code);
          NsD nsDecl = lastNs;
          int level = depth;
          while(nsDecl != null && nsDecl.lvl == level){
-            String pfx = nsDecl.bind.pfx;
-            h.endPrefixMapping(pfx == null ? "" : pfx);
+            h.endPrefixMapping((ss = nsDecl.bind.pfx) == null ? "" : ss);
             nsDecl = nsDecl.prvD;
          }
       }
@@ -637,12 +634,9 @@ findOrCreate:
             endTok();
          if(arr != null)
             h.comment(arr, 0, rLen);
-         else if(segments != null && segments.size() > 0){
-            char[] ch = arr;
-            if(ch == null)
-               arr = ch = buildR();
-            h.comment(ch, 0, ch.length);
-         }else
+         else if(segments != null && segments.size() > 0)
+            h.comment(arr = buildR(), 0, arr.length);
+         else
             h.comment(currSeg, 0, currSize);
       }
    }
