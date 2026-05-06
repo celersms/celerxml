@@ -304,11 +304,11 @@ class InSrc{
    final void thNull() throws XMLStreamException{ throw new XMLStreamException("Null in InputStream", loc()); }
 
    final void thUnxp(int ch, String msg) throws XMLStreamException{
-      throw new XMLStreamException(new StrB(26 + msg.length()).a("Unexpected char ").apos(ch).a(msg).toString(), loc());
+      throw new XMLStreamException(new StrB(24 + msg.length()).a("Unexpected ").apos(ch).a(msg).toString(), loc());
    }
 
    private final void thPsAttr(String name, String val1, String val2) throws XMLStreamException{
-      StrB sb = new StrB(56 + name.length()).a("Missing XML pseudo-attribute '").a(name).a('\'');
+      StrB sb = new StrB(52 + name.length()).a("Missing pseudo-attribute '").a(name).a('\'');
       if(val1 != null)
          sb.a(", expected '").a(val1).a("' or '").a(val2).a('\'');
       throw new XMLStreamException(sb.toString(), loc());

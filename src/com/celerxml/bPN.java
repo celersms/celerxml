@@ -46,8 +46,8 @@ final class bPN{
    }
 
    final PN find(int hash, int[] quads, int qlen){
-      if(qlen < 3)
-         return find(hash, quads[0], qlen < 2 ? 0 : quads[1]);
+      //if(qlen < 3)
+      //   return find(hash, quads[0], qlen < 2 ? 0 : quads[1]);
       int ix = hash & hashMsk, val = hsh[ix];
       PN pname;
       if(((val >> 8 ^ hash) << 8) == 0 && ((pname = nams[ix]) == null || pname.equals(quads, qlen)))
@@ -64,9 +64,8 @@ final class bPN{
       if(qlen < 4){
          String pfx, ln;
          if(colonIx < 0){
-            symbolStr = symbolStr.intern();
+            ln = symbolStr = symbolStr.intern();
             pfx = null;
-            ln = symbolStr;
          }else{
             pfx = symbolStr.substring(0, colonIx).intern();
             ln = symbolStr.substring(colonIx + 1).intern();

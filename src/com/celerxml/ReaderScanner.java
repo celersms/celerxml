@@ -243,16 +243,16 @@ final class ReaderScanner extends XmlScanner{
                 nameBuf = outputBuffer = xpand(outputBuffer);
             outputBuffer[outPtr++] = c;
          }
-         dtdPubId = new String(outputBuffer, 0, outPtr);
-         dtdSysId = Code(Code(true));
+         dtdPub = new String(outputBuffer, 0, outPtr);
+         dtdSys = Code(Code(true));
          c = Code(false);
       }else if(c == 'S'){
          Code("SYSTEM");
-         dtdPubId = null;
-         dtdSysId = Code(Code(true));
+         dtdPub = null;
+         dtdSys = Code(Code(true));
          c = Code(false);
       }else
-         dtdPubId = dtdSysId = null;
+         dtdPub = dtdSys = null;
       if((incompl = c == '[') || c == '>')
          return currToken = 11; // DTD
       thUnxp(c, ", expected '[' or '>'");

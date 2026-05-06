@@ -246,7 +246,7 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
             break;
          case 11: // DTD
             if(lexH != null){
-               lexH.startDTD(scan.tokName.Code, scan.dtdPubId, scan.dtdSysId);
+               lexH.startDTD(scan.tokName.Code, scan.dtdPub, scan.dtdSys);
                lexH.endDTD();
             }
             break;

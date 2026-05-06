@@ -316,16 +316,16 @@ public final class Utf8Scanner extends XmlScanner{
                nameBuf = outputBuffer = xpand(outputBuffer);
             outputBuffer[outPtr++] = (char)c;
          }
-         dtdPubId = new String(outputBuffer, 0, outPtr);
-         dtdSysId = Code(Code(true));
+         dtdPub = new String(outputBuffer, 0, outPtr);
+         dtdSys = Code(Code(true));
          b = Code(false);
       }else if(b == (byte)'S'){
          Code("SYSTEM");
-         dtdPubId = null;
-         dtdSysId = Code(Code(true));
+         dtdPub = null;
+         dtdSys = Code(Code(true));
          b = Code(false);
       }else
-         dtdPubId = dtdSysId = null;
+         dtdPub = dtdSys = null;
       if(b == (byte)'>'){
          incompl = false;
          return currToken = 11; // DTD
