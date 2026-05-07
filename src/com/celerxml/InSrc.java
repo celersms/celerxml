@@ -42,7 +42,7 @@ class InSrc{
       int val = 0, len, ch = afterWs();
       if(ch != 'v')
          thUnxp(ch, "; expected keyword 'version'");
-      if((ch = isKW("version")) != 0)
+      if((ch = isKW("version", 7)) != 0)
          thUnxp(ch, "version");
       if((len = qVal(mKW, handleEq())) == 3 && mKW[0] == '1' && mKW[1] == '.')
          if((ch = mKW[2]) == '0')
@@ -53,7 +53,7 @@ class InSrc{
          thPsAttr("version", V10, V11);
       mXmlVer = val;
       if((ch = getWsOrQMark()) == 'e'){
-         if((ch = isKW("encoding")) != 0)
+         if((ch = isKW("encoding", 8)) != 0)
             thUnxp(ch, "encoding");
          if((len = qVal(mKW, handleEq())) == 0)
             thPsAttr("encoding", null, null);
@@ -61,7 +61,7 @@ class InSrc{
          ch = getWsOrQMark();
       }
       if(ch == 's'){
-         if((ch = isKW("standalone")) != 0)
+         if((ch = isKW("standalone", 10)) != 0)
             thUnxp(ch, "standalone");
          if((len = qVal(mKW, handleEq())) == 2 && mKW[0] == 'n' && mKW[1] == 'o')
             stand = NO;
@@ -155,8 +155,8 @@ class InSrc{
       }
    }
 
-   int isKW(String kw) throws IOException, XMLStreamException{
-      for(int ptr = 1, len = kw.length(); ptr < len; ++ptr){
+   int isKW(String kw, int len) throws IOException, XMLStreamException{
+      for(int ptr = 1; ptr < len; ++ptr){
          char c = offset < inLen ? Code[offset++] : Code();
          if(c == 0)
             thNull();
@@ -296,7 +296,7 @@ class InSrc{
          inRowOff -= inLen;
          offset = 0;
          if(r == null || (inLen = r.read(Code, 0, 4096)) < 1)
-            throw new XMLStreamException("Unexpected end-of-input", loc());
+            throw new XMLStreamException("Unexpected EOI", loc());
       }
       return Code[offset++];
    }

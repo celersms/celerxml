@@ -59,32 +59,22 @@ final class bPN{
       return null;
    }
 
-   final PN add(int hash, String symbolStr, int colonIx, int[] quads, int qlen){
+   final PN add(int hash, String ss, int clnIx, int[] quads, int qlen){
       PN symbol;
       if(qlen < 4){
          String pfx, ln;
-         if(colonIx < 0){
-            ln = symbolStr = symbolStr.intern();
+         if(clnIx < 0){
+            ln = ss = ss.intern();
             pfx = null;
          }else{
-            pfx = symbolStr.substring(0, colonIx).intern();
-            ln = symbolStr.substring(colonIx + 1).intern();
+            pfx = ss.substring(0, clnIx).intern();
+            ln = ss.substring(clnIx + 1).intern();
          }
-         if(qlen == 3)
-            symbol = new PN3(symbolStr, pfx, ln, hash, quads);
-         else if(qlen == 2)
-            symbol = new PN2(symbolStr, pfx, ln, hash, quads[0], quads[1]);
-         else
-            symbol = new PN1(symbolStr, pfx, ln, hash, quads[0]);
+         symbol = qlen == 3 ? new PN3(ss, pfx, ln, hash, quads) : qlen == 2 ? new PN2(ss, pfx, ln, hash, quads[0], quads[1]) : new PN1(ss, pfx, ln, hash, quads[0]);
       }else{
          final int[] buf = new int[qlen];
-         for(int i = 0; i < qlen; ++i)
-            buf[i] = quads[i];
-         if(colonIx < 0){
-            symbolStr = symbolStr.intern();
-            symbol = new PNn(symbolStr, null, symbolStr, hash, buf, qlen);
-         }else
-            symbol = new PNn(symbolStr, symbolStr.substring(0, colonIx).intern(), symbolStr.substring(colonIx + 1).intern(), hash, buf, qlen);
+         System.arraycopy(quads, 0, buf, 0, qlen);
+         symbol = clnIx < 0 ? new PNn(ss = ss.intern(), null, ss, hash, buf, qlen) : new PNn(ss, ss.substring(0, clnIx).intern(), ss.substring(clnIx + 1).intern(), hash, buf, qlen);
       }
       int xx;
       if(hashSh){

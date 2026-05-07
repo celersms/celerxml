@@ -334,7 +334,7 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       if(state == 1){
          if((type = scan.nxtFromTree()) == -1){
             Code = 8; // END_DOCUMENT
-            throw new XMLStreamException("Unexpected End-of-input", scan.loc());
+            throw new XMLStreamException("Unexpected EOI", scan.loc());
          }
          Code = type;
          if(type == 12){ // CDATA

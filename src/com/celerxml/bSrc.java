@@ -25,44 +25,37 @@ final class bSrc extends InSrc{
       bBuf = impl.getBB();
    }
 
-   @Override
    final XmlScanner w() throws XMLStreamException{
       try{
          final byte[] lbuf = bBuf;
          String normEnc = null;
          bigEnd = true;
+         int yy, xx = 0;
          if(Code(4)){
 bomblock:   do{
-               int quartet = lbuf[offset] << 24 | (lbuf[offset + 1] & 0xFF) << 16 | (lbuf[offset + 2] & 0xFF) << 8 | lbuf[offset + 3] & 0xFF;
-               switch(quartet){
+               switch(yy = lbuf[0] << 24 | (lbuf[1] & 0xFF) << 16 | (lbuf[2] & 0xFF) << 8 | lbuf[3] & 0xFF){
                   case 0xFFFE0000:
                      bigEnd = false;
                   case 0x0000FEFF:
-                     offset += 4;
-                     Code = 4;
+                     Code = xx = 4;
                      break bomblock;
                   case 0x0000FFFE:
                   case 0xFEFF0000:
                      throw new XMLStreamException("Unsupported endianness");
                }
-               int msw = quartet >>> 16;
-               if(msw == 0xFEFF){
-                  offset += 2;
-                  Code = 2;
+               int msw = yy >>> 16;
+               if(msw == 0xFEFF || msw == 0xFFFE){
+                  Code = xx = 2;
+                  if(msw == 0xFFFE)
+                     bigEnd = false;
                   break;
                }
-               if(msw == 0xFFFE){
-                  offset += 2;
-                  Code = 2;
-                  bigEnd = false;
-                  break;
-               }
-               if((quartet >>> 8) == 0xEFBBBF){
-                  offset += 3;
+               if((yy >>> 8) == 0xEFBBBF){
+                  xx = 3;
                   Code = 1;
                   break;
                }
-               switch(quartet){
+               switch(yy){
                   case 0x3C000000:
                      bigEnd = false;
                   case 0x0000003C:
@@ -83,56 +76,53 @@ bomblock:   do{
                      throw new XMLStreamException("Unsupported encoding");
                }
             }while(false);
-            inRowOff = offset;
+            inRowOff = offset = xx;
          }
-         boolean bSzFound;
-         if(!(bSzFound = Code > 0))
+         boolean ff;
+         if(!(ff = Code > 0))
             Code = 1;
          boolean hasDecl = false;
          if(Code(6 * Code))
             if(Code == 1){
-               if(lbuf[offset] == '<' && lbuf[offset + 1] == '?' && lbuf[offset + 2] == 'x' && lbuf[offset + 3] == 'm' && lbuf[offset + 4] == 'l' && (lbuf[offset + 5] & 0xFF) <= 0x20){
+               if(lbuf[xx] == '<' && lbuf[xx + 1] == '?' && lbuf[xx + 2] == 'x' && lbuf[xx + 3] == 'm' && lbuf[xx + 4] == 'l' && (lbuf[xx + 5] & 0xFF) <= 0x20){
                   offset += 6;
                   hasDecl = true;
                }
-            }else{
-               int start = offset;
-               if(Code() == '<' && Code() == '?' && Code() == 'x' && Code() == 'm' && Code() == 'l' && Code() <= 0x20)
-                  hasDecl = true;
-               else
-                  offset = start;
-            }
+            }else if(Code() == '<' && Code() == '?' && Code() == 'x' && Code() == 'm' && Code() == 'l' && Code() <= 0x20)
+               hasDecl = true;
+            else
+               offset = xx;
          if(hasDecl){
             readDecl();
             if((normEnc = fnd) != null){
                normEnc = Code(normEnc);
-               if(bSzFound){
-                  int bpc = Code;
-                  boolean isBig = bigEnd;
+               if(ff){
+                  yy = Code;
+                  ff = bigEnd;
                   if(normEnc == UTF8 || normEnc == LAT1 || normEnc == ASCII)
-                     bpc = 1;
+                     yy = 1;
                   else if(normEnc == UTF16)
-                     bpc = 2;
+                     yy = 2;
                   else if(normEnc == UTF16L){
-                     bpc = 2;
-                     isBig = false;
+                     yy = 2;
+                     ff = false;
                   }else if(normEnc == UTF16B){
-                     bpc = 2;
-                     isBig = true;
+                     yy = 2;
+                     ff = true;
                   }else if(normEnc == UTF32)
-                     bpc = 4;
+                     yy = 4;
                   else if(normEnc == UTF32L){
-                     bpc = 4;
-                     isBig = false;
+                     yy = 4;
+                     ff = false;
                   }else if(normEnc == UTF32B){
-                     bpc = 4;
-                     isBig = true;
+                     yy = 4;
+                     ff = true;
                   }
-                  if(bpc != Code)
-                     throw new XMLStreamException(new StrB(normEnc.length() + 63).a("Declared '").a(normEnc).a("' uses ").apos((char)('0' + bpc)).a(
+                  if(yy != Code)
+                     throw new XMLStreamException(new StrB(normEnc.length() + 63).a("Declared '").a(normEnc).a("' uses ").apos((char)('0' + yy)).a(
                         " bytes/char; differs from the actual encoding").toString(), loc());
-                  if(isBig != bigEnd)
-                     throw new XMLStreamException(new StrB(normEnc.length() + 63).a("Declared '").a(normEnc).a(isBig ? "' is big" : "' is little").a(
+                  if(ff != bigEnd)
+                     throw new XMLStreamException(new StrB(normEnc.length() + 63).a("Declared '").a(normEnc).a(ff ? "' is big" : "' is little").a(
                         " endian; differs from the actual ordering").toString(), loc());
                }
             }
@@ -164,15 +154,12 @@ bomblock:   do{
       }
    }
 
-   @Override
    final void bck(){ offset -= Code; }
 
-   @Override
    final int nxt() throws IOException, XMLStreamException{
       return Code > 1 ? Code() : ((offset < inLen) ? bBuf[offset++] : nxtB()) & 0xFF;
    }
 
-   @Override
    final int afterWs() throws IOException, XMLStreamException{
       int c, count = 0;
       if(Code > 1)
@@ -186,8 +173,7 @@ bomblock:   do{
                   offset -= Code;
                ++inRow;
                inRowOff = offset;
-            }else if(c == 0)
-               thNull();
+            }
             ++count;
          }
       else
@@ -209,16 +195,12 @@ bomblock:   do{
       return Code > 1 ? Code() : (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF;
    }
 
-   @Override
-   final int isKW(String kw) throws IOException, XMLStreamException{
-      int c, len = kw.length();
+   final int isKW(String kw, int len) throws IOException, XMLStreamException{
+      int c;
       if(Code > 1){
-         for(int ptr = 1; ptr < len; ++ptr){
-            if((c = Code()) == 0)
-               thNull();
-            if(c != kw.charAt(ptr))
+         for(int ptr = 1; ptr < len; ++ptr)
+            if((c = Code()) != kw.charAt(ptr))
                return c;
-         }
          return 0;
       }
       for(int ptr = 1; ptr < len; ++ptr){
@@ -231,7 +213,6 @@ bomblock:   do{
       return 0;
    }
 
-   @Override
    final int qVal(char[] kw, int quote) throws IOException, XMLStreamException{
       int c, i = 0, len = kw.length;
       final boolean mb = Code > 1;
@@ -264,17 +245,14 @@ bomblock:   do{
       return -1;
    }
 
-   @Override
    final Location loc(){ return new LocImpl(impl.pubId, impl.sysId, (offset - inRowOff) / Code, inRow, (proc + offset) / Code); }
 
    private final byte nxtB() throws IOException, XMLStreamException{
-      if(offset >= inLen){
-         proc += inLen;
-         inRowOff -= inLen;
-         offset = 0;
-         if((inLen = is == null ? -1 : is.read(bBuf, 0, 4096)) < 1)
-            throw new XMLStreamException("Unexpected end-of-input", loc());
-      }
+      proc += inLen;
+      inRowOff -= inLen;
+      offset = 0;
+      if((inLen = is == null ? -1 : is.read(bBuf, 0, 4096)) < 1)
+         throw new XMLStreamException("Unexpected EOI", loc());
       return bBuf[offset++];
    }
 
