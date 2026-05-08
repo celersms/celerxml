@@ -31,53 +31,51 @@ final class bSrc extends InSrc{
          String normEnc = null;
          bigEnd = true;
          int yy, xx = 0;
-         if(Code(4)){
-bomblock:   do{
-               switch(yy = lbuf[0] << 24 | (lbuf[1] & 0xFF) << 16 | (lbuf[2] & 0xFF) << 8 | lbuf[3] & 0xFF){
-                  case 0xFFFE0000:
-                     bigEnd = false;
-                  case 0x0000FEFF:
-                     Code = xx = 4;
-                     break bomblock;
-                  case 0x0000FFFE:
-                  case 0xFEFF0000:
-                     throw new XMLStreamException("Unsupported endianness");
-               }
-               int msw = yy >>> 16;
-               if(msw == 0xFEFF || msw == 0xFFFE){
-                  Code = xx = 2;
-                  if(msw == 0xFFFE)
-                     bigEnd = false;
-                  break;
-               }
-               if((yy >>> 8) == 0xEFBBBF){
-                  xx = 3;
+bom:     if(Code(4)){
+            switch(yy = lbuf[0] << 24 | (lbuf[1] & 0xFF) << 16 | (lbuf[2] & 0xFF) << 8 | lbuf[3] & 0xFF){
+               case 0xFFFE0000:
+                  bigEnd = false;
+               case 0x0000FEFF:
+                  Code = xx = 4;
+                  break bom;
+               case 0x0000FFFE:
+               case 0xFEFF0000:
+                  throw new XMLStreamException("Unsupported endianness");
+            }
+            int msw = yy >>> 16;
+            if(msw == 0xFEFF || msw == 0xFFFE){
+               Code = xx = 2;
+               if(msw == 0xFFFE)
+                  bigEnd = false;
+               break bom;
+            }
+            if((yy >>> 8) == 0xEFBBBF){
+               xx = 3;
+               Code = 1;
+               break bom;
+            }
+            switch(yy){
+               case 0x3C000000:
+                  bigEnd = false;
+               case 0x0000003C:
+                  Code = 4;
+                  break bom;
+               case 0x3C003F00:
+                  bigEnd = false;
+               case 0x003C003F:
+                  Code = 2;
+                  break bom;
+               case 0x3C3F786D:
                   Code = 1;
-                  break;
-               }
-               switch(yy){
-                  case 0x3C000000:
-                     bigEnd = false;
-                  case 0x0000003C:
-                     Code = 4;
-                     break bomblock;
-                  case 0x3C003F00:
-                     bigEnd = false;
-                  case 0x003C003F:
-                     Code = 2;
-                     break bomblock;
-                  case 0x3C3F786D:
-                     Code = 1;
-                     break bomblock;
-                  case 0x00003C00:
-                  case 0x003C0000:
-                     throw new XMLStreamException("Unsupported endianness");
-                  case 0x4C6FA794: // EBCDIC
-                     throw new XMLStreamException("Unsupported encoding");
-               }
-            }while(false);
-            inRowOff = offset = xx;
+                  break bom;
+               case 0x00003C00:
+               case 0x003C0000:
+                  throw new XMLStreamException("Unsupported endianness");
+               case 0x4C6FA794: // EBCDIC
+                  throw new XMLStreamException("Unsupported encoding");
+            }
          }
+         inRowOff = offset = xx;
          boolean ff;
          if(!(ff = Code > 0))
             Code = 1;
@@ -118,12 +116,9 @@ bomblock:   do{
                      yy = 4;
                      ff = true;
                   }
-                  if(yy != Code)
-                     throw new XMLStreamException(new StrB(normEnc.length() + 63).a("Declared '").a(normEnc).a("' uses ").apos((char)('0' + yy)).a(
-                        " bytes/char; differs from the actual encoding").toString(), loc());
-                  if(ff != bigEnd)
-                     throw new XMLStreamException(new StrB(normEnc.length() + 63).a("Declared '").a(normEnc).a(ff ? "' is big" : "' is little").a(
-                        " endian; differs from the actual ordering").toString(), loc());
+                  if(yy != Code || ff != bigEnd)
+                     throw new XMLStreamException(new StrB(normEnc.length() + 90).a("Declared '").a(normEnc).a(ff ? "' is big" : "' is little").a(" endian, uses ").a(
+                        (char)('0' + yy)).a(" bytes/char; differs from the actual ordering/encoding").toString(), loc());
                }
             }
          }
