@@ -152,7 +152,7 @@ bom:     if(Code(4)){
    final void bck(){ offset -= Code; }
 
    final int nxt() throws IOException, XMLStreamException{
-      return Code > 1 ? Code() : ((offset < inLen) ? bBuf[offset++] : nxtB()) & 0xFF;
+      return Code > 1 ? Code() : (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF;
    }
 
    final int afterWs() throws IOException, XMLStreamException{
