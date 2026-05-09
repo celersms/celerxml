@@ -44,18 +44,17 @@ final class Wrap extends InputStream{
     
    public final int read(byte[] b) throws IOException{ return read(b, 0, b.length); }
 
-   public final int read(byte[] b, int off, int len) throws IOException{
+   public final int read(byte[] b, int offset, int len) throws IOException{
       if(Code != null){
          int avail = end - off;
          if(len > avail)
             len = avail;
-         System.arraycopy(Code, off, b, off, len);
-         off += len;
-         if(off >= end)
+         System.arraycopy(Code, off, b, offset, len);
+         if((off += len) >= end)
             Code();
          return len;
       }
-      return mIn.read(b, off, len);
+      return mIn.read(b, offset, len);
    }
 
    private final void Code(){
