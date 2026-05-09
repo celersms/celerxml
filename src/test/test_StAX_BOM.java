@@ -17,9 +17,10 @@ public final class test_StAX_BOM{
 
    private static final StringBuilder sb = new StringBuilder();
    private static XMLInputFactory factory = XMLInputFactory.newInstance();
+   private static final String encoding_pattern = "${ENCODING}";
 
    private static final String test_xml =
-      "<?xml version=\"1.0\" encoding=\"XXXXXXX\"?>\n" +
+      "<?xml version=\"1.0\" encoding=\"${ENCODING}\"?>\n" +
       "<websites>\n" +
       "   <website url=\"https://www.celersms.com/\" ssl=\"true\">\n" +
       "      <name>CelerSMS</name>\n" +
@@ -39,7 +40,7 @@ public final class test_StAX_BOM{
       "</websites>";
 
    private static final String expected_result =
-      "<?xml version='1.0' encoding='XXXXXXX' standalone='no'?>" +
+      "<?xml version='1.0' encoding='${ENCODING}' standalone='no'?>" +
       "<:websites>" +
       "\n   <:website :url='https://www.celersms.com/' :ssl='true'>" +
       "\n      <:name>CelerSMS</:name>" +
@@ -59,47 +60,100 @@ public final class test_StAX_BOM{
       "\n</:websites>";
 
    public static final void main(String[] args) throws Exception{
+      String enc;
       boolean test_nok = false;
       byte[] buf, bxml;
       int blen;
 
-      // Test BOM FFFE0000
-      bxml = test_xml.replace("XXXXXXX", "UTF-32").getBytes();
+      // Test BOM FFFE0000 (UTF-32)
+      enc = "UTF-32"; // 4-byte, little endian
+      bxml = test_xml.replace(encoding_pattern, enc).getBytes();
       blen = bxml.length;
       buf = new byte[blen * 4 + 4];
       buf[0] = (byte)0xFF;
       buf[1] = (byte)0xFE;
-      buf[2] = buf[3] = 0;
-      for(int i = 0, j = 4; i < blen; i++){
-         buf[j++] = bxml[i];
-         buf[j++] = buf[j++] = buf[j++] = 0;
-      }
-      if(!doTest(buf, expected_result.replace("XXXXXXX", "UTF-32"))){
+      for(int i = 0, j = 4; i < blen; i++, j += 4)
+         buf[j] = bxml[i];
+      if(!doTest(buf, enc)){
          test_nok = true;
-         System.out.println("BOM FFFE0000 test: NOK");
+         System.out.println("BOM FFFE0000 (UTF-32) test: NOK");
       }
 
-      // Test BOM 0000FEFF
-      bxml = test_xml.replace("XXXXXXX", "UTF-32BE").getBytes();
+      // Test BOM FFFE0000 (UTF-32LE)
+      enc = "UTF-32LE"; // 4-byte, little endian
+      bxml = test_xml.replace(encoding_pattern, enc).getBytes();
       blen = bxml.length;
       buf = new byte[blen * 4 + 4];
-      buf[0] = buf[1] = 0;
+      buf[0] = (byte)0xFF;
+      buf[1] = (byte)0xFE;
+      for(int i = 0, j = 4; i < blen; i++, j += 4)
+         buf[j] = bxml[i];
+      if(!doTest(buf, enc)){
+         test_nok = true;
+         System.out.println("BOM FFFE0000 (UTF-32LE) test: NOK");
+      }
+
+      // Test BOM 0000FEFF (UTF-32BE)
+      enc = "UTF-32BE"; // 4-byte, big endian
+      bxml = test_xml.replace(encoding_pattern, enc).getBytes();
+      blen = bxml.length;
+      buf = new byte[blen * 4 + 4];
       buf[2] = (byte)0xFE;
       buf[3] = (byte)0xFF;
-      for(int i = 0, j = 4; i < blen; i++){
-         buf[j++] = buf[j++] = buf[j++] = 0;
-         buf[j++] = bxml[i];
-      }
-      if(!doTest(buf, expected_result.replace("XXXXXXX", "UTF-32BE"))){
+      for(int i = 0, j = 4; i < blen; i++, j += 4)
+         buf[j + 3] = bxml[i];
+      if(!doTest(buf, enc)){
          test_nok = true;
-         System.out.println("BOM 0000FEFF test: NOK");
+         System.out.println("BOM 0000FEFF (UTF-32BE) test: NOK");
+      }
+
+      // Test BOM FFFE (UTF-16)
+      enc = "UTF-16"; // 2-byte, little endian
+      bxml = test_xml.replace(encoding_pattern, enc).getBytes();
+      blen = bxml.length;
+      buf = new byte[blen * 2 + 2];
+      buf[0] = (byte)0xFF;
+      buf[1] = (byte)0xFE;
+      for(int i = 0, j = 2; i < blen; i++, j += 2)
+         buf[j] = bxml[i];
+      if(!doTest(buf, enc)){
+         test_nok = true;
+         System.out.println("BOM FFFE (UTF-16) test: NOK");
+      }
+
+      // Test BOM FFFE (UTF-16LE)
+      enc = "UTF-16LE"; // 2-byte, little endian
+      bxml = test_xml.replace(encoding_pattern, enc).getBytes();
+      blen = bxml.length;
+      buf = new byte[blen * 2 + 2];
+      buf[0] = (byte)0xFF;
+      buf[1] = (byte)0xFE;
+      for(int i = 0, j = 2; i < blen; i++, j += 2)
+         buf[j] = bxml[i];
+      if(!doTest(buf, enc)){
+         test_nok = true;
+         System.out.println("BOM FFFE (UTF-16LE) test: NOK");
+      }
+
+      // Test BOM FEFF (UTF-16BE)
+      enc = "UTF-16BE"; // 2-byte, big endian
+      bxml = test_xml.replace(encoding_pattern, enc).getBytes();
+      blen = bxml.length;
+      buf = new byte[blen * 2 + 2];
+      buf[0] = (byte)0xFE;
+      buf[1] = (byte)0xFF;
+      for(int i = 0, j = 2; i < blen; i++, j += 2)
+         buf[j + 1] = bxml[i];
+      if(!doTest(buf, enc)){
+         test_nok = true;
+         System.out.println("BOM FFFE (UTF-16BE) test: NOK");
       }
 
       if(test_nok)
          System.exit(-1);
    }
 
-   private static final boolean doTest(byte[] buf, String expected){
+   private static final boolean doTest(byte[] buf, String enc){
       sb.setLength(0);
       try{
          XMLStreamReader reader = factory.createXMLStreamReader(new ByteArrayInputStream(buf), null);
@@ -112,7 +166,7 @@ public final class test_StAX_BOM{
          ex.printStackTrace();
          return false;
       }
-      return sb.toString().equals(expected);
+      return sb.toString().equals(expected_result.replace(encoding_pattern, enc));
    }
 
    private static final void printEvent(XMLStreamReader reader){
