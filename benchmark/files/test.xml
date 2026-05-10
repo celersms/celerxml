@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<websites>
+    <website url="https://www.celersms.com/" ssl="true">
+        <name>CelerSMS</name>
+        <category>Tools, Articles</category>
+        <since>2019</since>
+    </website>
+    <website url="https://ufmod.sourceforge.io/" ssl="true">
+        <name>&#181;FMOD</name>
+        <category>Assembly, Open-Source</category>
+        <since>2005</since>
+    </website>
+    <website url="https://implib.sourceforge.io/" ssl="true">
+        <name>ImpLib SDK</name>
+        <category>Assembly, Open-Source</category>
+        <since>2006</since>
+    </website>
+</websites>

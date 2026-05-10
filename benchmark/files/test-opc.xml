@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<WriteResponse xmlns="http://opcfoundation.org/webservices/OPCDA/"
+               xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+               xmlns:xsd='http://www.w3.org/2001/XMLSchema'
+               xmlns:enc='http://www.w3.org/2001/12/soap-encoding'
+               xsi:schemaLocation="http://opcfoundation.org/webservices/OPCDA/test.xsd">
+   <WriteResult RcvTime="2002-04-29T10:16:26.6806250+02:00"
+                ReplyTime="2002-04-29T10:16:26.7806250+02:00"
+                ClientRequestHandle="WriteError" RevisedLocaleID="en"
+                ServerState="running"/> 
+   <RItemList>
+      <Items ItemPath="" ItemName="WrongItemID1" ClientItemHandle="WrongItemID1" Timestamp="0001-01-01T00:00:00.0000000+01:00" ErrorID="E_UNKNOWNITEMID">
+         <Value xsi:nil="true"/>
+      </Items>
+      <Items ItemPath="" ItemName="WrongItemID2" ClientItemHandle="WrongItemID2" Timestamp="0001-01-01T00:00:00.0000000+01:00" ErrorID="E_UNKNOWNITEMID">
+         <Value xsi:nil="true"/>
+      </Items>
+      <Items ItemPath="/Reals" ItemName="Float1" ValueType="xsd:float" Timestamp="2002-04-29T11:47:18.1493750+02:00">
+         <Value xsi:type="xsd:float">10.0141414</Value>
+      </Items>
+      <Items ItemPath="/Reals" ItemName="Float2" ClientItemHandle="Float2" ValueType="xsd:float" Timestamp="2002-04-29T11:47:18.1493750+02:00" SuccessID="S_CLAMP">
+         <Value xsi:type="xsd:float">1.09</Value>
+      </Items>
+   </RItemList>
+   <Errors ID="E_UNKNOWNITEMID">
+      <Text>The item does not exist in the server address space.</Text>
+   </Errors>
+   <Errors ID="S_CLAMP">
+      <Text>The value written was accepted but the output was clamped.</Text> 
+   </Errors>	
+</WriteResponse>
