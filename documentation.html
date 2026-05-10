@@ -1,0 +1,65 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>CelerXML Documentation</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="CelerXML, the lightweight open-source Java library implementing the standard XML parsers: SAX, SAX2 and StAX">
+<style type=text/css>
+body{background-color:#fff;color:#353833;font-family:Arial,Helvetica,sans-serif;font-size:14px;margin:0;padding:0;height:100%;width:100%}
+a:link,a:visited{text-decoration:none;color:#4A6782}
+a[href]:hover,a[href]:focus{text-decoration:none;color:#bb7a2a}
+a[name]{color:#353833}
+a[name]:before,a[name]:target,a[id]:before,a[id]:target{content:"";display:inline-block;position:relative;padding-top:129px;margin-top:-129px}
+pre{font-family:monospace;font-size:14px}
+h1{font-size:20px}
+h2{font-size:18px}
+code{font-family:monospace;font-size:14px;padding-top:4px;margin-top:8px;line-height:1.4em}
+dt code{font-family:monospace;font-size:14px;padding-top:4px}
+table tr td dt code{font-family:monospace;font-size:14px;vertical-align:top;padding-top:4px}
+.header{clear:both;margin:0 20px;padding:5px 0 0 0}
+.subTitle{margin:5px 0 0 0}
+.contentContainer{clear:both;padding:10px 20px;position:relative}
+.contentContainer .description dl dt{font-size:12px;font-weight:bold;margin:10px 0 0 0;color:#4E4E4E}
+.contentContainer .description dl dd{margin:5px 0 10px 0px;font-size:14px;font-family:Georgia,"Times New Roman",Times,serif}
+table tr td dl,table tr td dl dt,table tr td dl dd{margin-top:0;margin-bottom:1px}
+.description pre{margin-top:0}
+.block{font-size:14px;font-family:Georgia,"Times New Roman",Times,serif;display:block;margin:3px 10px 2px 0px;color:#474747}
+.packLblInType{font-weight:bold}
+main,header,section{display:block}
+.description{line-height:1.4}
+</style>
+</head>
+<body>
+<main>
+<div class="header">
+<div class="subTitle"><span class="packLblInType">Package</span>&nbsp;com.celerxml</div>
+</div>
+<div class="contentContainer">
+<section class="description">
+<hr>
+<h1>CelerXML</h1>
+<div class="block"><a href="https://www.celersms.com/CelerXML.htm"><b>CelerXML</b></a> is a lightweight open-source Java library implementing the standard XML parsers: <i>Simple API for XML</i>
+(SAX and SAX2) and <i>Streaming API for XML</i> (StAX). It can be used as a drop-in replacement for other XML processors, without recompiling the user
+Java application source code. It is compatible with Java 1.6 and later.
+</div>
+<h2>Installation</h2>
+<div class="block">Just add <a href="https://github.com/celersms/celerxml/releases"><code>celerxml-1.0.1.jar</code></a> to the classpath. If the classpath contains other SAX or StAX processors,
+the following system properties can be used to select the current implementation:
+<p>Configure the <b>SAX</b> processor to use the CelerXML implementation:
+<pre>-Djavax.xml.parsers.SAXParserFactory=com.celerxml.SAXParserFactoryImpl</pre>
+<p>Configure the <b>StAX</b> processor to use the CelerXML implementation:
+<pre>-Djavax.xml.stream.XMLInputFactory=com.celerxml.InputFactoryImpl</pre>
+<p>There are no dependencies. There is no need to recompile the user Java application to switch from the default SAX or StAX implementation to CelerXML.
+</div>
+<h2>Javadoc</h2>
+<table>
+<tr><th>API<th>Factory class
+<tr><td>SAX<td><a href="https://javadoc.scijava.org/Java6/javax/xml/parsers/SAXParserFactory.html">javax.xml.parsers.SAXParserFactory</a>
+<tr><td>StAX<td><a href="https://javadoc.scijava.org/Java11/java.xml/javax/xml/stream/XMLInputFactory.html">javax.xml.stream.XMLInputFactory</a>
+</table>
+</section>
+<hr>
+<p><center><small>&#169; 2025 - 2026 <a href="https://www.celersms.com/org/vceler.htm">Victor Celer</a>
+<br>All rights reserved</small></center>&nbsp;<br>
+&nbsp;<br>
+</main></body></html>
