@@ -6,6 +6,7 @@ parsers were benchmarked:
  * FasterXML/aalto-xml v1.3.3
  * CelerXML v1.0.2
 
+|                 |               |
 | ---------------:| :------------ |
 | Iterations      | 5.000         |
 | XML file size   | 1.361 Kb      |
@@ -13,32 +14,26 @@ parsers were benchmarked:
 | CPU             | i7 / 2.70 GHz |
 | RAM             | 8 Gb          |
 
-## StAX XML parsing time
-
 ```mermaid
 xychart
-    title "StAX XML parsing time"
+    title "StAX XML parsing time (in µs)"
     x-axis [Xerces2, FasterXML, CelerXML]
-    y-axis "Time (in us)"
+    y-axis Time 10000 --> 13500
     bar [13113, 12732, 12285]
 ```
 
-## SAX2 XML parsing time
-
 ```mermaid
 xychart
-    title "SAX2 XML parsing time"
+    title "SAX2 XML parsing time (in µs)"
     x-axis [Xerces2, FasterXML, CelerXML]
-    y-axis "Time (in us)"
+    y-axis Time 7700 --> 7800
     bar [7784, 7763, 7757]
 ```
 
-## Classload time
-
 ```mermaid
 xychart
-    title "Classload time"
+    title "Classload time (in µs)"
     x-axis [Xerces2, FasterXML, CelerXML]
-    y-axis "Time (in us)"
+    y-axis Time 13000 --> 25200
     bar [14783, 25125, 13566]
 ```
