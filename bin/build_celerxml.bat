@@ -8,7 +8,7 @@ REM The JDK 6 or later installation path (optional)
 SET JDK6=\Tools\jdk1.8.0_202
 
 REM Current CelerXML version
-SET LIB_VER=1.0.1
+SET LIB_VER=1.0.2
 
 REM === CONFIG END ==================================
 TITLE Rebuilding CelerXML...
@@ -101,7 +101,7 @@ ECHO  ^</scm^>
 ECHO ^</project^>
 ) >%MVN_BUNDLE%\celerxml-%LIB_VER%.pom
 "%JDK6%\bin\jar" cMf %MVN_BUNDLE%\celerxml-%LIB_VER%-sources.jar -C src com
-"%JDK6%\bin\jar" cMf %MVN_BUNDLE%\celerxml-%LIB_VER%-javadoc.jar documentation.htm
+"%JDK6%\bin\jar" cMf %MVN_BUNDLE%\celerxml-%LIB_VER%-javadoc.jar -C .github documentation.htm
 
 REM Sign the files and package the Maven bundle
 ECHO.
