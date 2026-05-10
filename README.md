@@ -31,11 +31,3 @@ If you use Maven, you can include the CelerXML dependency by adding the followin
       <version>1.0.1</version>
     </dependency>
 ```
-
-# Benchmark
-
-The `bin\run_benchmark.bat` batch file measures the average XML parsing time and the classload time for the selected XML parser. The following
-parsers were benchmarked (latest versions):
- * Xerces2 (the default parser)
- * FasterXML
- * CelerXML
