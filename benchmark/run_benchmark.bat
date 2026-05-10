@@ -4,7 +4,13 @@ REM === CONFIG BEGIN ================================
 REM The location of the XML processor jars
 SET XML_JARS_PATH=lib
 
-REM Override the XML processor (optional)
+REM Override the XML processor (defaults to Xerces2)
+SET J_XML_OVERRIDE=
+
+REM Uncomment to benchmark the FasterXML parser
+REM SET J_XML_OVERRIDE=-Djavax.xml.parsers.SAXParserFactory=com.fasterxml.aalto.sax.SAXParserFactoryImpl -Djavax.xml.stream.XMLInputFactory=com.fasterxml.aalto.stax.InputFactoryImpl
+
+REM Uncomment to benchmark the CelerXML parser
 SET J_XML_OVERRIDE=-Djavax.xml.parsers.SAXParserFactory=com.celerxml.SAXParserFactoryImpl -Djavax.xml.stream.XMLInputFactory=com.celerxml.InputFactoryImpl
 
 REM XML file to use for this benchmark
