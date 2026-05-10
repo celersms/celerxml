@@ -15,6 +15,12 @@ parsers were benchmarked:
 | RAM             | 8 Gb          |
 
 ```mermaid
+---
+config:
+  xyChart:
+    height: 250
+    showDataLabel: true
+---
 xychart
     title "StAX XML parsing time (in µs)"
     x-axis [Xerces2, FasterXML, CelerXML]
@@ -23,6 +29,12 @@ xychart
 ```
 
 ```mermaid
+---
+config:
+  xyChart:
+    height: 250
+    showDataLabel: true
+---
 xychart
     title "SAX2 XML parsing time (in µs)"
     x-axis [Xerces2, FasterXML, CelerXML]
@@ -31,9 +43,15 @@ xychart
 ```
 
 ```mermaid
+---
+config:
+  xyChart:
+    height: 250
+    showDataLabel: true
+---
 xychart
     title "Classload time (in µs)"
     x-axis [Xerces2, FasterXML, CelerXML]
-    y-axis Time 13000 --> 25200
+    y-axis Time 10000 --> 25200
     bar [14783, 25125, 13566]
 ```
