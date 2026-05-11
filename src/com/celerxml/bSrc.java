@@ -38,41 +38,35 @@ bom:     if(Code(4)){
                case 0x0000FEFF:
                   Code = xx = 4;
                   break bom;
+               case 0x3C000000: // '<'000000
+                  bigEnd = false;
+               case 0x0000003C: // 000000'<'
+                  Code = 4;
+                  break bom;
+               case 0x3C003F00: // '<'00'?'00
+                  bigEnd = false;
+               case 0x003C003F: // 00'<'00'?'
+                  Code = 2;
+                  break bom;
+               case 0x3C3F786D: // '<?xm'
+                  Code = 1;
+                  break bom;
                case 0x0000FFFE:
                case 0xFEFF0000:
+               case 0x00003C00: // 0000'<'00
+               case 0x003C0000: // 00'<'0000
                   throw new XMLStreamException("Unsupported endianness");
+               case 0x4C6FA794: // EBCDIC
+                  throw new XMLStreamException("Unsupported encoding");
             }
             int msw = yy >>> 16;
             if(msw == 0xFEFF || msw == 0xFFFE){
                Code = xx = 2;
                if(msw == 0xFFFE)
                   bigEnd = false;
-               break bom;
-            }
-            if((yy >>> 8) == 0xEFBBBF){
+            }else if((yy >>> 8) == 0xEFBBBF){ // UTF-8
                xx = 3;
                Code = 1;
-               break bom;
-            }
-            switch(yy){
-               case 0x3C000000:
-                  bigEnd = false;
-               case 0x0000003C:
-                  Code = 4;
-                  break bom;
-               case 0x3C003F00:
-                  bigEnd = false;
-               case 0x003C003F:
-                  Code = 2;
-                  break bom;
-               case 0x3C3F786D:
-                  Code = 1;
-                  break bom;
-               case 0x00003C00:
-               case 0x003C0000:
-                  throw new XMLStreamException("Unsupported endianness");
-               case 0x4C6FA794: // EBCDIC
-                  throw new XMLStreamException("Unsupported encoding");
             }
          }
          inRowOff = offset = xx;
