@@ -12,144 +12,233 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamConstants;
 
-// Test the StAX parser using various byte order marks (BOM)
+// Test the StAX parser using various byte order marks (BOM) and encodings
 public final class test_StAX_BOM{
 
    private static final StringBuilder sb = new StringBuilder();
    private static XMLInputFactory factory = XMLInputFactory.newInstance();
-   private static final String encoding_pattern = "${ENCODING}";
+   private static final String enc_pat = "${ENCODING}";
 
    private static final String test_xml =
       "<?xml version=\"1.0\" encoding=\"${ENCODING}\"?>\n" +
-      "<websites>\n" +
-      "   <website url=\"https://www.celersms.com/\" ssl=\"true\">\n" +
-      "      <name>CelerSMS</name>\n" +
-      "      <category>Tools, Articles</category>\n" +
-      "      <since>2019</since>\n" +
-      "   </website>\n" +
-      "   <website url=\"https://ufmod.sourceforge.io/\" ssl=\"true\">\n" +
-      "      <name>uFMOD</name>\n" +
-      "      <category>Assembly, Open-Source</category>\n" +
-      "      <since>2005</since>\n" +
-      "   </website>\n" +
-      "   <website url=\"https://implib.sourceforge.io/\" ssl=\"true\">\n" +
-      "      <name>ImpLib SDK</name>\n" +
-      "      <category>Assembly, Open-Source</category>\n" +
-      "      <since>2006</since>\n" +
-      "   </website>\n" +
-      "</websites>";
+      "<books>\n" +
+      "   <book url=\"https://www.celersms.com/doc/XM_file_format.pdf\" isbn=\"978-958-53602-0-4\">\n" +
+      "      <title lang=\"EN\">The Unofficial XM File Format Specification</title>\n" +
+      "      <author>Kame&#241;ar, Vladimir</author>\n" +
+      "   </book>\n" +
+      "   <book url=\"https://www.celersms.com/doc/Demoscene.pdf\" isbn=\"978-958-53602-1-1\">\n" +
+      "      <title lang=\"ES\">Demoscene, el Arte Digital</title>\n" +
+      "      <author>Kame&#241;ar, Vladimir</author>\n" +
+      "   </book>\n" +
+      "   <book url=\"https://www.celersms.com/doc/La_Historia_de_un_Byte.pdf\" isbn=\"978-958-53602-2-8\">\n" +
+      "      <title lang=\"ES\">La Historia de un Byte</title>\n" +
+      "      <author>Galuscenko, Dmitry</author>\n" +
+      "   </book>\n" +
+      "   <book url=\"https://www.celersms.com/doc/La_Pregunta.pdf\" isbn=\"978-958-53602-3-5\">\n" +
+      "      <title lang=\"ES\">La Pregunta</title>\n" +
+      "      <author>Galuscenko, Dmitry</author>\n" +
+      "   </book>\n" +
+      "</books>";
 
    private static final String expected_result =
       "<?xml version='1.0' encoding='${ENCODING}' standalone='no'?>" +
-      "<:websites>" +
-      "\n   <:website :url='https://www.celersms.com/' :ssl='true'>" +
-      "\n      <:name>CelerSMS</:name>" +
-      "\n      <:category>Tools, Articles</:category>" +
-      "\n      <:since>2019</:since>" +
-      "\n   </:website>" +
-      "\n   <:website :url='https://ufmod.sourceforge.io/' :ssl='true'>" +
-      "\n      <:name>uFMOD</:name>" +
-      "\n      <:category>Assembly, Open-Source</:category>" +
-      "\n      <:since>2005</:since>" +
-      "\n   </:website>" +
-      "\n   <:website :url='https://implib.sourceforge.io/' :ssl='true'>" +
-      "\n      <:name>ImpLib SDK</:name>" +
-      "\n      <:category>Assembly, Open-Source</:category>" +
-      "\n      <:since>2006</:since>" +
-      "\n   </:website>" +
-      "\n</:websites>";
+      "<:books>" +
+      "\n   <:book :url='https://www.celersms.com/doc/XM_file_format.pdf' :isbn='978-958-53602-0-4'>" +
+      "\n      <:title :lang='EN'>The Unofficial XM File Format Specification</:title>" +
+      "\n      <:author>Kame\u00f1ar, Vladimir</:author>" +
+      "\n   </:book>" +
+      "\n   <:book :url='https://www.celersms.com/doc/Demoscene.pdf' :isbn='978-958-53602-1-1'>" +
+      "\n      <:title :lang='ES'>Demoscene, el Arte Digital</:title>" +
+      "\n      <:author>Kame\u00f1ar, Vladimir</:author>" +
+      "\n   </:book>" +
+      "\n   <:book :url='https://www.celersms.com/doc/La_Historia_de_un_Byte.pdf' :isbn='978-958-53602-2-8'>" +
+      "\n      <:title :lang='ES'>La Historia de un Byte</:title>" +
+      "\n      <:author>Galuscenko, Dmitry</:author>" +
+      "\n   </:book>" +
+      "\n   <:book :url='https://www.celersms.com/doc/La_Pregunta.pdf' :isbn='978-958-53602-3-5'>" +
+      "\n      <:title :lang='ES'>La Pregunta</:title>" +
+      "\n      <:author>Galuscenko, Dmitry</:author>" +
+      "\n   </:book>" +
+      "\n</:books>";
 
    public static final void main(String[] args) throws Exception{
       String enc;
-      boolean test_nok = false;
+      boolean nok = false;
       byte[] buf, bxml;
-      int blen;
+      int l;
 
-      // Test BOM FFFE0000 (UTF-32)
+      // BOM FFFE0000, UTF-32
       enc = "UTF-32"; // 4-byte, little endian
-      bxml = test_xml.replace(encoding_pattern, enc).getBytes();
-      blen = bxml.length;
-      buf = new byte[blen * 4 + 4];
+      bxml = test_xml.replace(enc_pat, enc).getBytes();
+      l = bxml.length;
+      buf = new byte[l * 4 + 4];
       buf[0] = (byte)0xFF;
       buf[1] = (byte)0xFE;
-      for(int i = 0, j = 4; i < blen; i++, j += 4)
+      for(int i = 0, j = 4; i < l; i++, j += 4)
          buf[j] = bxml[i];
       if(!doTest(buf, enc)){
-         test_nok = true;
-         System.out.println("BOM FFFE0000 (UTF-32) test: NOK");
+         nok = true;
+         System.out.println("BOM FFFE0000, UTF-32: NOK");
       }
 
-      // Test BOM FFFE0000 (UTF-32LE)
+      // BOM FFFE0000, UTF-32LE
       enc = "UTF-32LE"; // 4-byte, little endian
-      bxml = test_xml.replace(encoding_pattern, enc).getBytes();
-      blen = bxml.length;
-      buf = new byte[blen * 4 + 4];
+      bxml = test_xml.replace(enc_pat, enc).getBytes();
+      l = bxml.length;
+      buf = new byte[l * 4 + 4];
       buf[0] = (byte)0xFF;
       buf[1] = (byte)0xFE;
-      for(int i = 0, j = 4; i < blen; i++, j += 4)
+      for(int i = 0, j = 4; i < l; i++, j += 4)
          buf[j] = bxml[i];
       if(!doTest(buf, enc)){
-         test_nok = true;
-         System.out.println("BOM FFFE0000 (UTF-32LE) test: NOK");
+         nok = true;
+         System.out.println("BOM FFFE0000, UTF-32LE: NOK");
       }
 
-      // Test BOM 0000FEFF (UTF-32BE)
+      // BOM 0000FEFF, UTF-32BE
       enc = "UTF-32BE"; // 4-byte, big endian
-      bxml = test_xml.replace(encoding_pattern, enc).getBytes();
-      blen = bxml.length;
-      buf = new byte[blen * 4 + 4];
+      bxml = test_xml.replace(enc_pat, enc).getBytes();
+      l = bxml.length;
+      buf = new byte[l * 4 + 4];
       buf[2] = (byte)0xFE;
       buf[3] = (byte)0xFF;
-      for(int i = 0, j = 4; i < blen; i++, j += 4)
+      for(int i = 0, j = 4; i < l; i++, j += 4)
          buf[j + 3] = bxml[i];
       if(!doTest(buf, enc)){
-         test_nok = true;
-         System.out.println("BOM 0000FEFF (UTF-32BE) test: NOK");
+         nok = true;
+         System.out.println("BOM 0000FEFF, UTF-32BE: NOK");
       }
 
-      // Test BOM FFFE (UTF-16)
+      // BOM FFFE, UTF-16
       enc = "UTF-16"; // 2-byte, little endian
-      bxml = test_xml.replace(encoding_pattern, enc).getBytes();
-      blen = bxml.length;
-      buf = new byte[blen * 2 + 2];
+      bxml = test_xml.replace(enc_pat, enc).getBytes();
+      l = bxml.length;
+      buf = new byte[l * 2 + 2];
       buf[0] = (byte)0xFF;
       buf[1] = (byte)0xFE;
-      for(int i = 0, j = 2; i < blen; i++, j += 2)
+      for(int i = 0, j = 2; i < l; i++, j += 2)
          buf[j] = bxml[i];
       if(!doTest(buf, enc)){
-         test_nok = true;
-         System.out.println("BOM FFFE (UTF-16) test: NOK");
+         nok = true;
+         System.out.println("BOM FFFE, UTF-16: NOK");
       }
 
-      // Test BOM FFFE (UTF-16LE)
+      // BOM FFFE, UTF-16LE
       enc = "UTF-16LE"; // 2-byte, little endian
-      bxml = test_xml.replace(encoding_pattern, enc).getBytes();
-      blen = bxml.length;
-      buf = new byte[blen * 2 + 2];
+      bxml = test_xml.replace(enc_pat, enc).getBytes();
+      l = bxml.length;
+      buf = new byte[l * 2 + 2];
       buf[0] = (byte)0xFF;
       buf[1] = (byte)0xFE;
-      for(int i = 0, j = 2; i < blen; i++, j += 2)
+      for(int i = 0, j = 2; i < l; i++, j += 2)
          buf[j] = bxml[i];
       if(!doTest(buf, enc)){
-         test_nok = true;
-         System.out.println("BOM FFFE (UTF-16LE) test: NOK");
+         nok = true;
+         System.out.println("BOM FFFE, UTF-16LE: NOK");
       }
 
-      // Test BOM FEFF (UTF-16BE)
+      // BOM FEFF, UTF-16BE
       enc = "UTF-16BE"; // 2-byte, big endian
-      bxml = test_xml.replace(encoding_pattern, enc).getBytes();
-      blen = bxml.length;
-      buf = new byte[blen * 2 + 2];
+      bxml = test_xml.replace(enc_pat, enc).getBytes();
+      l = bxml.length;
+      buf = new byte[l * 2 + 2];
       buf[0] = (byte)0xFE;
       buf[1] = (byte)0xFF;
-      for(int i = 0, j = 2; i < blen; i++, j += 2)
+      for(int i = 0, j = 2; i < l; i++, j += 2)
          buf[j + 1] = bxml[i];
       if(!doTest(buf, enc)){
-         test_nok = true;
-         System.out.println("BOM FFFE (UTF-16BE) test: NOK");
+         nok = true;
+         System.out.println("BOM FFFE, UTF-16BE: NOK");
       }
 
-      if(test_nok)
+      // BOM EFBBBF, UTF-8
+      enc = "UTF-8"; // 1-byte
+      bxml = test_xml.replace(enc_pat, enc).getBytes();
+      l = bxml.length;
+      buf = new byte[l + 3];
+      buf[0] = (byte)0xEF;
+      buf[1] = (byte)0xBB;
+      buf[2] = (byte)0xBF;
+      for(int i = 0, j = 3; i < l;)
+         buf[j++] = bxml[i++];
+      if(!doTest(buf, enc)){
+         nok = true;
+         System.out.println("BOM EFBBBF, UTF-8: NOK");
+      }
+
+      // No BOM, UTF-32
+      enc = "UTF-32"; // 4-byte, little endian
+      bxml = test_xml.replace(enc_pat, enc).getBytes();
+      l = bxml.length;
+      buf = new byte[l * 4];
+      for(int i = 0, j = 0; i < l; i++, j += 4)
+         buf[j] = bxml[i];
+      if(!doTest(buf, enc)){
+         nok = true;
+         System.out.println("No BOM, UTF-32: NOK");
+      }
+
+      // No BOM, UTF-32LE
+      enc = "UTF-32LE"; // 4-byte, little endian
+      bxml = test_xml.replace(enc_pat, enc).getBytes();
+      l = bxml.length;
+      buf = new byte[l * 4];
+      for(int i = 0, j = 0; i < l; i++, j += 4)
+         buf[j] = bxml[i];
+      if(!doTest(buf, enc)){
+         nok = true;
+         System.out.println("No BOM, UTF-32LE: NOK");
+      }
+
+      // No BOM, UTF-32BE
+      enc = "UTF-32BE"; // 4-byte, big endian
+      bxml = test_xml.replace(enc_pat, enc).getBytes();
+      l = bxml.length;
+      buf = new byte[l * 4];
+      for(int i = 0, j = 3; i < l; i++, j += 4)
+         buf[j] = bxml[i];
+      if(!doTest(buf, enc)){
+         nok = true;
+         System.out.println("No BOM, UTF-32BE: NOK");
+      }
+
+      // No BOM, UTF-16
+      enc = "UTF-16"; // 2-byte, little endian
+      bxml = test_xml.replace(enc_pat, enc).getBytes();
+      l = bxml.length;
+      buf = new byte[l * 2];
+      for(int i = 0, j = 0; i < l; i++, j += 2)
+         buf[j] = bxml[i];
+      if(!doTest(buf, enc)){
+         nok = true;
+         System.out.println("No BOM, UTF-16: NOK");
+      }
+
+      // No BOM, UTF-16LE
+      enc = "UTF-16LE"; // 2-byte, little endian
+      bxml = test_xml.replace(enc_pat, enc).getBytes();
+      l = bxml.length;
+      buf = new byte[l * 2];
+      for(int i = 0, j = 0; i < l; i++, j += 2)
+         buf[j] = bxml[i];
+      if(!doTest(buf, enc)){
+         nok = true;
+         System.out.println("No BOM, UTF-16LE: NOK");
+      }
+
+      // No BOM, UTF-16BE
+      enc = "UTF-16BE"; // 2-byte, big endian
+      bxml = test_xml.replace(enc_pat, enc).getBytes();
+      l = bxml.length;
+      buf = new byte[l * 2];
+      for(int i = 0, j = 1; i < l; i++, j += 2)
+         buf[j] = bxml[i];
+      if(!doTest(buf, enc)){
+         nok = true;
+         System.out.println("No BOM, UTF-16BE: NOK");
+      }
+
+      if(nok)
          System.exit(-1);
    }
 
@@ -166,7 +255,7 @@ public final class test_StAX_BOM{
          ex.printStackTrace();
          return false;
       }
-      return sb.toString().equals(expected_result.replace(encoding_pattern, enc));
+      return sb.toString().equals(expected_result.replace(enc_pat, enc));
    }
 
    private static final void printEvent(XMLStreamReader reader){
