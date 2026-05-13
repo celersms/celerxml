@@ -6,6 +6,18 @@ parsers were benchmarked:
  * *FasterXML/aalto-xml* v1.3.3
  * *CelerXML* v1.0.2
 
+The following table summarizes the benchmark settings and environment:
+
+|                 |               |
+| ---------------:| :------------ |
+| Iterations      | 5.000         |
+| XML file size   | 1.361 Kb      |
+| XML lines count | 42.161        |
+| CPU             | i7 / 2.70 GHz |
+| RAM             | 8 Gb          |
+
+## Sample XML files for the benchmark
+
 Several sample XML files are included:
 
 | XML file                                       | Description                 |
@@ -18,13 +30,9 @@ Several sample XML files are included:
 
 This report was generated using the Mystic library as the input XML file.
 
-|                 |               |
-| ---------------:| :------------ |
-| Iterations      | 5.000         |
-| XML file size   | 1.361 Kb      |
-| XML lines count | 42.161        |
-| CPU             | i7 / 2.70 GHz |
-| RAM             | 8 Gb          |
+## Benchmark report
+
+The following charts represent the performance indicators measured when benchmarking the XML parsers.
 
 ```mermaid
 ---
