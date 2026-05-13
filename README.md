@@ -31,3 +31,7 @@ If you use Maven, you can include the CelerXML dependency by adding the followin
       <version>1.0.1</version>
     </dependency>
 ```
+
+# Benchmark
+
+According to the latest [benchmarks](benchmark), CelerXML features the highest XML parsing speed and lowest classloading time.
