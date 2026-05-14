@@ -3,9 +3,12 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
 // to permit persons to whom the Software is furnished to do so, subject to the condition that this
 // copyright shall be included in all copies or substantial portions of the Software:
-// Copyright Victor Celer, 2025
+// Copyright Victor Celer, 2025 - 2026
 
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.ByteArrayInputStream;
 import java.util.Iterator;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
@@ -32,9 +35,27 @@ public final class bench_StAX{
       System.out.println("Factory: " + factory.getClass().getName());
       System.out.printf("Classload time: %.2f us\n", (t1 - t0) / (float)1000);
 
+      // Read the XML file into memory to exclude I/O from the benchmark
+      File xml = new File(args[0]);
+      FileInputStream fis = new FileInputStream(xml);
+      byte[] buf = new byte[(int)xml.length()];
+      fis.read(buf);
+      fis.close();
+      ByteArrayInputStream bxml = new ByteArrayInputStream(buf);
+
       t0 = System.nanoTime();
-      for(int xx = 0; xx < count; xx++){
+/*      for(int xx = 0; xx < count; xx++){
          XMLStreamReader reader = factory.createXMLStreamReader(null, new FileReader(args[0]));
+         while(reader.hasNext()){
+            printEvent(reader);
+            reader.next();
+         }
+         reader.close();
+      } */
+
+      for(int xx = 0; xx < count; xx++){
+         bxml.reset();
+         XMLStreamReader reader = factory.createXMLStreamReader(bxml, null);
          while(reader.hasNext()){
             printEvent(reader);
             reader.next();
