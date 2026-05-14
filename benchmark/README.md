@@ -44,8 +44,8 @@ config:
 xychart
     title "StAX XML parsing time (in µs)"
     x-axis [Xerces2, FasterXML, CelerXML]
-    y-axis Time 10000 --> 13500
-    bar [13113, 12732, 12285]
+    y-axis Time 10000 --> 15000
+    bar [14958, 11083, 10468]
 ```
 
 ```mermaid
@@ -58,8 +58,8 @@ config:
 xychart
     title "SAX2 XML parsing time (in µs)"
     x-axis [Xerces2, FasterXML, CelerXML]
-    y-axis Time 7700 --> 7800
-    bar [7784, 7763, 7757]
+    y-axis Time 10000 --> 20000
+    bar [18879, 14577, 13677]
 ```
 
 ```mermaid
