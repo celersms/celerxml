@@ -11,7 +11,7 @@ REM Uncomment to benchmark the FasterXML parser
 REM SET J_XML_OVERRIDE=-Djavax.xml.parsers.SAXParserFactory=com.fasterxml.aalto.sax.SAXParserFactoryImpl -Djavax.xml.stream.XMLInputFactory=com.fasterxml.aalto.stax.InputFactoryImpl
 
 REM Uncomment to benchmark the CelerXML parser
-SET J_XML_OVERRIDE=-Djavax.xml.parsers.SAXParserFactory=com.celerxml.SAXParserFactoryImpl -Djavax.xml.stream.XMLInputFactory=com.celerxml.InputFactoryImpl
+REM SET J_XML_OVERRIDE=-Djavax.xml.parsers.SAXParserFactory=com.celerxml.SAXParserFactoryImpl -Djavax.xml.stream.XMLInputFactory=com.celerxml.InputFactoryImpl
 
 REM XML file to use for this benchmark
 SET XML_FILE=benchmark\files\large_xml_file.xml
