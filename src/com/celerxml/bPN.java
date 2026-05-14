@@ -78,8 +78,7 @@ final class bPN{
       }
       int xx;
       if(hashSh){
-         int[] old = hsh;
-         System.arraycopy(old, 0, hsh = new int[xx = old.length], 0, xx); // CoW
+         System.arraycopy(hsh, 0, hsh = new int[xx = hsh.length], 0, xx); // CoW
          hashSh = false;
       }
       if(rehash){
@@ -124,18 +123,16 @@ final class bPN{
       if(nams[ix] == null){
          hsh[ix] = hash << 8;
          if(namSh){
-            PN[] old = nams;
-            System.arraycopy(old, 0, nams = new PN[xx = old.length], 0, xx); // CoW
+            System.arraycopy(nams, 0, nams = new PN[xx = nams.length], 0, xx); // CoW
             namSh = false;
          }
          nams[ix] = symbol;
       }else{
          if(clLstSh){
-            Node[] old = clLst;
-            if(old == null)
+            if(clLst == null)
                clLst = new Node[32];
             else
-               System.arraycopy(old, 0, clLst = new Node[xx = old.length], 0, xx); // CoW
+               System.arraycopy(clLst, 0, clLst = new Node[xx = clLst.length], 0, xx); // CoW
             clLstSh = false;
          }
          ++clCnt;
@@ -152,9 +149,9 @@ final class bPN{
    }
 
    private final int Code(){
-      int bucket, xx, len = clEnd;
+      int bucket, xx, len;
       final Node[] buckets = clLst;
-      if(len <= 0xFE){
+      if((len = clEnd) <= 0xFE){
          if((bucket = clEnd++) >= (xx = buckets.length))
             System.arraycopy(buckets, 0, clLst = new Node[xx + xx], 0, xx);
          return bucket;
