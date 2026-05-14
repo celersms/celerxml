@@ -3,8 +3,11 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
 // to permit persons to whom the Software is furnished to do so, subject to the condition that this
 // copyright shall be included in all copies or substantial portions of the Software:
-// Copyright Victor Celer, 2025
+// Copyright Victor Celer, 2025 - 2026
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.ByteArrayInputStream;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.Attributes;
@@ -33,9 +36,24 @@ public final class bench_SAX extends DefaultHandler{
       SAXParser saxParser = factory.newSAXParser();
       bench_SAX testHandler = new bench_SAX();
 
+      // Read the XML file into memory to exclude I/O from the benchmark
+      File xml = new File(args[0]);
+      FileInputStream fis = new FileInputStream(xml);
+      byte[] buf = new byte[(int)xml.length()];
+      fis.read(buf);
+      fis.close();
+      ByteArrayInputStream bxml = new ByteArrayInputStream(buf);
+
       t0 = System.nanoTime();
+/*      for(int xx = 0; xx < count; xx++){
+         sb.setLength(0);
+         saxParser.parse(args[0], testHandler);
+      } */
+
       for(int xx = 0; xx < count; xx++){
          sb.setLength(0);
+         bxml.reset();
+         saxParser.parse(bxml, testHandler);
          saxParser.parse(args[0], testHandler);
       }
 
