@@ -34,12 +34,12 @@ final class bPN{
    }
 
    final PN find(int hash, int q1, int q2){
-      int ix = hash & hashMsk, val = hsh[ix];
+      int ix, val;
       PN pname;
-      if(((val >> 8 ^ hash) << 8) == 0 && ((pname = nams[ix]) == null || pname.equals(q1, q2)))
+      if((((val = hsh[ix = hash & hashMsk]) >> 8 ^ hash) << 8) == 0 && ((pname = nams[ix]) == null || pname.equals(q1, q2)))
          return pname;
-      if((val &= 0xFF) != 0)
-         for(Node curr = clLst[--val]; curr != null; curr = curr.nxt)
+      if((byte)val != 0)
+         for(Node curr = clLst[(byte)val - 1]; curr != null; curr = curr.nxt)
             if((pname = curr.Code).eq(hash, q1, q2))
                return pname;
       return null;
@@ -48,12 +48,12 @@ final class bPN{
    final PN find(int hash, int[] quads, int qlen){
       //if(qlen < 3)
       //   return find(hash, quads[0], qlen < 2 ? 0 : quads[1]);
-      int ix = hash & hashMsk, val = hsh[ix];
+      int ix, val;
       PN pname;
-      if(((val >> 8 ^ hash) << 8) == 0 && ((pname = nams[ix]) == null || pname.equals(quads, qlen)))
+      if((((val = hsh[ix = hash & hashMsk]) >> 8 ^ hash) << 8) == 0 && ((pname = nams[ix]) == null || pname.equals(quads, qlen)))
          return pname;
-      if((val &= 0xFF) != 0)
-         for(Node curr = clLst[--val]; curr != null; curr = curr.nxt)
+      if((byte)val != 0)
+         for(Node curr = clLst[(byte)val - 1]; curr != null; curr = curr.nxt)
             if((pname = curr.Code).eq(hash, quads, qlen))
                return pname;
       return null;
@@ -72,11 +72,11 @@ final class bPN{
          }
          symbol = qlen == 3 ? new PN3(ss, pfx, ln, hash, quads) : qlen == 2 ? new PN2(ss, pfx, ln, hash, quads[0], quads[1]) : new PN1(ss, pfx, ln, hash, quads[0]);
       }else{
-         final int[] buf = new int[qlen];
-         System.arraycopy(quads, 0, buf, 0, qlen);
+         final int[] buf;
+         System.arraycopy(quads, 0, buf = new int[qlen], 0, qlen);
          symbol = clnIx < 0 ? new PNn(ss = ss.intern(), null, ss, hash, buf, qlen) : new PNn(ss, ss.substring(0, clnIx).intern(), ss.substring(clnIx + 1).intern(), hash, buf, qlen);
       }
-      int xx;
+      int xx, ix, hh;
       if(hashSh){
          System.arraycopy(hsh, 0, hsh = new int[xx = hsh.length], 0, xx); // CoW
          hashSh = false;
@@ -92,8 +92,7 @@ final class bPN{
          PN symb;
          for(int i = 0; i < xx; ++i)
             if((symb = oldNames[i]) != null){
-               int hh = symb.hashCode(), ix = hh & hashMsk;
-               nams[ix] = symb;
+               nams[ix = (hh = symb.hashCode()) & hashMsk] = symb;
                hsh[ix] = hh << 8;
             }
          if((xx = clEnd) != 0){
@@ -103,24 +102,22 @@ final class bPN{
             clLst = new Node[oldNodes.length];
             for(int i = 0; i < xx; ++i)
                for(Node curr = oldNodes[i]; curr != null; curr = curr.nxt){
-                  int hh = (symb = curr.Code).hashCode(), ix = hh & hashMsk, val = hsh[ix];
+                  int val = hsh[ix = (hh = (symb = curr.Code).hashCode()) & hashMsk];
                   if(nams[ix] == null){
                      hsh[ix] = hh << 8;
                      nams[ix] = symb;
                   }else{
                      ++clCnt;
-                     int bucket = val & 0xFF;
-                     if(bucket == 0)
-                        hsh[ix] = val & ~0xFF | ((bucket = Code()) + 1);
+                     if((hh = (byte)val) == 0)
+                        hsh[ix] = val | ((hh = Code()) + 1);
                      else
-                        --bucket;
-                     clLst[bucket] = new Node(symb, clLst[bucket]);
+                        --hh;
+                     clLst[hh] = new Node(symb, clLst[hh]);
                   }
                }
          }
       }
-      int ix = hash & hashMsk;
-      if(nams[ix] == null){
+      if(nams[ix = hash & hashMsk] == null){
          hsh[ix] = hash << 8;
          if(namSh){
             System.arraycopy(nams, 0, nams = new PN[xx = nams.length], 0, xx); // CoW
@@ -136,12 +133,11 @@ final class bPN{
             clLstSh = false;
          }
          ++clCnt;
-         int entryValue = hsh[ix], bucket = entryValue & 0xFF;
-         if(bucket == 0)
-            hsh[ix] = entryValue & ~0xFF | ((bucket = Code()) + 1);
+         if((hh = (byte)(xx = hsh[ix])) == 0)
+            hsh[ix] = xx | ((hh = Code()) + 1);
          else
-            --bucket;
-         clLst[bucket] = new Node(symbol, clLst[bucket]);
+            --hh;
+         clLst[hh] = new Node(symbol, clLst[hh]);
       }
       if(++Code > (ix = hsh.length) >> 1 && (clCnt >= (xx = ix >> 2) || Code > ix - xx))
          rehash = true;
