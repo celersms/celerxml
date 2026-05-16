@@ -150,7 +150,7 @@ bom:     if(Code(4)){
    }
 
    final int afterWs() throws IOException, XMLStreamException{
-      int c, count = 0;
+      int c;
       if(Code > 1)
          while(true){
             if((c = Code()) > 0x20){
@@ -163,7 +163,6 @@ bom:     if(Code(4)){
                ++inRow;
                inRowOff = offset;
             }
-            ++count;
          }
       else
          while(true){
@@ -179,7 +178,6 @@ bom:     if(Code(4)){
                inRowOff = offset;
             }else if(b == 0)
                thNull();
-            ++count;
          }
       return Code > 1 ? Code() : (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF;
    }
