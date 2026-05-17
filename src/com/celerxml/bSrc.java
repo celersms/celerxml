@@ -150,52 +150,41 @@ bom:     if(Code(4)){
    }
 
    final int afterWs() throws IOException, XMLStreamException{
-      int c;
-      if(Code > 1)
-         while(true){
-            if((c = Code()) > 0x20){
-               offset -= Code;
-               break;
-            }
+      if(Code > 1){
+         int c;
+         while((c = Code()) <= 0x20)
             if(c == '\r' || c == '\n'){
                if(c == '\r' && Code() != '\n')
                   offset -= Code;
                ++inRow;
                inRowOff = offset;
             }
-         }
-      else
-         while(true){
-            byte b = offset < inLen ? bBuf[offset++] : nxtB();
-            if((b & 0xFF) > 0x20){
+         offset -= Code;
+         return Code();
+      }
+      byte b;
+      while(((b = offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF) <= 0x20){
+         if(b == (byte)'\r' || b == (byte)'\n'){
+            if(b == (byte)'\r' && (offset < inLen ? bBuf[offset++] : nxtB()) != (byte)'\n')
                --offset;
-               break;
-            }
-            if(b == (byte)'\r' || b == (byte)'\n'){
-               if(b == (byte)'\r' && (offset < inLen ? bBuf[offset++] : nxtB()) != (byte)'\n')
-                  --offset;
-               ++inRow;
-               inRowOff = offset;
-            }else if(b == 0)
-               thNull();
-         }
-      return Code > 1 ? Code() : (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF;
+            ++inRow;
+            inRowOff = offset;
+         }else if(b == 0)
+            thNull();
+      }
+      return (offset <= inLen ? bBuf[offset - 1] : nxtB()) & 0xFF;
    }
 
    final int isKW(String kw, int len) throws IOException, XMLStreamException{
-      int c;
-      if(Code > 1){
-         for(int ptr = 1; ptr < len; ++ptr)
-            if((c = Code()) != kw.charAt(ptr))
-               return c;
-         return 0;
-      }
-      for(int ptr = 1; ptr < len; ++ptr){
-         byte b = offset < inLen ? bBuf[offset++] : nxtB();
-         if(b == 0)
+      int c, i = 1;
+      final boolean mb = Code > 1;
+      while(i < len){
+         if(mb)
+            c = Code();
+         else if((c = (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF) == 0)
             thNull();
-         if((b & 0xFF) != kw.charAt(ptr))
-            return b & 0xFF;
+         if(c != kw.charAt(i++))
+            return c;
       }
       return 0;
    }
@@ -205,7 +194,7 @@ bom:     if(Code(4)){
       final boolean mb = Code > 1;
       while(i < len){
          if(mb){
-            if((c = Code()) ==  '\r' || c == '\n'){
+            if((c = Code()) == '\r' || c == '\n'){
                if(c == '\r' && Code() != '\n')
                   offset -= Code;
                ++inRow;
@@ -213,17 +202,15 @@ bom:     if(Code(4)){
                c = '\n';
             }
          }else{
-            byte b = offset < inLen ? bBuf[offset++] : nxtB();
-            if(b == 0)
+            if((c = (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF) == 0)
                thNull();
-            if(b == (byte)'\r' || b == (byte)'\n'){
-               if(b == (byte)'\r' && (offset < inLen ? bBuf[offset++] : nxtB()) != (byte)'\n')
+            if(c == '\r' || c == '\n'){
+               if(c == '\r' && (offset < inLen ? bBuf[offset++] : nxtB()) != (byte)'\n')
                   --offset;
                ++inRow;
                inRowOff = offset;
-               b = (byte)'\n';
+               c = '\n';
             }
-            c = b & 0xFF;
          }
          if(c == quote)
             return i;
@@ -255,13 +242,12 @@ bom:     if(Code(4)){
    }
 
    private final int Code() throws IOException, XMLStreamException{
-      byte b1 = offset < inLen ? bBuf[offset++] : nxtB(), b2 = offset < inLen ? bBuf[offset++] : nxtB();
-      int c;
+      int c, b1 = (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF, b2 = (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF;
       if(Code == 2)
-         c = bigEnd ? (b1 & 0xFF) << 8 | b2 & 0xFF : (b2 & 0xFF) << 8 | b1 & 0xFF;
+         c = bigEnd ? b1 << 8 | b2 : b2 << 8 | b1;
       else{
-         byte b3 = offset < inLen ? bBuf[offset++] : nxtB(), b4 = offset < inLen ? bBuf[offset++] : nxtB();
-         c = bigEnd ? b1 << 24 | (b2 & 0xFF) << 16 | (b3 & 0xFF) << 8 | b4 & 0xFF : b4 << 24 | (b3 & 0xFF) << 16 | (b2 & 0xFF) << 8 | b1 & 0xFF;
+         int b3 = (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF, b4 = (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF;
+         c = bigEnd ? b1 << 24 | b2 << 16 | b3 << 8 | b4 : b4 | b3 << 16 | b2 << 8 | b1;
       }
       if(c == 0)
          thNull();
