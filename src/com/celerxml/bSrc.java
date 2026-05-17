@@ -17,7 +17,7 @@ final class bSrc extends InSrc{
    private final InputStream is;
    private final byte[] bBuf;
    private int Code;
-   private boolean bigEnd;
+   private boolean big;
 
    bSrc(InputFactoryImpl impl, InputStream is){
       super(impl);
@@ -29,22 +29,22 @@ final class bSrc extends InSrc{
       try{
          final byte[] lbuf = bBuf;
          String normEnc = null;
-         bigEnd = true;
+         big = true;
          int yy, xx = 0;
 bom:     if(Code(4)){
             switch(yy = lbuf[0] << 24 | (lbuf[1] & 0xFF) << 16 | (lbuf[2] & 0xFF) << 8 | lbuf[3] & 0xFF){
                case 0xFFFE0000:
-                  bigEnd = false;
+                  big = false;
                case 0x0000FEFF:
                   Code = xx = 4;
                   break bom;
                case 0x3C000000: // '<'000000
-                  bigEnd = false;
+                  big = false;
                case 0x0000003C: // 000000'<'
                   Code = 4;
                   break bom;
                case 0x3C003F00: // '<'00'?'00
-                  bigEnd = false;
+                  big = false;
                case 0x003C003F: // 00'<'00'?'
                   Code = 2;
                   break bom;
@@ -63,7 +63,7 @@ bom:     if(Code(4)){
             if(msw == 0xFEFF || msw == 0xFFFE){
                Code = xx = 2;
                if(msw == 0xFFFE)
-                  bigEnd = false;
+                  big = false;
             }else if((yy >>> 8) == 0xEFBBBF){ // UTF-8
                xx = 3;
                Code = 1;
@@ -90,7 +90,7 @@ bom:     if(Code(4)){
                normEnc = Code(normEnc);
                if(ff){
                   yy = Code;
-                  ff = bigEnd;
+                  ff = big;
                   if(normEnc == UTF8 || normEnc == LAT1 || normEnc == ASCII)
                      yy = 1;
                   else if(normEnc == UTF16)
@@ -110,7 +110,7 @@ bom:     if(Code(4)){
                      yy = 4;
                      ff = true;
                   }
-                  if(yy != Code || ff != bigEnd)
+                  if(yy != Code || ff != big)
                      throw new XMLStreamException(new StrB(normEnc.length() + 90).a("Declared '").a(normEnc).a(ff ? "' is big" : "' is little").a(" endian, uses ").a(
                         (char)('0' + yy)).a(" bytes/char; differs from the actual ordering/encoding").toString(), loc());
                }
@@ -118,9 +118,9 @@ bom:     if(Code(4)){
          }
          if(normEnc == null)
             if(Code == 2)
-               normEnc = bigEnd ? UTF16B : UTF16L;
+               normEnc = big ? UTF16B : UTF16L;
             else if(Code == 4)
-               normEnc = bigEnd ? UTF32B : UTF32L;
+               normEnc = big ? UTF32B : UTF32L;
             else
                normEnc = UTF8;
          impl.enc = normEnc;
@@ -129,10 +129,10 @@ bom:     if(Code(4)){
             return new Utf8Scanner(impl, is, lbuf, offset, inLen);
          Reader rdr;
          if(normEnc.startsWith(UTF32))
-            rdr = new Utf32Reader(impl, is, lbuf, offset, inLen, bigEnd);
+            rdr = new Utf32Reader(impl, is, lbuf, offset, inLen, big);
          else{
             if(normEnc == UTF16)
-               normEnc = bigEnd ? UTF16B : UTF16L;
+               normEnc = big ? UTF16B : UTF16L;
             rdr = new java.io.InputStreamReader(offset < inLen ? new Wrap(impl, is, lbuf, offset, inLen) : is, normEnc);
          }
          return new ReaderScanner(impl, rdr, impl.getCB3(), 0, 0);
@@ -225,7 +225,7 @@ bom:     if(Code(4)){
       proc += inLen;
       inRowOff -= inLen;
       offset = 0;
-      if((inLen = is == null ? -1 : is.read(bBuf, 0, 4096)) < 1)
+      if(is == null || (inLen = is.read(bBuf, 0, 4096)) < 1)
          throw new XMLStreamException("Unexpected EOI", loc());
       return bBuf[offset++];
    }
@@ -233,7 +233,7 @@ bom:     if(Code(4)){
    private final boolean Code(int min) throws IOException{
       int count, got = inLen - offset;
       while(got < min){
-         if((count = is == null ? -1 : is.read(bBuf, inLen, 4096 - inLen)) < 1)
+         if(is == null || (count = is.read(bBuf, inLen, 4096 - inLen)) < 1)
             return false;
          inLen += count;
          got += count;
@@ -242,15 +242,15 @@ bom:     if(Code(4)){
    }
 
    private final int Code() throws IOException, XMLStreamException{
-      int c, b1 = (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF, b2 = (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF;
+      int b1 = (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF, b2 = (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF;
       if(Code == 2)
-         c = bigEnd ? b1 << 8 | b2 : b2 << 8 | b1;
+         b1 = big ? b1 << 8 | b2 : b2 << 8 | b1;
       else{
          int b3 = (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF, b4 = (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF;
-         c = bigEnd ? b1 << 24 | b2 << 16 | b3 << 8 | b4 : b4 | b3 << 16 | b2 << 8 | b1;
+         b1 = big ? b1 << 24 | b2 << 16 | b3 << 8 | b4 : b4 << 24 | b3 << 16 | b2 << 8 | b1;
       }
-      if(c == 0)
+      if(b1 == 0)
          thNull();
-      return c;
+      return b1;
    }
 }
