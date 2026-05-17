@@ -18,11 +18,9 @@ final class Chr{
       byte[] bchars = Code = new byte[256];
       for(int i = 0x41; i <= 0x5A; ++i)
          bchars[i] = bchars[i | 0x20] = 1; // PUBID_OK
-      for(int i = 0x39; i <= 0x39; ++i)
+      for(int i = 0x27; i <= 0x3B; ++i)
          bchars[i] = 1; // PUBID_OK
-      bchars[0x0A] = bchars[0x0D] = bchars[0x20] = bchars[0x21] = bchars[0x23] = bchars[0x24] = bchars[0x25] = bchars[0x27] =
-                     bchars[0x28] = bchars[0x29] = bchars[0x2A] = bchars[0x2B] = bchars[0x2C] = bchars[0x2D] = bchars[0x2E] =
-                     bchars[0x2F] = bchars[0x3A] = bchars[0x3B] = bchars[0x3D] = bchars[0x3F] = bchars[0x40] = bchars[0x5F] = 1; // PUBID_OK
+      bchars[0x0A] = bchars[0x0D] = bchars[0x20] = bchars[0x21] = bchars[0x23] = bchars[0x24] = bchars[0x25] = bchars[0x3D] = bchars[0x3F] = bchars[0x40] = bchars[0x5F] = 1; // PUBID_OK
       bchars = null;
       Chr chr = sUtf8 = new Chr();
       bchars = chr.OTH;
