@@ -10,8 +10,8 @@ final class Chr{
 
    final byte[] TXT, ATT, NAM, DTD, OTH;
    static final byte[] Code;
-   private static final int[] sXml10S, sXml10;
-   private static Chr sAscii, sLat1;
+   private static final int[] s10S, s10;
+   private static Chr sAscii, sLat;
    static final Chr sUtf8;
 
    static{
@@ -21,18 +21,16 @@ final class Chr{
       for(int i = 0x27; i <= 0x3B; ++i)
          bchars[i] = 1; // PUBID_OK
       bchars[0x0A] = bchars[0x0D] = bchars[0x20] = bchars[0x21] = bchars[0x23] = bchars[0x24] = bchars[0x25] = bchars[0x3D] = bchars[0x3F] = bchars[0x40] = bchars[0x5F] = 1; // PUBID_OK
-      bchars = null;
       Chr chr = sUtf8 = new Chr();
-      bchars = chr.OTH;
       do8bTxt(chr.TXT);
       Code(chr.TXT);
-      do8bAttr(chr.ATT);
+      doAttr(chr.ATT);
       Code(chr.ATT);
-      do8bName(chr.NAM);
+      doName(chr.NAM);
       Code(chr.NAM);
-      do8bDtd(chr.DTD);
+      doDtd(chr.DTD);
       Code(chr.DTD);
-      do8bTxt(bchars);
+      do8bTxt(bchars = chr.OTH);
       Code(bchars);
       bchars[0x26] = bchars[0x3C] = 0;
       bchars[0x2D] = 13; // HYPHEN
@@ -40,7 +38,7 @@ final class Chr{
       bchars[0x3F] = 12; // QMARK
       bchars[0x5D] = 11; // RBRACKET
 
-      int[] chars = sXml10S = new int[394];
+      int[] chars = s10S = new int[394];
       chars[2]   = 0x87FFFFFE; // 0x41 - 0x5A, 0x5F
       chars[3]   = 0x07FFFFFE; // 0x61 - 0x7A
       chars[6]   = chars[7]   = 0xFF7FFFFF; // 0xC0 - 0xD6, 0xD8 - 0xF6 | 0xF8 - 0xFF
@@ -156,8 +154,8 @@ final class Chr{
       chars[392] = 0xFFFFFFE0; // 0x3105 - 0x312C
       chars[393] = 0x00001FFF;
 
-      chars = sXml10 = new int[394];
-      System.arraycopy(sXml10S, 0, chars, 0, 394);
+      chars = s10 = new int[394];
+      System.arraycopy(s10S, 0, chars, 0, 394);
       chars[1]   = 0x03FF6000; // 0x2D, 0x2E, 0x30 - 0x39
       chars[5]   = 0x00800000; // 0xB7
       chars[22]  = 0x00030003; // (0x2BB - 0x2C1) 0x2D0, 0x2D1
@@ -236,30 +234,26 @@ final class Chr{
 
    static final Chr getAscii(){
       if(sAscii == null){
-         Chr chr = new Chr();
-         doLat1(chr.TXT, chr.ATT, chr.NAM, chr.DTD, chr.OTH);
-         doAscii(chr.TXT);
-         doAscii(chr.ATT);
-         doAscii(chr.NAM);
-         doAscii(chr.DTD);
-         doAscii(chr.OTH);
-         sAscii = chr;
+         Chr chr = sAscii = new Chr();
+         byte[] bTXT, bATT, bNAM, bDTD, bOTH;
+         doLat(bTXT = chr.TXT, bATT = chr.ATT, bNAM = chr.NAM, bDTD = chr.DTD, bOTH = chr.OTH);
+         for(int i = 128; i <= 255; i++)
+            bTXT[i] = bATT[i] = bNAM[i] = bDTD[i] = bOTH[i] = 1; // INVALID
       }
       return sAscii;
    }
 
    static final Chr getLat1(){
-      if(sLat1 == null){
-         Chr chr = new Chr();
-         doLat1(chr.TXT, chr.ATT, chr.NAM, chr.DTD, chr.OTH);
-         sLat1 = chr;
+      if(sLat == null){
+         Chr chr = sLat = new Chr();
+         doLat(chr.TXT, chr.ATT, chr.NAM, chr.DTD, chr.OTH);
       }
-      return sLat1;
+      return sLat;
    }
 
-   static final boolean is10NS(int c){ return c > 0x312C ? (c < 0xAC00 ? c >= 0x4E00 && c <= 0x9FA5 : c <= 0xD7A3) : (sXml10S[c >> 5] & 1 << (c & 31)) != 0; }
+   static final boolean is10NS(int c){ return c > 0x312C ? (c < 0xAC00 ? c >= 0x4E00 && c <= 0x9FA5 : c <= 0xD7A3) : (s10S[c >> 5] & 1 << (c & 31)) != 0; }
 
-   static final boolean is10N(int c){ return c > 0x312C ? (c < 0xAC00 ? c >= 0x4E00 && c <= 0x9FA5 : c <= 0xD7A3) : (sXml10[c >> 5] & 1 << (c & 31)) != 0; }
+   static final boolean is10N(int c){ return c > 0x312C ? (c < 0xAC00 ? c >= 0x4E00 && c <= 0x9FA5 : c <= 0xD7A3) : (s10[c >> 5] & 1 << (c & 31)) != 0; }
 
    private static final void Code(byte[] arr){
       for(int c = 128; c < 256; ++c){
@@ -274,20 +268,15 @@ final class Chr{
       }
    }
 
-   private static final void doAscii(byte[] arr){
-      for(int i = 128; i <= 255; ++i)
-         arr[i] = 1; // INVALID
-   }
-
-   private static final void doLat1(byte[] txt, byte[] attr, byte[] name, byte[] dtd, byte[] other){
+   private static final void doLat(byte[] txt, byte[] attr, byte[] name, byte[] dtd, byte[] other){
       do8bTxt(txt);
-      do8bAttr(attr);
-      do8bName(name);
+      doAttr(attr);
+      doName(name);
       for(int i = 0xC0; i <= 0xFF; ++i)
-         if(i != 0xD7 && i != 0xF7)
+         if((i & 0xDF) != 0xD7)
             name[i] = 3; // NAME_ANY
       name[0xB7] = 2; // NAME_NONFIRST
-      do8bDtd(dtd);
+      doDtd(dtd);
       do8bTxt(other);
       other['&'] = other['<'] = 0;
       other[']'] = 11; // RBRACKET
@@ -295,7 +284,7 @@ final class Chr{
       other['-'] = 13; // HYPHEN
    }
 
-   private static final void doCommTxt(byte[] arr){
+   private static final void doTxt(byte[] arr){
       for(int i = 0; i < 32; ++i)
          arr[i] = 1; // INVALID
       arr['\t'] = 0;
@@ -304,7 +293,7 @@ final class Chr{
       arr['<'] = 9; // LT
    }
 
-   private static final void do8bName(byte[] arr){
+   private static final void doName(byte[] arr){
       for(int i = 0x41; i <= 0x5A; ++i)
          arr[i] = arr[i | 0x20] = 3; // NAME_ANY
       arr['_'] = 3; // NAME_ANY
@@ -315,20 +304,20 @@ final class Chr{
    }
 
    private static final void do8bTxt(byte[] arr){
-      doCommTxt(arr);
+      doTxt(arr);
       arr['&'] = 10; // AMP
       arr[']'] = 11; // RBRACKET
    }
 
-   private static final void do8bAttr(byte[] arr){
-      doCommTxt(arr);
+   private static final void doAttr(byte[] arr){
+      doTxt(arr);
       arr['\t'] = 8; // WS_TAB
       arr['&'] = 10; // AMP
       arr['\''] = arr['"'] = 14; // ATTR_QUOTE
    }
 
-   private static final void do8bDtd(byte[] arr){
-      doCommTxt(arr);
+   private static final void doDtd(byte[] arr){
+      doTxt(arr);
       arr['\''] = arr['"'] = 8; // DTD_QUOTE
       arr['>'] = 10; // DTD_GT
       arr[']'] = 11; // RBRACKET

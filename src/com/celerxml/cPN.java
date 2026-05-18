@@ -10,13 +10,13 @@ final class cPN{
 
    private PN[] syms;
    private Node[] nodes;
-   private int Code, sz, idxMsk;
+   private int Code, sz, msk;
    boolean dirty;
 
    cPN(){
       syms = new PN[64];
       nodes = new Node[32];
-      idxMsk = 63;
+      msk = 63;
       Code = 48;
       dirty = true;
    }
@@ -26,15 +26,15 @@ final class cPN{
       nodes = parent.nodes;
       sz = parent.sz;
       Code = parent.Code;
-      idxMsk = parent.idxMsk;
+      msk = parent.msk;
    }
 
    final PN find(char[] buff, int len, int hash){
-      int index = hash & idxMsk;
-      PN sym = syms[index];
-      if(sym != null && sym.Code(buff, len, hash))
+      int idx;
+      PN sym;
+      if((sym = syms[idx = hash & msk]) != null && sym.Code(buff, len, hash))
          return sym;
-      Node b = nodes[index >> 1];
+      Node b = nodes[idx >> 1];
       while(b != null){
          if((sym = b.Code).Code(buff, len, hash))
             return sym;
@@ -44,60 +44,51 @@ final class cPN{
    }
 
    final PN add(char[] buff, int len, int hash){
-      int index = hash & idxMsk, size;
+      int idx, size;
       boolean primary = false;
-      if(syms[index] == null)
+      if(syms[idx = hash & msk] == null)
          primary = true;
       else if(sz >= Code){
-         size = syms.length;
-         int idx, newSize = size + size;
          PN[] oldSyms = syms;
+         int newSize = (size = oldSyms.length) + size;
          Node[] oldNodes = nodes;
          syms = new PN[newSize];
          nodes = new Node[size];
-         idxMsk = newSize - 1;
+         msk = newSize - 1;
          Code += Code;
          for(int i = 0; i < size; ++i){
             PN symbol = oldSyms[i];
             if(symbol != null)
-               if(syms[idx = symbol.hashCode() & idxMsk] == null)
+               if(syms[idx = symbol.hashCode() & msk] == null)
                   syms[idx] = symbol;
-               else{
-                  int bix = idx >> 1;
-                  nodes[bix] = new Node(symbol, nodes[bix]);
-               }
+               else
+                  nodes[idx >>= 1] = new Node(symbol, nodes[idx]);
          }
          size >>= 1;
          for(int i = 0; i < size; ++i){
             Node b = oldNodes[i];
             while(b != null){
                PN symbol = b.Code;
-               if(syms[idx = symbol.hashCode() & idxMsk] == null)
+               if(syms[idx = symbol.hashCode() & msk] == null)
                   syms[idx] = symbol;
-               else{
-                  int bix = idx >> 1;
-                  nodes[bix] = new Node(symbol, nodes[bix]);
-               }
+               else
+                  nodes[idx >>= 1] = new Node(symbol, nodes[idx]);
                b = b.nxt;
             }
          }
-         primary = syms[index = hash & idxMsk] == null;
+         primary = syms[idx = hash & msk] == null;
       }
       if(!dirty){
-         PN[] oldSyms = syms;
-         System.arraycopy(oldSyms, 0, syms = new PN[size = oldSyms.length], 0, size); // CoW
-         Node[] oldNodes = nodes;
-         System.arraycopy(oldNodes, 0, nodes = new Node[size = oldNodes.length], 0, size); // CoW
+         System.arraycopy(syms, 0, syms = new PN[size = syms.length], 0, size); // CoW
+         System.arraycopy(nodes, 0, nodes = new Node[size = nodes.length], 0, size); // CoW
          dirty = true;
       }
       ++sz;
       PN pname = PN.Code(new String(buff, 0, len).intern(), hash);
       if(primary)
-         syms[index] = pname;
-      else{
-         int bix = index >> 1;
-         nodes[bix] = new Node(pname, nodes[bix]);
-      }
+         syms[idx] = pname;
+      else
+         nodes[idx >>= 1] = new Node(pname, nodes[idx]);
       return pname;
    }
 
@@ -107,7 +98,7 @@ final class cPN{
          nodes = child.nodes;
          sz = child.sz;
          Code = child.Code;
-         idxMsk = child.idxMsk;
+         msk = child.msk;
          child.dirty = dirty = false;
       }
    }
