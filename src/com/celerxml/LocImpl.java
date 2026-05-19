@@ -20,18 +20,13 @@ final class LocImpl implements javax.xml.stream.Location{
       this.row = row + 1;
    }
 
-   @Override
    public final int getLineNumber(){ return row; }
 
-   @Override
    public final int getColumnNumber(){ return col; }
 
-   @Override
    public final int getCharacterOffset(){ return off; }
 
-   @Override
    public final String getPublicId(){ return Code; }
 
-   @Override
    public final String getSystemId(){ return sys; }
 }

@@ -39,26 +39,22 @@ class InSrc{
    }
 
    final void readDecl() throws IOException, XMLStreamException{
-      int val = 0, len, ch = afterWs();
-      if(ch != 'v')
-         thUnxp(ch, "; expected keyword 'version'");
+      int len, ch;
+      if((ch = afterWs()) != 'v')
+         thUnxp(ch, "; expected 'version'");
       if((ch = isKW("version", 7)) != 0)
          thUnxp(ch, "version");
-      if((len = qVal(mKW, handleEq())) == 3 && mKW[0] == '1' && mKW[1] == '.')
-         if((ch = mKW[2]) == '0')
-            val = 0x100; // V10
-         else if(ch == '1')
-            val = 0x110; // V11
-      if(val == 0)
+      if((len = qVal(mKW, handleEq())) == 3 && mKW[0] == '1' && mKW[1] == '.' && ((ch = mKW[2]) == '0' || ch == '1'))
+         mXmlVer = ch; // V10 | V11
+      else
          thPsAttr("version", V10, V11);
-      mXmlVer = val;
-      if((ch = getWsOrQMark()) == 'e'){
+      if((ch = wsOrQ()) == 'e'){
          if((ch = isKW("encoding", 8)) != 0)
             thUnxp(ch, "encoding");
          if((len = qVal(mKW, handleEq())) == 0)
             thPsAttr("encoding", null, null);
          fnd = len < 0 ? new String(mKW) : new String(mKW, 0, len);
-         ch = getWsOrQMark();
+         ch = wsOrQ();
       }
       if(ch == 's'){
          if((ch = isKW("standalone", 10)) != 0)
@@ -69,7 +65,7 @@ class InSrc{
             stand = YES;
          else
             thPsAttr("standalone", YES, NO);
-         ch = getWsOrQMark();
+         ch = wsOrQ();
       }
       if(ch != '?' || (ch = nxt()) != '>')
          thUnxp(ch, ", expected '?>'");
@@ -84,12 +80,12 @@ class InSrc{
       return ch;
    }
 
-   private final int getWsOrQMark() throws IOException, XMLStreamException{
+   private final int wsOrQ() throws IOException, XMLStreamException{
       int ch = nxt();
       if(ch == '?')
          return ch;
       if(ch > 0x20)
-         thUnxp(ch, ", expected either '?' or white space");
+         thUnxp(ch, ", expected '?' or white space");
       if(ch == '\n' || ch == '\r')
          bck();
       return afterWs();
@@ -113,18 +109,15 @@ class InSrc{
                if(Code[offset + 1] == '?' && Code[offset + 2] == 'x' && Code[offset + 3] == 'm' && Code[offset + 4] == 'l' && Code[offset + 5] <= 0x20){
                   offset += 6;
                   readDecl();
-                  if(fnd != null){
-                     normEnc = Code(fnd);
-                     String extEnc = impl.extEnc;
-                     if(extEnc != null && normEnc != null && !extEnc.equalsIgnoreCase(normEnc)){
-                        XMLReporter rep = impl.rep;
-                        if(rep != null)
-                           rep.report("Inconsistent encoding", "xml declaration", this, loc());
-                     }
+                  String extEnc;
+                  if(fnd != null && (normEnc = Code(fnd)) != null && (extEnc = impl.extEnc) != null && !extEnc.equalsIgnoreCase(normEnc)){
+                     XMLReporter rep = impl.rep;
+                     if(rep != null)
+                        rep.report("Inconsistent encoding", "xml declaration", this, loc());
                   }
                }
             }else if(c == 0xEF)
-               throw new XMLStreamException("First char 0xEF not valid in xml document");
+               throw new XMLStreamException("First char 0xEF not valid in XML");
          }
          impl.enc = normEnc;
          impl.Code(mXmlVer, fnd, stand);
@@ -206,23 +199,21 @@ class InSrc{
                return "EBCDIC";
             break;
          case 'i':
-            if(Code(enc, LAT1, off, len, false) || Code(enc, "ISO-Latin1", off, len, false))
+            if(Code(enc, LAT1, off, len, false) || Code(enc, "ISOLatin1", off, len, false))
                return LAT1;
-            if(Code(enc, "ISO-10646", off, len, true)){
-               if(Code(enc, "UCS-Basic", off = enc.indexOf("10646") + 5, len, false))
+            if(Code(enc, "ISO10646", off, len, true)){
+               if(Code(enc, "UCSBasic", off = enc.indexOf("10646") + 5, len, false) || Code(enc, "UTF1", off, len, false) || Code(enc, "J1", off, len, false) || Code(enc, ASCII, off, len, false))
                   return ASCII;
-               if(Code(enc, "Unicode-Latin1", off, len, false))
+               if(Code(enc, "UnicodeLatin1", off, len, false))
                   return LAT1;
-               if(Code(enc, "UCS-2", off, len, false))
+               if(Code(enc, "UCS2", off, len, false))
                   return UTF16;
-               if(Code(enc, "UCS-4", off, len, false))
+               if(Code(enc, "UCS4", off, len, false))
                   return UTF32;
-               if(Code(enc, "UTF-1", off, len, false) || Code(enc, "J-1", off, len, false) || Code(enc, ASCII, off, len, false))
-                  return ASCII;
             }
             break;
          case 'j':
-            if(Code(enc, "JIS_Encoding", off, len, false))
+            if(Code(enc, "JISEncoding", off, len, false))
                return "Shift_JIS";
             break;
          case 's':
@@ -233,15 +224,15 @@ class InSrc{
             if(len > off + 1)
                switch(enc.charAt(off + 1) | 0x20){ // to lowercase
                   case 'c':
-                     if(Code(enc, "UCS-2", off, len, false))
+                     if(Code(enc, "UCS2", off, len, false))
                         return UTF16;
-                     if(Code(enc, "UCS-4", off, len, false))
+                     if(Code(enc, "UCS4", off, len, false))
                         return UTF32;
                      break;
                   case 'n':
                      if(Code(enc, "Unicode", off, len, false))
                         return UTF16;
-                     if(Code(enc, "UnicodeAscii", off, len, false))
+                     if(Code(enc, "UnicodeLatin1", off, len, false))
                         return LAT1;
                      if(Code(enc, "UnicodeAscii", off, len, false))
                         return ASCII;
@@ -257,7 +248,7 @@ class InSrc{
                         return UTF16B;
                      if(Code(enc, UTF16L, off, len, false))
                         return UTF16L;
-                     if(Code(enc, UTF16, off, len, false))
+                     if(Code(enc, UTF16, off, len, false) || Code(enc, "UTF", off, len, false))
                         return UTF16;
                      if(Code(enc, UTF32B, off, len, false))
                         return UTF32B;
@@ -265,8 +256,6 @@ class InSrc{
                         return UTF32L;
                      if(Code(enc, UTF32, off, len, false))
                         return UTF32;
-                     if(Code(enc, "UTF", off, len, false))
-                        return UTF16;
             }
       }
       return enc;

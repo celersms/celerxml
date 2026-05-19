@@ -9,13 +9,13 @@ package com.celerxml;
 final class cPN{
 
    private PN[] syms;
-   private Node[] nodes;
+   private Node[] nn;
    private int Code, sz, msk;
    boolean dirty;
 
    cPN(){
       syms = new PN[64];
-      nodes = new Node[32];
+      nn = new Node[32];
       msk = 63;
       Code = 48;
       dirty = true;
@@ -23,7 +23,7 @@ final class cPN{
 
    cPN(cPN parent){
       syms = parent.syms;
-      nodes = parent.nodes;
+      nn = parent.nn;
       sz = parent.sz;
       Code = parent.Code;
       msk = parent.msk;
@@ -34,7 +34,7 @@ final class cPN{
       PN sym;
       if((sym = syms[idx = hash & msk]) != null && sym.Code(buff, len, hash))
          return sym;
-      Node b = nodes[idx >> 1];
+      Node b = nn[idx >> 1];
       while(b != null){
          if((sym = b.Code).Code(buff, len, hash))
             return sym;
@@ -50,19 +50,18 @@ final class cPN{
          primary = true;
       else if(sz >= Code){
          PN[] oldSyms = syms;
-         int newSize = (size = oldSyms.length) + size;
-         Node[] oldNodes = nodes;
-         syms = new PN[newSize];
-         nodes = new Node[size];
-         msk = newSize - 1;
-         Code += Code;
+         Node[] oldNodes = nn;
+         syms = new PN[idx = (size = oldSyms.length) + size];
+         nn = new Node[size];
+         msk = idx - 1;
+         Code <<= 1;
          for(int i = 0; i < size; ++i){
             PN symbol = oldSyms[i];
             if(symbol != null)
                if(syms[idx = symbol.hashCode() & msk] == null)
                   syms[idx] = symbol;
                else
-                  nodes[idx >>= 1] = new Node(symbol, nodes[idx]);
+                  nn[idx >>= 1] = new Node(symbol, nn[idx]);
          }
          size >>= 1;
          for(int i = 0; i < size; ++i){
@@ -72,7 +71,7 @@ final class cPN{
                if(syms[idx = symbol.hashCode() & msk] == null)
                   syms[idx] = symbol;
                else
-                  nodes[idx >>= 1] = new Node(symbol, nodes[idx]);
+                  nn[idx >>= 1] = new Node(symbol, nn[idx]);
                b = b.nxt;
             }
          }
@@ -80,7 +79,7 @@ final class cPN{
       }
       if(!dirty){
          System.arraycopy(syms, 0, syms = new PN[size = syms.length], 0, size); // CoW
-         System.arraycopy(nodes, 0, nodes = new Node[size = nodes.length], 0, size); // CoW
+         System.arraycopy(nn, 0, nn = new Node[size = nn.length], 0, size); // CoW
          dirty = true;
       }
       ++sz;
@@ -88,14 +87,14 @@ final class cPN{
       if(primary)
          syms[idx] = pname;
       else
-         nodes[idx >>= 1] = new Node(pname, nodes[idx]);
+         nn[idx >>= 1] = new Node(pname, nn[idx]);
       return pname;
    }
 
    final void Code(cPN child){
       if(child.sz > sz){
          syms = child.syms;
-         nodes = child.nodes;
+         nn = child.nn;
          sz = child.sz;
          Code = child.Code;
          msk = child.msk;

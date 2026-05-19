@@ -31,7 +31,7 @@ import org.xml.sax.InputSource;
 public final class InputFactoryImpl extends XMLInputFactory{
 
    private int flags;
-   private bPN utf8T, lat1T, asciiT;
+   private bPN utf8T, lat1T, ascT;
    private LinkedHashMap mURIs;
    private XMLEventAllocator alloc;
    private ShBuf rcclr;
@@ -71,7 +71,7 @@ public final class InputFactoryImpl extends XMLInputFactory{
       this.flags = impl.flags;
       this.utf8T = impl.utf8T;
       this.lat1T = impl.lat1T;
-      this.asciiT = impl.asciiT;
+      this.ascT = impl.ascT;
       this.genTab = impl.genTab;
       this.rep = impl.rep;
       this.res = impl.res;
@@ -83,23 +83,18 @@ public final class InputFactoryImpl extends XMLInputFactory{
          Code(8192, true);
    }
 
-   @Override
    public final XMLStreamReader createXMLStreamReader(InputStream in) throws XMLStreamException{ return createXMLStreamReader(in, null); }
 
-   @Override
    public final XMLStreamReader createXMLStreamReader(InputStream in, String enc) throws XMLStreamException{
       return new ReaderImpl(new bSrc(new InputFactoryImpl(null, null, enc, this, false), in).w());
    }
 
-   @Override
    public final XMLStreamReader createXMLStreamReader(Reader reader) throws XMLStreamException{ return createXMLStreamReader(null, reader); }
 
-   @Override
    public final XMLStreamReader createXMLStreamReader(String systemId, Reader reader) throws XMLStreamException{
       return new ReaderImpl(new InSrc(new InputFactoryImpl(null, systemId, null, this, false), reader).w());
    }
 
-   @Override
    public final XMLStreamReader createXMLStreamReader(Source src) throws XMLStreamException{
       Reader r = null;
       InputStream in = null;
@@ -156,15 +151,12 @@ public final class InputFactoryImpl extends XMLInputFactory{
       }
    }
 
-   @Override
    public final XMLStreamReader createXMLStreamReader(String systemId, InputStream in) throws XMLStreamException{
       return new ReaderImpl(new bSrc(new InputFactoryImpl(null, systemId, null, this, false), in).w());
    }
 
-   @Override
    public final Object getProperty(String name){ return getProperty(name, true); }
 
-   @Override
    public final void setProperty(String name, Object value){
       Object ob = Code.get(name);
       if(ob == null || ob instanceof Boolean)
@@ -174,25 +166,18 @@ public final class InputFactoryImpl extends XMLInputFactory{
       Code(((Integer)ob).intValue(), ((Boolean)value).booleanValue());
    }
 
-   @Override
    public final XMLEventAllocator getEventAllocator(){ return alloc; }
     
-   @Override
    public final XMLReporter getXMLReporter(){ return rep; }
 
-   @Override
    public final XMLResolver getXMLResolver(){ return res; }
 
-   @Override
    public final boolean isPropertySupported(String name){ return Code.containsKey(name); }
 
-   @Override
    public final void setEventAllocator(XMLEventAllocator alloc){ this.alloc = alloc; }
 
-   @Override
    public final void setXMLReporter(XMLReporter rep){ this.rep = rep; }
 
-   @Override
    public final void setXMLResolver(XMLResolver res){ this.res = res; }
 
    final Object getProperty(String name, boolean isMandatory){
@@ -297,9 +282,9 @@ public final class InputFactoryImpl extends XMLInputFactory{
             lat1T = new bPN();
          tab = lat1T;
       }else if(enc == InSrc.ASCII){
-         if(asciiT == null)
-            asciiT = new bPN();
-         tab = asciiT;
+         if(ascT == null)
+            ascT = new bPN();
+         tab = ascT;
       }else
          throw new Error(new StrB(28).a("Unknown encoding ").append(enc).toString());
       return new bPN(tab);
@@ -315,12 +300,7 @@ public final class InputFactoryImpl extends XMLInputFactory{
    }
 
    final void Code(int ver, String xmlDeclEnc, String standalone){
-      if(ver == 0x100)
-         declVer = InSrc.V10;
-      else if(ver == 0x110)
-         declVer = InSrc.V11;
-      else
-         declVer = null;
+      declVer = ver == '0' ? InSrc.V10 : InSrc.V11;
       declEnc = xmlDeclEnc;
       bStand = standalone == InSrc.YES ? 1 : standalone == InSrc.NO ? (byte)2 : 0;
    }
@@ -330,13 +310,12 @@ public final class InputFactoryImpl extends XMLInputFactory{
       String res;
       Key key = new Key(buf, len);
       if(mURIs == null)
-         mURIs = new LRUMap();
+         mURIs = new LRU();
       else if((res = (String)mURIs.get(key)) != null)
          return res;
-      res = new String(buf, 0, len).intern();
-      char[] newBuf = new char[len];
-      System.arraycopy(key.mChars, 0, newBuf, 0, len);
-      mURIs.put(new Key(newBuf, len, key.mHash), res);
+      char[] newBuf;
+      System.arraycopy(key.mCh, 0, newBuf = new char[len], 0, len);
+      mURIs.put(new Key(newBuf, len, key.mHsh), res = new String(buf, 0, len).intern());
       return res;
    }
 
@@ -346,7 +325,7 @@ public final class InputFactoryImpl extends XMLInputFactory{
       else if(enc == InSrc.LAT1)
          lat1T.Code(sym);
       else if(enc == InSrc.ASCII)
-         asciiT.Code(sym);
+         ascT.Code(sym);
       else
          throw new Error(new StrB(28).a("Unknown encoding ").append(enc).toString());
    }
@@ -361,86 +340,72 @@ public final class InputFactoryImpl extends XMLInputFactory{
       throw new Error(new StrB(28).a("Unknown encoding ").append(enc).toString());
    }
 
-   @Override
    public final XMLEventReader createFilteredReader(XMLEventReader reader, javax.xml.stream.EventFilter filter){ return null; }
 
-   @Override
    public final XMLStreamReader createFilteredReader(XMLStreamReader reader, javax.xml.stream.StreamFilter filter){ return null; }
 
-   @Override
    public final XMLEventReader createXMLEventReader(InputStream in){ return null; }
 
-   @Override
    public final XMLEventReader createXMLEventReader(InputStream in, String enc){ return null; }
 
-   @Override
    public final XMLEventReader createXMLEventReader(Reader reader){ return null; }
 
-   @Override
    public final XMLEventReader createXMLEventReader(Source source){ return null; }
 
-   @Override
    public final XMLEventReader createXMLEventReader(String systemId, InputStream in){ return null; }
 
-   @Override
    public final XMLEventReader createXMLEventReader(String systemId, Reader r){ return null; }
 
-   @Override
    public final XMLEventReader createXMLEventReader(XMLStreamReader sr){ return null; }
 
-   final static class LRUMap extends LinkedHashMap{
+   final static class LRU extends LinkedHashMap{
 
-      LRUMap(){ super(64, 0.7f, true); }
+      LRU(){ super(64, 0.7f, true); }
 
-      @Override
       protected final boolean removeEldestEntry(Map.Entry e){ return size() >= 716; }
    }
 
    final static class Key{
 
-      final char[] mChars;
-      final int mLength, mHash;
+      final char[] mCh;
+      final int mLen, mHsh;
 
       Key(char[] buffer, int len){
-         mChars = buffer;
-         mLength = len;
+         mCh = buffer;
+         mLen = len;
          if(len <= 8){
             int hash = buffer[0];
             for(int i = 1; i < len; ++i)
-               hash = (hash * 31) + buffer[i];
-            mHash = hash;
+               hash = hash * 31 + buffer[i];
+            mHsh = hash;
          }else{
-            int ix, dist, hash = len ^ buffer[0], end = len - 4;
-            ix = dist = 2;
+            int ix, dist = ix = 2, hash = len ^ buffer[0], end = len - 4;
             while(ix < end){
-               hash = (hash * 31) + buffer[ix];
-               ix += dist;
-               ++dist;
+               hash = hash * 31 + buffer[ix];
+               ix += dist++;
             }
-            mHash = (((hash * 31) ^ (buffer[end] << 2) + buffer[end + 1]) * 31) + (buffer[end + 2] << 2) ^ buffer[end + 3];
+            mHsh = (((hash * 31) ^ (buffer[end] << 2) + buffer[end + 1]) * 31) + (buffer[end + 2] << 2) ^ buffer[end + 3];
          }
       }
 
       Key(char[] buffer, int len, int hashCode){
-         mChars = buffer;
-         mLength = len;
-         mHash = hashCode;
+         mCh = buffer;
+         mLen = len;
+         mHsh = hashCode;
       }
 
-      @Override
-      public final int hashCode(){ return mHash; }
+      public final int hashCode(){ return mHsh; }
 
-      @Override
       public final boolean equals(Object o){
          if(o == this)
             return true;
          if(o == null)
             return false;
          Key other = (Key)o;
-         int len = mLength;
-         if(other.mLength != len)
+         int len = mLen;
+         if(other.mLen != len)
             return false;
-         char[] c1 = mChars, c2 = other.mChars;
+         final char[] c1 = mCh, c2 = other.mCh;
          for(int i = 0; i < len; ++i)
             if(c1[i] != c2[i])
                return false;
