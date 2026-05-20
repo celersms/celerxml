@@ -1,0 +1,14 @@
+// Permission is granted, free of charge, to any person obtaining a copy of this software and associated
+// documentation, to deal in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
+// to permit persons to whom the Software is furnished to do so, subject to the condition that this
+// copyright shall be included in all copies or substantial portions of the Software:
+// Copyright Victor Celer, 2025 - 2026
+package com.celerxml;
+
+final class LRU extends java.util.LinkedHashMap{
+
+   LRU(){ super(64, 0.7f, true); }
+
+   protected final boolean removeEldestEntry(java.util.Map.Entry e){ return size() >= 716; }
+}
