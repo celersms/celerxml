@@ -3,8 +3,8 @@ com.celerxml.bPN:find
 com.celerxml.bSrc:isKW,qVal,Code
 com.celerxml.cPN:find
 com.celerxml.InputFactoryImpl:createFilteredReader,createXMLEventReader
-com.celerxml.InputFactoryImpl$Key:equals
 com.celerxml.InSrc:isKW,Code
+com.celerxml.Key:equals
 com.celerxml.NsD:Code
 com.celerxml.PN:Code,size,equals,eq
 com.celerxml.PN1:size
