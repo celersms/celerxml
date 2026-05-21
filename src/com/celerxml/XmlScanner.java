@@ -238,7 +238,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
          return XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
       NsD nsDecl = lastNs;
       while(nsDecl != null){
-         if(nsDecl.hasPfx(pfx))
+         if(pfx.equals(nsDecl.bind.pfx))
             return nsDecl.bind.Code;
          nsDecl = nsDecl.prvD;
       }
@@ -258,9 +258,9 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
       String pfx;
 loop_pfx:
       for(NsD nsDecl = lastNs; nsDecl != null; nsDecl = nsDecl.prvD)
-         if(nsDecl.Code(nsURI) && (pfx = nsDecl.bind.pfx) != null){
+         if(nsURI.equals(nsDecl.bind.Code) && (pfx = nsDecl.bind.pfx) != null){
             for(NsD decl2 = lastNs; decl2 != nsDecl; decl2 = decl2.prvD)
-               if(decl2.hasPfx(pfx))
+               if(pfx.equals(decl2.bind.pfx))
                   continue loop_pfx;
             return pfx;
          }
@@ -282,9 +282,9 @@ loop_pfx:
       String pfx;
 loop_pfx:
       for(NsD nsDecl = lastNs; nsDecl != null; nsDecl = nsDecl.prvD)
-         if(nsDecl.Code(nsURI) && (pfx = nsDecl.bind.pfx) != null){
+         if(nsURI.equals(nsDecl.bind.Code) && (pfx = nsDecl.bind.pfx) != null){
             for(NsD decl2 = lastNs; decl2 != nsDecl; decl2 = decl2.prvD)
-               if(decl2.hasPfx(pfx))
+               if(pfx.equals(decl2.bind.pfx))
                   continue loop_pfx;
             if(larr == null)
                larr = new ArrayList();
@@ -320,7 +320,7 @@ loop_pfx:
          return nsCache[bn.Code.hashCode() & 0x3F] = bn;
       }
       if(pfx == "xml")
-         return name.Code(NsB.XML_B);
+         return name.Code(NsB.XML);
       ++bindMiss;
       NsB b = new NsB(pfx);
       if(bCnt == 0)
@@ -349,9 +349,9 @@ findOrCreate:
                   break findOrCreate;
                }
             if(pfx == "xml")
-               ns = NsB.XML_B;
+               ns = NsB.XML;
             else if(pfx == "xmlns")
-               ns = NsB.XMLNS_B;
+               ns = NsB.XMLNS;
             else{
                ns = new NsB(pfx);
                if(bCnt == 0)

@@ -21,25 +21,17 @@ final class NsD{
       this.lvl = lvl;
    }
 
-   final boolean hasPfx(String pfx){ return pfx.equals(bind.pfx); }
-
-   final boolean Code(String uri){ return uri.equals(bind.Code); }
-
    final NsD Code(){
       bind.Code = Code;
       return prvD;
    }
 
    final boolean Code(String prefix, int lvl){
-      if(this.lvl >= lvl){
-         if(prefix == bind.pfx)
+      NsD prev = this;
+      while(prev != null && prev.lvl >= lvl){
+         if(prefix == prev.bind.pfx)
             return true;
-         NsD prev = prvD;
-         while(prev != null && prev.lvl >= lvl){
-            if(prefix == prev.bind.pfx)
-               return true;
-            prev = prev.prvD;
-         }
+         prev = prev.prvD;
       }
       return false;
    }

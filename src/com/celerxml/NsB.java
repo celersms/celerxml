@@ -10,7 +10,7 @@ import javax.xml.XMLConstants;
 
 final class NsB{
 
-   final static NsB XML_B = new NsB("xml", XMLConstants.XML_NS_URI), XMLNS_B = new NsB("xmlns", XMLConstants.XMLNS_ATTRIBUTE_NS_URI);
+   final static NsB XML = new NsB("xml", XMLConstants.XML_NS_URI), XMLNS = new NsB("xmlns", XMLConstants.XMLNS_ATTRIBUTE_NS_URI);
    final String pfx;
    String Code;
 
@@ -21,5 +21,5 @@ final class NsB{
       Code = uri;
    }
 
-   final boolean Code(){ return this == XML_B || this == XMLNS_B; }
+   final boolean Code(){ return this == XML || this == XMLNS; }
 }
