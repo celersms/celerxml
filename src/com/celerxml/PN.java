@@ -24,17 +24,17 @@ class PN{
    final String getNsUri(){ return nsB == null ? null : nsB.Code; }
 
    final QName qN(){
-      String pfx = this.pfx, uri = nsB == null ? null : nsB.Code;
-      return new QName(uri == null ? "" : uri, ln, pfx == null ? "" : pfx);
+      String uri;
+      if(nsB == null || (uri = nsB.Code) == null)
+         uri = "";
+      return new QName(uri, ln, pfx == null ? "" : pfx);
    }
 
    final QName qN(NsB defNs){
-      String uri, pfx = this.pfx;
-      if(pfx == null)
-         pfx = "";
-      if(nsB != null && (uri = nsB.Code) != null)
-         return new QName(uri, ln, pfx);
-      return new QName((uri = defNs.Code) == null ? "" : uri, ln, pfx);
+      String uri;
+      if((nsB == null || (uri = nsB.Code) == null) && (uri = defNs.Code) == null)
+         uri = "";
+      return new QName(uri, ln, pfx == null ? "" : pfx);
    }
 
    final boolean isBound(){ return nsB == null || nsB.Code != null; }
@@ -57,23 +57,22 @@ class PN{
          return true;
       if(!(o instanceof PN))
          return false;
-      PN other = (PN)o;
-      return other.pfx == pfx && other.ln == ln;
+      PN other;
+      return (other = (PN)o).pfx == pfx && other.ln == ln;
    }
 
    static final PN Code(String pname, int hash){
-      int colonIx = pname.indexOf(':');
-      if(colonIx < 0)
+      int ix;
+      if((ix = pname.indexOf(':')) < 0)
          return new PN(pname, null, pname, hash);
-      return new PN(pname, pname.substring(0, colonIx).intern(), pname.substring(colonIx + 1).intern(), hash);
+      return new PN(pname, pname.substring(0, ix).intern(), pname.substring(ix + 1).intern(), hash);
    }
 
    final boolean Code(char[] buffer, int len, int hash){
       if(hash != this.hash)
          return false;
-      String pname = Code;
-      int plen = pname.length();
-      if(len != plen)
+      String pname;
+      if((pname = Code).length() != len)
          return false;
       for(int i = 0; i < len; ++i)
          if(buffer[i] != pname.charAt(i))
