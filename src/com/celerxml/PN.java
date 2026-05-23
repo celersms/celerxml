@@ -48,10 +48,8 @@ class PN{
       return nsUri == null || nsUri.length() == 0 ? thisUri == null : nsUri.equals(thisUri);
    }
 
-   @Override
    public final int hashCode(){ return hash; }
 
-   @Override
    public final boolean equals(Object o){
       if(o == this)
          return true;
@@ -61,20 +59,13 @@ class PN{
       return (other = (PN)o).pfx == pfx && other.ln == ln;
    }
 
-   static final PN Code(String pname, int hash){
-      int ix;
-      if((ix = pname.indexOf(':')) < 0)
-         return new PN(pname, null, pname, hash);
-      return new PN(pname, pname.substring(0, ix).intern(), pname.substring(ix + 1).intern(), hash);
-   }
-
-   final boolean Code(char[] buffer, int len, int hash){
+   final boolean Code(char[] buffer, int blen, int hash){
       if(hash != this.hash)
          return false;
       String pname;
-      if((pname = Code).length() != len)
+      if((pname = Code).length() != blen)
          return false;
-      for(int i = 0; i < len; ++i)
+      for(int i = 0; i < blen; ++i)
          if(buffer[i] != pname.charAt(i))
             return false;
       return true;
@@ -86,15 +77,10 @@ class PN{
       return newName;
    }
 
-   int size(){ return 0; }
-
    int Code(int idx){ return 0; }
-
+   int len(){ return 0; }
    boolean equals(int quad1, int quad2){ return false; }
-
    boolean equals(int[] quads, int qlen){ return false; }
-
    boolean eq(int h, int quad1, int quad2){ return false; }
-
    boolean eq(int h, int[] quads, int qlen){ return false; }
 }
