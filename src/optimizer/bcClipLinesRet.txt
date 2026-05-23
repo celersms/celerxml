@@ -6,10 +6,8 @@ com.celerxml.InputFactoryImpl:createFilteredReader,createXMLEventReader
 com.celerxml.InSrc:isKW,Code
 com.celerxml.Key:equals
 com.celerxml.NsD:Code
-com.celerxml.PN:Code,size,equals,eq
-com.celerxml.PN1:size
-com.celerxml.PN2:size
-com.celerxml.PN3:equals,eq,size
+com.celerxml.PN:Code,equals,eq
+com.celerxml.PN3:equals,eq
 com.celerxml.PNn:equals,eq
 com.celerxml.ReaderImpl:getTextStart,isAttributeSpecified
 com.celerxml.ReaderScanner:doPrologDecl,doDtdStart,commOrCdataStart,doPIStart,startElem,doEndE,entInTxt,prolog
