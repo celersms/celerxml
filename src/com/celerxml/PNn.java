@@ -17,17 +17,12 @@ final class PNn extends PN{
       this.len = len;
    }
 
-   @Override
    final PN Code(NsB nsb){
       PNn newName = new PNn(Code, pfx, ln, hash, q, len);
       newName.nsB = nsb;
       return newName;
    }
 
-   @Override
-   final boolean equals(int q1, int q2){ return len < 3 ? (len == 1 ? q[0] == q1 && q2 == 0 : q[0] == q1 && q[1] == q2) : false; }
-
-   @Override
    final boolean equals(int[] q, int len){
       if(len == this.len){
          for(int i = 0; i < len; ++i)
@@ -38,12 +33,6 @@ final class PNn extends PN{
       return false;
    }
 
-   @Override
-   final boolean eq(int h, int q1, int q2){
-      return h == hash && len < 3 ? (len == 1 ? q[0] == q1 && q2 == 0 : q[0] == q1 && q[1] == q2) : false;
-   }
-
-   @Override
    final boolean eq(int h, int[] q, int len){
       if(h == hash && len == this.len){
          for(int i = 0; i < len; ++i)
@@ -54,9 +43,8 @@ final class PNn extends PN{
       return false;
    }
 
-   @Override
+   final int len(){ return len; }
+   final boolean equals(int q1, int q2){ return false; }
+   final boolean eq(int h, int q1, int q2){ return false; }
    final int Code(int idx){ return idx < len ? q[idx] : 0; }
-
-   @Override
-   final int size(){ return len; }
 }
