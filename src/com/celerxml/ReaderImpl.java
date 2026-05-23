@@ -23,44 +23,34 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       bTxt = scan.impl.doTxt();
    }
 
-   @Override
    public final String getCharacterEncodingScheme(){ return scan.impl.declEnc; }
 
-   @Override
    public final String getEncoding(){ return scan.impl.enc; }
 
-   @Override
    public String getVersion(){ return scan.impl.declVer; }
 
-   @Override
    public final boolean isStandalone(){ return scan.impl.bStand == 1; }
 
-   @Override
    public final boolean standaloneSet(){ return scan.impl.bStand != 0; }
 
-   @Override
    public Object getProperty(String p){
       return "javax.xml.stream.entities".equals(p) || "javax.xml.stream.notations".equals(p) ? java.util.Collections.EMPTY_LIST : scan.impl.getProperty(p, false);
    }
 
-   @Override
    public final int getAttributeCount(){ return aCnt; }
 
-   @Override
    public final String getAttributeLocalName(int idx){
       if(idx >= aCnt || idx < 0)
          throw new IllegalArgumentException("Index out of bounds");
       return scan.names[idx].ln;
    }
 
-   @Override
    public final QName getAttributeName(int idx){
       if(idx >= aCnt || idx < 0)
          throw new IllegalArgumentException("Index out of bounds");
       return scan.names[idx].qN();
    }
 
-   @Override
    public final String getAttributeNamespace(int idx){
       if(idx >= aCnt || idx < 0)
          throw new IllegalArgumentException("Index out of bounds");
@@ -68,7 +58,6 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       return pattr == null ? "" : pattr;
    }
 
-   @Override
    public final String getAttributePrefix(int idx){
       if(idx >= aCnt || idx < 0)
           throw new IllegalArgumentException("Index out of bounds");
@@ -76,28 +65,24 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       return pattr == null ? "" : pattr;
    }
 
-   @Override
    public final String getAttributeType(int idx){
       if(idx >= aCnt)
          throw new IllegalArgumentException("Index out of bounds");
       return "CDATA";
    }
 
-   @Override
    public final String getAttributeValue(int idx){
       if(idx >= aCnt || idx < 0)
          throw new IllegalArgumentException("Index out of bounds");
       return scan.getV(idx);
    }
 
-   @Override
    public final String getAttributeValue(String nsURI, String name){
       if(scan.attrCount < 1)
          return null;
       return scan.getV(nsURI, name);
    }
 
-   @Override
    public final String getElementText() throws XMLStreamException{
       int type, len;
       while((type = next()) == 5 || type == 3); // COMMENT | PROCESSING_INSTRUCTION
@@ -138,34 +123,28 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       return text;
    }
 
-   @Override
    public final int getEventType(){ return Code == 12 && bTxt ? 4 : Code; } // CDATA --> CHARACTERS
 
-   @Override
    public final String getLocalName(){
       if(Code <= 2 || Code == 9) // END_ELEMENT | ENTITY_REFERENCE
          return curN.ln;
       throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT/ENTITY_REFERENCE");
    }
 
-   @Override
    public final QName getName(){
       if(Code > 2) // END_ELEMENT
          throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT");
       return scan.tokName.qN(scan.defNs);
    }
 
-   @Override
    public final javax.xml.namespace.NamespaceContext getNamespaceContext(){ return scan; }
 
-   @Override
    public final int getNamespaceCount(){
       if(Code > 2) // END_ELEMENT
          throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT");
       return scan.getNC();
    }
 
-   @Override
    public final String getNamespacePrefix(int idx){
       if(Code > 2) // END_ELEMENT
          throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT");
@@ -173,7 +152,6 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       return pfx == null ? "" : pfx;
    }
 
-   @Override
    public final String getNamespaceURI(){
       if(Code > 2) // END_ELEMENT
          throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT");
@@ -183,7 +161,6 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       return uri == null ? "" : uri;
    }
 
-   @Override
    public final String getNamespaceURI(int idx){
       if(Code > 2) // END_ELEMENT
          throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT");
@@ -191,14 +168,12 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       return uri == null ? "" : uri;
    }
 
-   @Override
    public final String getNamespaceURI(String pfx){
       if(Code > 2) // END_ELEMENT
          throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT");
       return scan.getNamespaceURI(pfx);
    }
 
-   @Override
    public final String getPIData(){
       if(Code != 3) // PROCESSING_INSTRUCTION
          throw new IllegalStateException("Not PROCESSING_INSTRUCTION");
@@ -209,14 +184,12 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       }
    }
 
-   @Override
    public final String getPITarget(){
       if(Code != 3) // PROCESSING_INSTRUCTION
          throw new IllegalStateException("Not PROCESSING_INSTRUCTION");
       return curN.ln;
    }
 
-   @Override
    public final String getPrefix(){
       if(Code > 2) // END_ELEMENT
          throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT");
@@ -224,7 +197,6 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       return pfx == null ? "" : pfx;
    }
 
-   @Override
    public final String getText(){
       if((1 << Code & T2) == 0)
          throw new IllegalStateException("Not text");
@@ -235,7 +207,6 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       }
    }
 
-   @Override
    public final char[] getTextCharacters(){
       if((1 << Code & T3) == 0)
          throw new IllegalStateException("Not text");
@@ -246,7 +217,6 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       }
    }
 
-   @Override
    public final int getTextCharacters(int srcStart, char[] target, int targetStart, int len){
       if((1 << Code & T3) == 0)
          throw new IllegalStateException("Not text");
@@ -257,7 +227,6 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       }
    }
 
-   @Override
    public final int getTextLength(){
       if((1 << Code & T3) == 0)
          throw new IllegalStateException("Not text");
@@ -268,31 +237,22 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       }
    }
 
-   @Override
    public final int getTextStart(){ return 0; }
 
-   @Override
    public final boolean hasName(){ return Code <= 2; } // END_ELEMENT
 
-   @Override
    public final boolean hasNext(){ return Code != 8; } // END_DOCUMENT
 
-   @Override
    public final boolean hasText(){ return (1 << Code & T2) != 0; }
 
-   @Override
    public final boolean isAttributeSpecified(int idx){ return true; }
 
-   @Override
    public final boolean isCharacters(){ return getEventType() == 4; } // CHARACTERS
 
-   @Override
    public final boolean isEndElement(){ return Code == 2; } // END_ELEMENT
 
-   @Override
    public final boolean isStartElement(){ return Code == 1; }
 
-   @Override
    public final boolean isWhiteSpace(){
       if(Code == 4 || Code == 12) // CHARACTERS | CDATA
          try{
@@ -302,33 +262,25 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
          }
       return Code == 6; // SPACE
    }
-    
-   @Override
+
    public final void require(int type, String nsUri, String localName) throws XMLStreamException{
-      int curr = Code;
-      if(curr != type && curr == 12 && bTxt) // CDATA
-         curr = 4; // CHARACTERS
-      if(type != curr)
+      int curr;
+      if((curr = Code) != type && curr == 12 && bTxt && (curr = 4) != type) // CDATA --> CHARACTERS
          throw new XMLStreamException("Unexpected type", scan.loc());
       if(localName != null){
          if(curr != 1 && curr != 2 && curr != 9) // END_ELEMENT | ENTITY_REFERENCE
-            throw new XMLStreamException("Token not START_ELEMENT, END_ELEMENT or ENTITY_REFERENCE", scan.loc());
+            throw new XMLStreamException("Not START_ELEMENT/END_ELEMENT/ENTITY_REFERENCE", scan.loc());
          if(!localName.equals(getLocalName()))
             throw new XMLStreamException("Unexpected local name", scan.loc());
       }
       if(nsUri != null){
          if(curr != 1 && curr != 2) // END_ELEMENT
-            throw new XMLStreamException("Token not START_ELEMENT or END_ELEMENT", scan.loc());
-         String uri = getNamespaceURI();
-         if(nsUri.length() == 0){
-            if(uri != null && uri.length() > 0)
-               throw new XMLStreamException("Expected empty namespace", scan.loc());
-         }else if(!nsUri.equals(uri))
+            throw new XMLStreamException("Not START_ELEMENT/END_ELEMENT", scan.loc());
+         if(!nsUri.equals(getNamespaceURI()))
             throw new XMLStreamException("Unexpected namespace", scan.loc());
       }
    }
 
-   @Override
    public final int next() throws XMLStreamException{
       int type;
       if(state == 1){
@@ -336,8 +288,7 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
             Code = 8; // END_DOCUMENT
             throw new XMLStreamException("Unexpected EOI", scan.loc());
          }
-         Code = type;
-         if(type == 12){ // CDATA
+         if((Code = type) == 12){ // CDATA
             if(bTxt)
                return 4; // CHARACTERS
          }else{
@@ -370,7 +321,6 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       return Code = type;
    }
 
-   @Override
    public final int nextTag() throws XMLStreamException{
       int nxt;
       while(true)
@@ -391,13 +341,11 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
          }
    }
 
-   @Override
    public final void close() throws XMLStreamException{
       state = 3;
       Code = 8; // END_DOCUMENT
       scan.free();
    }
 
-   @Override
    public final javax.xml.stream.Location getLocation(){ return scan.getLocation(); }
 }
