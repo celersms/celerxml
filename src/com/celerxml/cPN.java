@@ -44,18 +44,18 @@ final class cPN{
    }
 
    final PN add(char[] buff, int len, int hash){
-      int idx, size;
+      int idx, xx;
       boolean primary = false;
       if(syms[idx = hash & msk] == null)
          primary = true;
       else if(sz >= Code){
          PN[] oldSyms = syms;
          Node[] oldNodes = nn;
-         syms = new PN[idx = (size = oldSyms.length) + size];
-         nn = new Node[size];
+         syms = new PN[idx = (xx = oldSyms.length) + xx];
+         nn = new Node[xx];
          msk = idx - 1;
          Code <<= 1;
-         for(int i = 0; i < size; ++i){
+         for(int i = 0; i < xx; ++i){
             PN symbol = oldSyms[i];
             if(symbol != null)
                if(syms[idx = symbol.hashCode() & msk] == null)
@@ -63,8 +63,8 @@ final class cPN{
                else
                   nn[idx >>= 1] = new Node(symbol, nn[idx]);
          }
-         size >>= 1;
-         for(int i = 0; i < size; ++i){
+         xx >>= 1;
+         for(int i = 0; i < xx; ++i){
             Node b = oldNodes[i];
             while(b != null){
                PN symbol = b.Code;
@@ -78,12 +78,13 @@ final class cPN{
          primary = syms[idx = hash & msk] == null;
       }
       if(!dirty){
-         System.arraycopy(syms, 0, syms = new PN[size = syms.length], 0, size); // CoW
-         System.arraycopy(nn, 0, nn = new Node[size = nn.length], 0, size); // CoW
+         System.arraycopy(syms, 0, syms = new PN[xx = syms.length], 0, xx); // CoW
+         System.arraycopy(nn, 0, nn = new Node[xx = nn.length], 0, xx); // CoW
          dirty = true;
       }
       ++sz;
-      PN pname = PN.Code(new String(buff, 0, len).intern(), hash);
+      String sname = new String(buff, 0, len).intern();
+      PN pname = (xx = sname.indexOf(':')) < 0 ? new PN(sname, null, sname, hash) : new PN(sname, sname.substring(0, xx).intern(), sname.substring(xx + 1).intern(), hash);
       if(primary)
          syms[idx] = pname;
       else
