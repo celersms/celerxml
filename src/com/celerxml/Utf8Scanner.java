@@ -451,7 +451,7 @@ public final class Utf8Scanner extends XmlScanner{
       --depth;
       currToken = 2; // END_ELEMENT
       tokName = curr.Code;
-      int size = tokName.size(), ptr = inPtr;
+      int size = tokName.len(), ptr = inPtr;
       if(end - ptr < (size << 2) + 1)
          return doEndESlow(size);
       byte[] buf = inBuf;
