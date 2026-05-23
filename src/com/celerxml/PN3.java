@@ -24,28 +24,16 @@ final class PN3 extends PN{
       this.q3 = q3;
    }
 
-   @Override
    final PN Code(NsB nsb){
       PN3 newName = new PN3(Code, pfx, ln, hash, q1, q2, q3);
       newName.nsB = nsb;
       return newName;
    }
 
-   @Override
+   final int len(){ return 3; }
    final boolean equals(int q1, int q2){ return false; }
-
-   @Override
    final boolean equals(int[] quads, int qlen){ return qlen == 3 && quads[0] == q1 && quads[1] == q2 && quads[2] == q3; }
-
-   @Override
    final boolean eq(int h, int q1, int q2){ return false; }
-
-   @Override
    final boolean eq(int h, int[] quads, int qlen){ return h == hash && qlen == 3 && quads[0] == q1 && quads[1] == q2 && quads[2] == q3; }
-
-   @Override
    final int Code(int idx){ return idx < 2 ? (idx == 0 ? q1 : q2) : q3; }
-
-   @Override
-   final int size(){ return 3; }
 }
