@@ -148,24 +148,22 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
    public final String getNamespacePrefix(int idx){
       if(Code > 2) // END_ELEMENT
          throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT");
-      String pfx = scan.findCurrNsDecl(idx).bind.pfx;
-      return pfx == null ? "" : pfx;
+      String pfx;
+      return (pfx = scan.findCurrNsDecl(idx).bind.pfx) == null ? "" : pfx;
    }
 
    public final String getNamespaceURI(){
       if(Code > 2) // END_ELEMENT
          throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT");
-      String uri = scan.tokName.getNsUri();
-      if(uri == null)
-         uri = scan.defNs.Code;
-      return uri == null ? "" : uri;
+      String uri;
+      return (uri = scan.tokName.getNsUri()) == null && (uri = scan.defNs.Code) == null ? "" : uri;
    }
 
    public final String getNamespaceURI(int idx){
       if(Code > 2) // END_ELEMENT
          throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT");
-      String uri = scan.findCurrNsDecl(idx).bind.Code;
-      return uri == null ? "" : uri;
+      String uri;
+      return (uri = scan.findCurrNsDecl(idx).bind.Code) == null ? "" : uri;
    }
 
    public final String getNamespaceURI(String pfx){
@@ -193,8 +191,8 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
    public final String getPrefix(){
       if(Code > 2) // END_ELEMENT
          throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT");
-      String pfx = curN.pfx;
-      return pfx == null ? "" : pfx;
+      String pfx;
+      return (pfx = curN.pfx) == null ? "" : pfx;
    }
 
    public final String getText(){
@@ -268,13 +266,13 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       if((curr = Code) != type && curr == 12 && bTxt && (curr = 4) != type) // CDATA --> CHARACTERS
          throw new XMLStreamException("Unexpected type", scan.loc());
       if(localName != null){
-         if(curr != 1 && curr != 2 && curr != 9) // END_ELEMENT | ENTITY_REFERENCE
+         if(curr > 2 && curr != 9) // END_ELEMENT | ENTITY_REFERENCE
             throw new XMLStreamException("Not START_ELEMENT/END_ELEMENT/ENTITY_REFERENCE", scan.loc());
          if(!localName.equals(getLocalName()))
             throw new XMLStreamException("Unexpected local name", scan.loc());
       }
       if(nsUri != null){
-         if(curr != 1 && curr != 2) // END_ELEMENT
+         if(curr > 2) // END_ELEMENT
             throw new XMLStreamException("Not START_ELEMENT/END_ELEMENT", scan.loc());
          if(!nsUri.equals(getNamespaceURI()))
             throw new XMLStreamException("Unexpected namespace", scan.loc());
