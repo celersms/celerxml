@@ -34,4 +34,4 @@ If you use Maven, you can include the CelerXML dependency by adding the followin
 
 # Benchmark
 
-According to the latest [benchmarks](benchmark), CelerXML features the highest XML parsing speed and lowest classloading time.
+According to the latest [benchmarks](benchmark), CelerXML features the highest XML parsing speed and lowest classloading time. This is the result of 10+ years of optimization and profiling, as mentioned in [this article](https://github.com/celersms/celerxml/discussions/5).
