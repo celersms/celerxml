@@ -8,13 +8,13 @@ processors were benchmarked:
 
 The following table summarizes the benchmark settings and environment:
 
-|                 |               |
-| ---------------:| :------------ |
-| Iterations      | 10.000        |
-| XML file size   | 1.361 Kb      |
-| XML lines count | 42.161        |
-| CPU             | i7 / 2.70 GHz |
-| RAM             | 8 Gb          |
+|                 |                 |
+| ---------------:| :-------------- |
+| Iterations      | 50.000          |
+| XML file size   | 1.361 Kb        |
+| XML lines count | 42.161          |
+| CPU             | i5-7400 / 3 GHz |
+| RAM             | 8 Gb            |
 
 ## Selecting the XML processor
 
@@ -57,8 +57,8 @@ config:
 xychart
     title "StAX XML parsing time (in µs)"
     x-axis [Xerces2, FasterXML, CelerXML]
-    y-axis Time 10000 --> 15000
-    bar [14958, 11083, 10468]
+    y-axis Time 10000 --> 16000
+    bar [15581, 12007, 11498]
 ```
 
 ```mermaid
@@ -71,8 +71,8 @@ config:
 xychart
     title "SAX2 XML parsing time (in µs)"
     x-axis [Xerces2, FasterXML, CelerXML]
-    y-axis Time 10000 --> 20000
-    bar [18879, 14577, 13677]
+    y-axis Time 15000 --> 22000
+    bar [21276, 17388, 16929]
 ```
 
 ```mermaid
@@ -85,6 +85,6 @@ config:
 xychart
     title "Classload time (in µs)"
     x-axis [Xerces2, FasterXML, CelerXML]
-    y-axis Time 10000 --> 25200
-    bar [14783, 25125, 13566]
+    y-axis Time 12000 --> 16000
+    bar [14783, 15125, 13566]
 ```
