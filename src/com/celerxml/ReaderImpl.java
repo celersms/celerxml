@@ -11,16 +11,14 @@ import javax.xml.stream.XMLStreamException;
 
 class ReaderImpl implements javax.xml.stream.XMLStreamReader{
 
-   private static final int T1 = 1 << 4 | 1 << 12 | 1 << 6 | 1 << 9, T2 = 1 << 4 | 1 << 12 | 1 << 6 | 1 << 5 | 1 << 11 | 1 << 9, T3 = 1 << 4 | 1 << 12 | 1 << 6 | 1 << 5;
    final XmlScanner scan;
    private PN curN, rootN;
    private int aCnt, state, Code;
    final boolean bTxt;
 
    ReaderImpl(XmlScanner scan){
-      this.scan = scan;
       Code = 7; // START_DOCUMENT
-      bTxt = scan.impl.doTxt();
+      bTxt = (this.scan = scan).impl.doTxt();
    }
 
    public final String getCharacterEncodingScheme(){ return scan.impl.declEnc; }
@@ -54,15 +52,15 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
    public final String getAttributeNamespace(int idx){
       if(idx >= aCnt || idx < 0)
          throw new IllegalArgumentException("Index out of bounds");
-      String pattr = scan.names[idx].getNsUri();
-      return pattr == null ? "" : pattr;
+      String pattr;
+      return (pattr = scan.names[idx].getNsUri()) == null ? "" : pattr;
    }
 
    public final String getAttributePrefix(int idx){
       if(idx >= aCnt || idx < 0)
           throw new IllegalArgumentException("Index out of bounds");
-      String pattr = scan.names[idx].pfx;
-      return pattr == null ? "" : pattr;
+      String pattr;
+      return (pattr = scan.names[idx].pfx) == null ? "" : pattr;
    }
 
    public final String getAttributeType(int idx){
@@ -77,31 +75,26 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
       return scan.getV(idx);
    }
 
-   public final String getAttributeValue(String nsURI, String name){
-      if(scan.attrCount < 1)
-         return null;
-      return scan.getV(nsURI, name);
-   }
+   public final String getAttributeValue(String nsURI, String name){ return aCnt < 1 ? null : scan.getV(nsURI, name); }
 
    public final String getElementText() throws XMLStreamException{
       int type, len;
       while((type = next()) == 5 || type == 3); // COMMENT | PROCESSING_INSTRUCTION
       if(type == 2) // END_ELEMENT
          return "";
-      if((1 << type & T1) == 0)
+      if((1 << type & 0x1250) == 0)
          throw new IllegalStateException("Not text");
       String text = scan.getText(), cache = null;
       StrB sb = null;
       boolean acc = false;
       while((type = next()) != 2) // END_ELEMENT
-         if((1 << type & T1) != 0){
+         if((1 << type & 0x1250) != 0){
             if(!acc){
                acc = true;
                if(text.length() > 0)
                   cache = text;
             }
-            String ss = getText();
-            if((len = ss.length()) > 0){
+            if((len = scan.getTextLength()) > 0){
                if(cache != null){
                   sb = new StrB(cache.length() + len).a(cache);
                   cache = null;
@@ -126,9 +119,9 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
    public final int getEventType(){ return Code == 12 && bTxt ? 4 : Code; } // CDATA --> CHARACTERS
 
    public final String getLocalName(){
-      if(Code <= 2 || Code == 9) // END_ELEMENT | ENTITY_REFERENCE
-         return curN.ln;
-      throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT/ENTITY_REFERENCE");
+      if(Code > 2 && Code != 9) // END_ELEMENT | ENTITY_REFERENCE
+         throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT/ENTITY_REFERENCE");
+      return curN.ln;
    }
 
    public final QName getName(){
@@ -196,7 +189,7 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
    }
 
    public final String getText(){
-      if((1 << Code & T2) == 0)
+      if((1 << Code & 0x1A70) == 0)
          throw new IllegalStateException("Not text");
       try{
          return scan.getText();
@@ -206,7 +199,7 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
    }
 
    public final char[] getTextCharacters(){
-      if((1 << Code & T3) == 0)
+      if((1 << Code & 0x1070) == 0)
          throw new IllegalStateException("Not text");
       try{
          return scan.getTextCharacters();
@@ -216,7 +209,7 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
    }
 
    public final int getTextCharacters(int srcStart, char[] target, int targetStart, int len){
-      if((1 << Code & T3) == 0)
+      if((1 << Code & 0x1070) == 0)
          throw new IllegalStateException("Not text");
       try{
          return scan.getTextCharacters(srcStart, target, targetStart, len);
@@ -226,7 +219,7 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
    }
 
    public final int getTextLength(){
-      if((1 << Code & T3) == 0)
+      if((1 << Code & 0x1070) == 0)
          throw new IllegalStateException("Not text");
       try{
          return scan.getTextLength();
@@ -241,7 +234,7 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
 
    public final boolean hasNext(){ return Code != 8; } // END_DOCUMENT
 
-   public final boolean hasText(){ return (1 << Code & T2) != 0; }
+   public final boolean hasText(){ return (1 << Code & 0x1A70) != 0; }
 
    public final boolean isAttributeSpecified(int idx){ return true; }
 

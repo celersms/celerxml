@@ -38,10 +38,8 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
 
    static final String EOI = "Unexpected EOI", CDATA = "CDATA[";
    private static final String NULL = "Illegal null argument";
-   private static final char[] arr0 = new char[0];
-   private static final String sIndSpaces = "\n                                 ", sIndTabs = "\n\t\t\t\t\t\t\t\t\t";
-   private static final char[] sIndSpacesArray = sIndSpaces.toCharArray(), sIndTabsArray = sIndTabs.toCharArray();
-   private static final String[] sIndSpacesStrings = new String[34], sIndTabsStrings = new String[10];
+   private static final char[] arr0 = new char[0], indWS = "\n                                 ".toCharArray(), indTAB = "\n\t\t\t\t\t\t\t\t\t".toCharArray();
+   private static final String[] arrWS = new String[34], arrTAB = new String[10];
    private static final Iterator s1Empty = new SIterator(null, true);
 
    XmlScanner(InputFactoryImpl impl){
@@ -404,13 +402,13 @@ findOrCreate:
       String text;
       int strlen = rLen = indCharCount + 1;
       if(indChar == '\t'){
-         arr = sIndTabsArray;
-         if((text = sIndTabsStrings[indCharCount]) == null)
-            sIndTabsStrings[indCharCount] = text = sIndTabs.substring(0, strlen);
+         arr = indTAB;
+         if((text = arrTAB[indCharCount]) == null)
+            arrTAB[indCharCount] = text = "\n\t\t\t\t\t\t\t\t\t".substring(0, strlen);
       }else{
-         arr = sIndSpacesArray;
-         if((text = sIndSpacesStrings[indCharCount]) == null)
-            sIndSpacesStrings[indCharCount] = text = sIndSpaces.substring(0, strlen);
+         arr = indWS;
+         if((text = arrWS[indCharCount]) == null)
+            arrWS[indCharCount] = text = "\n                                 ".substring(0, strlen);
       }
       result = text;
    }
