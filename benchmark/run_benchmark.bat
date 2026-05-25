@@ -17,7 +17,7 @@ REM XML file to use for this benchmark
 SET XML_FILE=benchmark\files\large_xml_file.xml
 
 REM How many times to repeat the benchmark?
-SET COUNT=5000
+SET COUNT=10000
 
 REM === CONFIG END ==================================
 TITLE Benchmarking the XML processor...
