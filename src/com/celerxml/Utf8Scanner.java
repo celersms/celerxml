@@ -164,7 +164,7 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    public final int nxtFromProlog(boolean isProlog) throws XMLStreamException{
-      if(incompl)
+      if(inc)
          skipTok();
       setStartLoc();
       while(true){
@@ -206,7 +206,7 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    public final int nxtFromTree() throws XMLStreamException{
-      if(incompl){
+      if(inc){
          if(skipTok()){
             reset();
             return currToken = 9; // ENTITY_REFERENCE
@@ -220,8 +220,8 @@ public final class Utf8Scanner extends XmlScanner{
          curr = curr.nxt;
          while(lastNs != null && lastNs.lvl >= depth)
             lastNs =lastNs.Code();
-      }else if(pending){
-         pending = false;
+      }else if(pend){
+         pend = false;
          reset();
          return currToken = 9; // ENTITY_REFERENCE
       }
@@ -249,7 +249,7 @@ public final class Utf8Scanner extends XmlScanner{
       }else
          cTmp = (int)b & 0xFF;
       if(lazy)
-         incompl = true;
+         inc = true;
       else
          endC();
       return currToken = 4; // CHARACTERS
@@ -264,20 +264,20 @@ public final class Utf8Scanner extends XmlScanner{
             assertMore();
          if((b = inBuf[inPtr++]) == (byte)'-'){
             if(lazy)
-               incompl = true;
+               inc = true;
             else
                endComm();
             return currToken = 5; // COMMENT
          }
       }else if(b == (byte)'D' && isProlog){
          doDtdStart();
-         if(!lazy && incompl){
+         if(!lazy && inc){
             endDTD();
-            incompl = false;
+            inc = false;
          }
          return 11; // DTD
       }
-      incompl = true;
+      inc = true;
       currToken = 4; // CHARACTERS
       thPlogUnxpCh(isProlog, decChr(b));
       return 0;
@@ -327,12 +327,12 @@ public final class Utf8Scanner extends XmlScanner{
       }else
          dtdPub = dtdSys = null;
       if(b == (byte)'>'){
-         incompl = false;
+         inc = false;
          return currToken = 11; // DTD
       }
       if(b != (byte)'[')
          thUnxp(decChr(b), ", expected '[' or '>'");
-      incompl = true;
+      inc = true;
       return currToken = 11; // DTD
    }
 
@@ -346,7 +346,7 @@ public final class Utf8Scanner extends XmlScanner{
          if(inBuf[inPtr++] != (byte)'-')
             thInErr("Expected '-'");
          if(lazy)
-            incompl = true;
+            inc = true;
          else
             endComm();
          return currToken = 5; // COMMENT
@@ -360,7 +360,7 @@ public final class Utf8Scanner extends XmlScanner{
                thInErr("Expected '[CDATA['");
          }
          if(lazy)
-            incompl = true;
+            inc = true;
          else
             endCData();
          return 12; // CDATA
@@ -400,7 +400,7 @@ public final class Utf8Scanner extends XmlScanner{
             ++inPtr;
          }
          if(lazy)
-            incompl = true;
+            inc = true;
          else
             endPI();
       }else{
@@ -411,7 +411,7 @@ public final class Utf8Scanner extends XmlScanner{
          if((b = inBuf[inPtr++]) != (byte)'>')
             thNoPISp(decChr(b));
          reset();
-         incompl = false;
+         inc = false;
       }
       return 3; // PROCESSING_INSTRUCTION
    }
@@ -830,7 +830,7 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    final void endTok() throws XMLStreamException{
-      incompl = false;
+      inc = false;
       switch(currToken){
          case 3:  // PROCESSING_INSTRUCTION
             endPI();
@@ -1627,7 +1627,7 @@ public final class Utf8Scanner extends XmlScanner{
                if(ok){
                   ++inPtr;
                   currSize = outPtr;
-                  if(cls && !pending)
+                  if(cls && !pend)
                      endClsTxt();
                   return;
                }
@@ -1713,14 +1713,14 @@ public final class Utf8Scanner extends XmlScanner{
             case 9:  // LT
                --inPtr;
                currSize = outPtr;
-               if(cls && !pending)
+               if(cls && !pend)
                   endClsTxt();
                return;
             case 10: // AMP
                if((c = entInTxt()) == 0){
-                  pending = true;
+                  pend = true;
                   currSize = outPtr;
-                  // if(cls && !pending)
+                  // if(cls && !pend)
                   //    endClsTxt();
                   return;
                }
@@ -2133,7 +2133,7 @@ public final class Utf8Scanner extends XmlScanner{
             endClsCData();
          }else{
             endClsC();
-            if(pending)
+            if(pend)
                return;
          }
       }
@@ -2197,7 +2197,7 @@ public final class Utf8Scanner extends XmlScanner{
                return;
             case 10: // AMP
                if((c = entInTxt()) == 0){
-                  pending = true;
+                  pend = true;
                   currSize = outPtr;
                   return;
                }
