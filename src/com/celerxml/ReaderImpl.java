@@ -120,7 +120,7 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
 
    public final String getLocalName(){
       if(Code > 2 && Code != 9) // END_ELEMENT | ENTITY_REFERENCE
-         throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT/ENTITY_REFERENCE");
+         throw new IllegalStateException("Not START_ELEMENT/END_ELEMENT/ENTITY_REF");
       return curN.ln;
    }
 
@@ -167,7 +167,7 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
 
    public final String getPIData(){
       if(Code != 3) // PROCESSING_INSTRUCTION
-         throw new IllegalStateException("Not PROCESSING_INSTRUCTION");
+         throw new IllegalStateException("Not PROCESSING_INSTR");
       try{
          return scan.getText();
       }catch(XMLStreamException ex){
@@ -177,7 +177,7 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
 
    public final String getPITarget(){
       if(Code != 3) // PROCESSING_INSTRUCTION
-         throw new IllegalStateException("Not PROCESSING_INSTRUCTION");
+         throw new IllegalStateException("Not PROCESSING_INSTR");
       return curN.ln;
    }
 
@@ -260,7 +260,7 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
          throw new XMLStreamException("Unexpected type", scan.loc());
       if(localName != null){
          if(curr > 2 && curr != 9) // END_ELEMENT | ENTITY_REFERENCE
-            throw new XMLStreamException("Not START_ELEMENT/END_ELEMENT/ENTITY_REFERENCE", scan.loc());
+            throw new XMLStreamException("Not START_ELEMENT/END_ELEMENT/ENTITY_REF", scan.loc());
          if(!localName.equals(getLocalName()))
             throw new XMLStreamException("Unexpected local name", scan.loc());
       }
