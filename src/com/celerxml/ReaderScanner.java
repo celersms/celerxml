@@ -56,9 +56,8 @@ final class ReaderScanner extends XmlScanner{
       return chr;
    }
 
-   @Override
    final void endTok() throws XMLStreamException{
-      incompl = false;
+      inc = false;
       switch(currToken){
          case 3:  // PROCESSING_INSTRUCTION
             endPI();
@@ -80,9 +79,8 @@ final class ReaderScanner extends XmlScanner{
       }
    }
 
-   @Override
    final int nxtFromProlog(boolean isProlog) throws XMLStreamException{
-      if(incompl)
+      if(inc)
          skipTok();
       iniRawOff = bOrC + inPtr;
       startRow = currRow;
@@ -105,9 +103,6 @@ final class ReaderScanner extends XmlScanner{
                if(c == '/' || !isProlog)
                   thRoot(isProlog, c);
                return startElem(c);
-            case ' ':
-            case '\t':
-               continue;
             case '\r':
                if(inPtr >= end && !more()){
                   rowOff = startCol = 0;
@@ -120,16 +115,17 @@ final class ReaderScanner extends XmlScanner{
             case '\n':
                rowOff = inPtr;
                ++currRow;
-               break;
+            case ' ':
+            case '\t':
+               continue;
             default:
                thPlogUnxpCh(isProlog, c);
          }
       }
    }
 
-   @Override
    final int nxtFromTree() throws XMLStreamException{
-      if(incompl){
+      if(inc){
          if(skipTok()){
             reset();
             return currToken = 9; // ENTITY_REFERENCE
@@ -143,8 +139,8 @@ final class ReaderScanner extends XmlScanner{
          curr = curr.nxt;
          while(lastNs != null && lastNs.lvl >= depth)
             lastNs = lastNs.Code();
-      }else if(pending){
-         pending = false;
+      }else if(pend){
+         pend = false;
          reset();
          return currToken = 9; // ENTITY_REFERENCE
       }
@@ -156,17 +152,15 @@ final class ReaderScanner extends XmlScanner{
          startCol = -rowOff;
          return -1;
       }
-      int c = buf[inPtr];
-      if(c == '<'){
+      int c;
+      if((c = buf[inPtr]) == '<'){
          if(++inPtr >= end && !more())
             thInErr(EOI);
          if((c = buf[inPtr++]) == '!')
             return commOrCdataStart();
          if(c == '?')
             return doPIStart();
-         if(c == '/')
-            return doEndE();
-         return startElem((char)c);
+         return c == '/' ? doEndE() : startElem((char)c);
       }
       if(c == '&'){
          ++inPtr;
@@ -175,7 +169,7 @@ final class ReaderScanner extends XmlScanner{
       }
       cTmp = c;
       if(lazy)
-         incompl = true;
+         inc = true;
       else
          endC();
       return currToken = 4; // CHARACTERS
@@ -184,26 +178,26 @@ final class ReaderScanner extends XmlScanner{
    private final int doPrologDecl(boolean isProlog) throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      char c = buf[inPtr++];
-      if(c == '-'){
+      char c;
+      if((c = buf[inPtr++]) == '-'){
          if(inPtr >= end)
             assertMore();
          if((c = buf[inPtr++]) == '-'){
             if(lazy)
-               incompl = true;
+               inc = true;
             else
                endComm();
             return currToken = 5; // COMMENT
          }
       }else if(isProlog && c == 'D'){
          doDtdStart();
-         if(!lazy && incompl){
+         if(!lazy && inc){
             endDTD();
-            incompl = false;
+            inc = false;
          }
          return 11; // DTD
       }
-      incompl = true;
+      inc = true;
       currToken = 4; // CHARACTERS
       thPlogUnxpCh(isProlog, c);
       return 0;
@@ -253,7 +247,7 @@ final class ReaderScanner extends XmlScanner{
          c = Code(false);
       }else
          dtdPub = dtdSys = null;
-      if((incompl = c == '[') || c == '>')
+      if((inc = c == '[') || c == '>')
          return currToken = 11; // DTD
       thUnxp(c, ", expected '[' or '>'");
       return 0;
@@ -262,14 +256,14 @@ final class ReaderScanner extends XmlScanner{
    private final int commOrCdataStart() throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      char c = buf[inPtr++];
-      if(c == '-'){
+      char c;
+      if((c = buf[inPtr++]) == '-'){
          if(inPtr >= end)
             assertMore();
          if(buf[inPtr++] != '-')
             thInErr("Expected '-'");
          if(lazy)
-            incompl = true;
+            inc = true;
          else
             endComm();
          return currToken = 5; // COMMENT
@@ -283,7 +277,7 @@ final class ReaderScanner extends XmlScanner{
                thInErr("Expected '[CDATA['");
          }
          if(lazy)
-            incompl = true;
+            inc = true;
          else
             endCData();
          return 12; // CDATA
@@ -296,14 +290,13 @@ final class ReaderScanner extends XmlScanner{
       currToken = 3; // PROCESSING_INSTRUCTION
       if(inPtr >= end)
          assertMore();
-      tokName = parsePN(buf[inPtr++]);
-      String ln = tokName.ln;
-      if(ln.length() == 3 && ln.equalsIgnoreCase("xml") && tokName.pfx == null)
+      String ln;
+      if((ln = (tokName = parsePN(buf[inPtr++])).ln).length() == 3 && ln.equalsIgnoreCase("xml") && tokName.pfx == null)
          thInErr("Target 'xml' reserved");
       if(inPtr >= end)
          assertMore();
-      char c = buf[inPtr++];
-      if(c <= 0x20){
+      char c;
+      if((c = buf[inPtr++]) <= 0x20){
          while(true){
             if(c == '\n'){
                rowOff = inPtr;
@@ -324,7 +317,7 @@ final class ReaderScanner extends XmlScanner{
             ++inPtr;
          }
          if(lazy)
-            incompl = true;
+            inc = true;
          else
             endPI();
       }else{
@@ -335,7 +328,7 @@ final class ReaderScanner extends XmlScanner{
          if((c = buf[inPtr++]) != '>')
             thNoPISp(c);
          reset();
-         incompl = false;
+         inc = false;
       }
       return 3; // PROCESSING_INSTRUCTION
    }
@@ -343,9 +336,9 @@ final class ReaderScanner extends XmlScanner{
    private final int chrEnt() throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      char c = buf[inPtr++];
+      char c;
       int value = 0;
-      if(c == 'x')
+      if((c = buf[inPtr++]) == 'x')
          while(true){
             if(inPtr >= end)
                assertMore();
@@ -354,13 +347,13 @@ final class ReaderScanner extends XmlScanner{
             if((c = (char)((c | 0x20) - 0x30)) > 9) // to lowercase
                c -= 0x27;
             if(c < 0 || c > 0xF)
-               thUnxp(c, ", not a hex digit");
+               thUnxp(c, ", not hex digit");
             value = value << 4 | c;
          }
       else
          while(c != ';'){
             if(c < '0' || c > '9')
-               thUnxp(c, ", not a dec digit");
+               thUnxp(c, ", not dec digit");
             value = value * 10 + c - '0';
             if(inPtr >= end)
                assertMore();
@@ -373,15 +366,14 @@ final class ReaderScanner extends XmlScanner{
 
    private final int startElem(char c) throws XMLStreamException{
       currToken = 1; // START_ELEMENT
-      nsCnt = 0;
-      PN elemName = parsePN(c);
-      String prefix = elemName.pfx;
+      PN elemName;
+      String prefix;
+      int xx;
+      nsCnt = xx = 0;
       boolean allBound = true;
-      if(prefix != null)
+      if((prefix = (elemName = parsePN(c)).pfx) != null)
          allBound = (elemName = bindName(elemName, prefix)).isBound();
-      tokName = elemName;
-      curr = new Node(elemName, curr);
-      int xx = 0;
+      curr = new Node(tokName = elemName, curr);
       while(true){
          if(inPtr >= end)
             assertMore();
@@ -416,10 +408,9 @@ final class ReaderScanner extends XmlScanner{
             break;
          }else if(c == '<')
             thInErr("Unexpected '<'");
-         PN attrName = parsePN(c);
-         prefix = attrName.pfx;
+         PN attrName;
          boolean isNsDecl = true;
-         if(prefix == null)
+         if((prefix = (attrName = parsePN(c)).pfx) == null)
             isNsDecl = attrName.ln == "xmlns";
          else if(prefix != "xmlns"){
             attrName = bindName(attrName, prefix);
@@ -481,8 +472,8 @@ final class ReaderScanner extends XmlScanner{
          if(!elemName.isBound())
             thUnbPfx(tokName, false);
          for(int i = 0, len = attrCount; i < len; ++i){
-            PN attrName = names[i];
-            if(!attrName.isBound())
+            PN attrName;
+            if(!(attrName = names[i]).isBound())
                thUnbPfx(attrName, true);
          }
       }
@@ -977,7 +968,6 @@ final class ReaderScanner extends XmlScanner{
       }
    }
 
-   @Override
    final void skipDTD() throws XMLStreamException{
       int quoteChar = 0;
       final byte[] TYPES = Code.DTD;
@@ -1106,7 +1096,7 @@ final class ReaderScanner extends XmlScanner{
                   if(ok){
                      ++inPtr;
                      currSize = outPtr;
-                     if(cls && !pending)
+                     if(cls && !pend)
                         endClsTxt();
                      return;
                   }
@@ -1190,7 +1180,7 @@ outl: while(true){
                case 10: // AMP
                   int d = entInTxt();
                   if(d == 0){
-                     pending = true;
+                     pend = true;
                      break outl;
                   }
                   if((d >> 16) != 0){
@@ -1241,7 +1231,7 @@ outl: while(true){
          outputBuffer[outPtr++] = c;
       }
       currSize = outPtr;
-      if(cls && !pending)
+      if(cls && !pend)
          endClsTxt();
    }
 
@@ -1317,7 +1307,7 @@ outl: while(true){
             endClsCData();
          }else{
             endClsC();
-            if(pending)
+            if(pend)
                return;
          }
       }
@@ -1457,7 +1447,7 @@ outl: while(true){
                case 10: // AMP
                   int d = entInTxt();
                   if(d == 0){
-                     pending = true;
+                     pend = true;
                      break outl;
                   }
                   if((d >> 16) != 0){
@@ -1510,7 +1500,6 @@ outl: while(true){
       currSize = outPtr;
    }
 
-   @Override
    final boolean skipCTxt() throws XMLStreamException{
       while(true){
          if(inPtr >= end && !more())
@@ -1531,7 +1520,6 @@ outl: while(true){
       }
    }
 
-   @Override
    final void skipComm() throws XMLStreamException{
       final byte[] TYPES = Code.OTH;
       final char[] inputBuffer = buf;
@@ -1581,7 +1569,6 @@ outl: while(true){
       }
    }
 
-   @Override
    final void skipPI() throws XMLStreamException{
       final byte[] TYPES = Code.OTH;
       final char[] inputBuffer = buf;
@@ -1628,7 +1615,6 @@ outl: while(true){
       }
    }
 
-   @Override
    final boolean skipChars() throws XMLStreamException{
       final byte[] TYPES = Code.TXT;
       final char[] inputBuffer = buf;
@@ -1690,7 +1676,6 @@ outl: while(true){
       }
    }
 
-   @Override
    final void skipCData() throws XMLStreamException{
       final byte[] TYPES = Code.OTH;
       final char[] inputBuffer = buf;
@@ -1745,7 +1730,6 @@ outl: while(true){
       }
    }
 
-   @Override
    final void skipWS() throws XMLStreamException{
       int ptr = inPtr;
       while(true){
@@ -1983,7 +1967,6 @@ outl: while(true){
 
    private final void thSurr(char ch) throws XMLStreamException{ thInErr(new StrB(23).a("Invalid surrogate ").apos((int)ch).toString()); }
 
-   @Override
    final javax.xml.stream.Location loc(){ return new LocImpl(impl.pubId, impl.sysId, inPtr - rowOff, currRow, bOrC + inPtr); }
 
    private final boolean loadNRet() throws XMLStreamException{
@@ -2004,7 +1987,6 @@ outl: while(true){
       }
    }
 
-   @Override
    final void close() throws IOException{
       if(in != null){
          in.close();
@@ -2012,7 +1994,6 @@ outl: while(true){
       }
    }
 
-   @Override
    final void Code(){
       super.Code();
       if(syms.dirty)
