@@ -48,11 +48,8 @@ final class ReaderScanner extends XmlScanner{
    private final char chkSurrgCh(char chr) throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      int val = ((chr - 0xD800) << 10) + 0x10000;
       if(chr >= 0xDC00 || (chr = buf[inPtr++]) < 0xDC00 || chr >= 0xE000)
          thSurr(chr);
-      if(val > 0x10FFFF)
-         thInvC(val);
       return chr;
    }
 
@@ -360,7 +357,7 @@ final class ReaderScanner extends XmlScanner{
             c = buf[inPtr++];
          }
       if((value >= 0xD800 && value < 0xE000) || value == 0 || value == 0xFFFE || value == 0xFFFF)
-         thInvC(value);
+         thC(value);
       return value;
    }
 
@@ -725,14 +722,11 @@ final class ReaderScanner extends XmlScanner{
             char sec = buf[inPtr++];
             if(sec < 0xDC00 || sec >= 0xE000)
                thSurr(sec);
-            int value = ((c - 0xD800) << 10) + 0x10000;
-            if(value > 0x10FFFF)
-               thInvC(value);
             if(cix >= cbuf.length)
                nameBuf = cbuf = xpand(cbuf);
+            ok = Chr.is10N(((c - 0xD800) << 10) + 0x10000);
             cbuf[cix++] = c;
             c = buf[inPtr - 1];
-            ok = Chr.is10N(value);
          }else if(c >= 0xFFFE)
             thC(c);
          else
@@ -1738,8 +1732,8 @@ outl: while(true){
                break;
             ptr = 0;
          }
-         char c = buf[ptr];
-         if(c > ' ')
+         char c;
+         if((c = buf[ptr]) > ' ')
             break;
          ++ptr;
          if(c == '\n'){
@@ -1766,8 +1760,8 @@ outl: while(true){
    private final char Code(boolean reqd) throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      char c = buf[inPtr++];
-      if(c > 0x20){
+      char c;
+      if((c = buf[inPtr++]) > 0x20){
          if(!reqd)
             return c;
          thUnxp(c, ", expected white space");
@@ -1795,8 +1789,8 @@ outl: while(true){
       for(int i = 1, len = kw.length(); i < len; ++i){
          if(inPtr >= end)
             assertMore();
-         char c = buf[inPtr++];
-         if(c != kw.charAt(i))
+         char c;
+         if((c = buf[inPtr++]) != kw.charAt(i))
             thUnxp(c, new StrB(18).a(", expected ").a(kw).toString());
       }
    }
@@ -1827,8 +1821,8 @@ outl: while(true){
       while(count <= max){
          if(inPtr >= end)
             assertMore();
-         char c2 = buf[inPtr];
-         if(c2 != c){
+         char c2;
+         if((c2 = buf[inPtr]) != c){
             if(c2 == '<' && inPtr + 1 < end && buf[inPtr + 1] != '!'){
                indent(count, c);
                return -1;
@@ -1891,8 +1885,8 @@ outl: while(true){
          if(inPtr >= end)
             assertMore();
          if((c = buf[inPtr]) < 45 || (c > 58 && c < 65) || c == 47){
-            PN n = syms.find(nameBuffer, ptr, hash);
-            if(n != null)
+            PN n;
+            if((n = syms.find(nameBuffer, ptr, hash)) != null)
                return n;
             int namePtr = 1, lastColon = -1;
             if((c = nameBuffer[0]) < 0xD800 || c >= 0xE000){
@@ -1934,8 +1928,8 @@ outl: while(true){
       while(true){
          if(inPtr >= end)
             assertMore();
-         char c = buf[inPtr++];
-         if(c == quote)
+         char c;
+         if((c = buf[inPtr++]) == quote)
             return new String(outputBuffer, 0, outPtr);
          switch(TYPES[c]){
             case 2: // WS_CR
@@ -1958,11 +1952,8 @@ outl: while(true){
    }
 
    private final void Code(char chr, char sec) throws XMLStreamException{
-      int val = ((chr - 0xD800) << 10) + 0x10000;
       if(chr >= 0xDC00 || (chr = sec) < 0xDC00 || chr >= 0xE000)
          thSurr(chr);
-      if(val > 0x10FFFF)
-         thInvC(val);
    }
 
    private final void thSurr(char ch) throws XMLStreamException{ thInErr(new StrB(23).a("Invalid surrogate ").apos((int)ch).toString()); }
@@ -1972,8 +1963,8 @@ outl: while(true){
    private final boolean loadNRet() throws XMLStreamException{
       if(in == null)
          return false;
-      int xx = inPtr;
-      bOrC += xx;
+      int xx;
+      bOrC += xx = inPtr;
       rowOff -= xx;
       System.arraycopy(buf, xx, buf, inPtr = 0, end -= xx);
       try{
