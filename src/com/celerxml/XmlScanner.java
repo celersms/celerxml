@@ -682,8 +682,6 @@ findOrCreate:
         : new StrB(20).a("Name char ").apos(ch).toString());
    }
 
-   final void thInvC(int ch) throws XMLStreamException{ thInErr(new StrB(24).a("Invalid char ").apos(ch).toString()); }
-
    final void thNoPISp(int ch) throws XMLStreamException{ thUnxp(ch, ", not space or closing '?>'"); }
 
    final void thHyph() throws XMLStreamException{ thInErr("'--' in comment"); }
