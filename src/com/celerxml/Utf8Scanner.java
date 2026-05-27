@@ -443,7 +443,7 @@ public final class Utf8Scanner extends XmlScanner{
             b = inBuf[inPtr++];
          }
       if((value >= 0xD800 && value < 0xE000) || value == 0 || value == 0xFFFE || value == 0xFFFF)
-         thInvC(value);
+         thC(value);
       return value;
    }
 
