@@ -15,7 +15,6 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.stream.XMLStreamException;
 import org.xml.sax.Locator;
 import org.xml.sax.XMLReader;
-import org.xml.sax.Attributes;
 import org.xml.sax.DTDHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -42,14 +41,9 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
    private int attrc;
 
    SAXParserImpl(InputFactoryImpl factory){ Code = factory; }
-
-   @Override
    public final org.xml.sax.Parser getParser(){ return this; }
-
-   @Override
    public final XMLReader getXMLReader(){ return this; }
 
-   @Override
    public Object getProperty(String name) throws SAXNotRecognizedException{
       switch(Code(name)){
          case 0xDB4F95F7: // "declaration-handler"
@@ -66,7 +60,6 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
       }
    }
 
-   @Override
    public final void setProperty(String name, Object value) throws SAXNotRecognizedException{
       switch(Code(name)){
          case 0xDB4F95F7: // "declaration-handler"
@@ -85,7 +78,6 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
       }
    }
 
-   @Override
    public final void parse(InputSource is, org.xml.sax.HandlerBase hb) throws SAXException{
       if(hb != null){
          if(cntH == null)
@@ -100,7 +92,6 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
       parse(is);
    }
 
-   @Override
    public final void parse(InputSource is, DefaultHandler dh) throws SAXException{
       if(dh != null){
          if(cntH == null)
@@ -115,55 +106,35 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
       parse(is);
    }
 
-   @Override
    public final ContentHandler getContentHandler(){ return cntH; }
-
-   @Override
    public final DTDHandler getDTDHandler(){ return dtdH; }
-
-   @Override
    public final EntityResolver getEntityResolver(){ return eRes; }
-
-   @Override
    public final ErrorHandler getErrorHandler(){ return errH; }
-
-   @Override
    public final boolean getFeature(String name) throws SAXNotRecognizedException{ return SAXParserFactoryImpl.fix(name); }
-
-   @Override
    public final void setContentHandler(ContentHandler cntH){ this.cntH = cntH; }
-
-   @Override
    public final void setDTDHandler(DTDHandler dtdH){ this.dtdH = dtdH; }
-
-   @Override
    public final void setEntityResolver(EntityResolver eRes){ this.eRes = eRes; }
-
-   @Override
    public final void setErrorHandler(ErrorHandler errH){ this.errH = errH; }
-
-   @Override
    public final void setFeature(String name, boolean val){ /* NOOP */ }
 
-   @Override
    public final void parse(InputSource input) throws SAXException{
-      String str = input.getSystemId();
-      InputFactoryImpl impl = new InputFactoryImpl(input.getPublicId(), str, input.getEncoding(), Code, false);
-      impl.Code(256, false);
+      String str;
+      InputFactoryImpl impl;
+      (impl = new InputFactoryImpl(input.getPublicId(), str = input.getSystemId(), input.getEncoding(), Code, false)).Code(256, false);
       InputStream is = null;
-      Reader r = input.getCharacterStream();
-      if(r == null && (is = input.getByteStream()) == null){
+      Reader r;
+      if((r = input.getCharacterStream()) == null && (is = input.getByteStream()) == null){
          if(str == null)
             throw new SAXException("Source neither char or byte stream, nor system id");
          try{
             URL url;
-            int ix = str.indexOf(':', 0);
-            if(ix >= 3 && ix <= 8)
+            int ix;
+            if((ix = str.indexOf(':', 0)) >= 3 && ix <= 8)
                url = new URL(str);
             else{
                String absPath = new File(str).getAbsolutePath();
-               char sep = File.separatorChar;
-               if(sep != '/')
+               char sep;
+               if((sep = File.separatorChar) != '/')
                   absPath = absPath.replace(sep, '/');
                if((ix = absPath.length()) > 0 && absPath.charAt(0) != '/')
                   absPath = new StrB(1 + ix).a('/').a(absPath).toString();
@@ -182,10 +153,11 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
          cntH.startDocument();
       }
       try{
-         scan = r != null ? new InSrc(impl, r).w() : new bSrc(impl, is).w();
+         final XmlScanner scan = this.scan = (r != null ? new InSrc(impl, r) : new bSrc(impl, is)).w();
          int type;
          while((type = scan.nxtFromProlog(true)) != 1) // START_ELEMENT
-            auxEvt(type, false);
+            if(type != 6) // SPACE
+               Code(type);
          attrc = scan.attrCount;
          scan.startElement(cntH, this);
          int depth = 1;
@@ -201,10 +173,10 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
             }else if(type == 4) // CHARACTERS
                scan.chrEvts(cntH);
             else
-               auxEvt(type, true);
+               Code(type);
          while((type = scan.nxtFromProlog(false)) != -1) // EOI
             if(type != 6) // SPACE
-               auxEvt(type, false);
+               Code(type);
       }catch(XMLStreamException ex){
          SAXParseException se = new SAXParseException(ex.getMessage(), (Locator)this, ex);
          if(errH != null)
@@ -228,14 +200,13 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
       }
    }
 
-   @Override
    public final void parse(String systemId) throws SAXException{ parse(new InputSource(systemId)); }
 
-   private final void auxEvt(int type, boolean inTree) throws SAXException, XMLStreamException{
+   private final void Code(int type) throws SAXException, XMLStreamException{
       switch(type){
          case 5:  // COMMENT
             scan.commentEvent(lexH);
-            break;
+            return;
          case 12: // CDATA
             if(lexH != null){
                lexH.startCDATA();
@@ -243,190 +214,71 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
                lexH.endCDATA();
             }else
                scan.chrEvts(cntH);
-            break;
+            return;
          case 11: // DTD
             if(lexH != null){
                lexH.startDTD(scan.tokName.Code, scan.dtdPub, scan.dtdSys);
                lexH.endDTD();
             }
-            break;
+            return;
          case 3:  // PROCESSING_INSTRUCTION
             scan.PIEvent(cntH);
-            break;
+            return;
          case 6:  // SPACE
-            if(inTree)
-               scan.spaceEvts(cntH);
-            break;
-         default:
-            if(type == -1){ // EOI
-               SAXParseException se = new SAXParseException("Unexpected EOI", (Locator)this);
-               if(errH != null)
-                  errH.fatalError(se);
-               throw se;
-            }
-            throw new RuntimeException(new StrB(26).a("Unexpected type ").apos(type).toString());
+            scan.spaceEvts(cntH);
+            return;
       }
+      if(type == -1){ // EOI
+         SAXParseException se = new SAXParseException("Unexpected EOI", (Locator)this);
+         if(errH != null)
+            errH.fatalError(se);
+         throw se;
+      }
+      throw new RuntimeException(new StrB(26).a("Unexpected type ").apos(type).toString());
    }
 
-   @Override
-   public final void setDocumentHandler(org.xml.sax.DocumentHandler h){ cntH = new DocHandlerW(h); }
-
-   @Override
+   public final void setDocumentHandler(org.xml.sax.DocumentHandler h){ cntH = new DocH(h); }
    public final void setLocale(java.util.Locale locale){ /* NOOP */ }
-
-   @Override
    public final int getIndex(String qName){ return scan.findIdx(null, qName); }
-
-   @Override
    public final int getIndex(String uri, String lName){ return scan.findIdx(uri, lName); }
-
-   @Override
    public final int getLength(){ return attrc; }
-
-   @Override
    public final String getLocalName(int idx){ return idx < 0 || idx >= attrc ? null : scan.names[idx].ln; }
-
-   @Override
    public final String getQName(int idx){ return idx < 0 || idx >= attrc ? null : scan.names[idx].Code; }
-
-   @Override
    public final String getType(int idx){ return idx < 0 || idx >= attrc ? null : "CDATA"; }
-
-   @Override
    public final String getType(String qName){ return getIndex(qName) < 0 ? null : "CDATA"; }
-
-   @Override
    public final String getType(String uri, String lName){ return getIndex(uri, lName) < 0 ? null : "CDATA"; }
 
-   @Override
    public final String getURI(int idx){
       if(idx < 0 || idx >= attrc)
          return null;
-      String uri = scan.names[idx].getNsUri();
-      return uri == null ? "" : uri;
+      String uri;
+      return (uri = scan.names[idx].getNsUri()) == null ? "" : uri;
    }
 
-   @Override
    public final String getValue(int idx){ return idx < 0 || idx >= attrc ? null : scan.getV(idx); }
-
-   @Override
    public final String getValue(String qName){ return scan.getV(null, qName); }
-
-   @Override
    public final String getValue(String uri, String lName){ return scan.getV(uri, lName); }
-
-   @Override
    public final boolean isDeclared(int idx){ return false; }
-
-   @Override
    public final boolean isDeclared(String qName){ return false; }
-
-   @Override
    public final boolean isDeclared(String uri, String lName){ return false; }
-
-   @Override
    public final boolean isSpecified(int idx){ return true; }
-
-   @Override
    public final boolean isSpecified(String qName){ return true; }
-
-   @Override
    public final boolean isSpecified(String uri, String lName){ return true; }
-
-   @Override
    public final int getColumnNumber(){ return scan.col(); }
-
-   @Override
    public final int getLineNumber(){ return scan.currRow + 1; }
-
-   @Override
    public final String getPublicId(){ return scan.impl.pubId; }
-
-   @Override
    public final String getSystemId(){ return scan.impl.sysId; }
 
-   @Override
    public final String getEncoding(){
-      InputFactoryImpl impl = scan.impl;
-      String enc = impl.enc;
-      if(enc == null && (enc = impl.declEnc) == null)
+      InputFactoryImpl impl;
+      String enc;
+      if((enc = (impl = scan.impl).enc) == null && (enc = impl.declEnc) == null)
          enc = impl.extEnc;
       return enc;
    }
 
-   @Override
    public final String getXMLVersion(){ return scan.impl.declVer; }
-
-   @Override
    public boolean isNamespaceAware(){ return true; }
-
-   @Override
    public boolean isValidating(){ return false; }
-
    private static final int Code(String s){ return s.startsWith("http://xml.org/sax/properties/") ? s.substring(30).hashCode() : 0; }
-
-   final static class DocHandlerW implements ContentHandler, org.xml.sax.AttributeList{
-
-      private final org.xml.sax.DocumentHandler Code;
-      private Attributes attrs;
-
-      DocHandlerW(org.xml.sax.DocumentHandler docH){ Code = docH; }
-
-      @Override
-      public final void characters(char[] ch, int start, int len) throws SAXException{ Code.characters(ch, start, len); }
-
-      @Override
-      public final void startDocument() throws SAXException{ Code.startDocument(); }
-
-      @Override
-      public final void endDocument() throws SAXException{ Code.endDocument(); }
-
-      @Override
-      public final void endElement(String uri, String lName, String qName) throws SAXException{ Code.endElement(qName == null ? lName : qName); }
-
-      @Override
-      public final void ignorableWhitespace(char[] ch, int start, int len) throws SAXException{ Code.ignorableWhitespace(ch, start, len); }
-
-      @Override
-      public final void processingInstruction(String tgt, String data) throws SAXException{ Code.processingInstruction(tgt, data); }
-
-      @Override
-      public final void setDocumentLocator(Locator loc){ Code.setDocumentLocator(loc); }
-
-      @Override
-      public final void startElement(String uri, String lName, String qName, Attributes attrs) throws SAXException{
-         this.attrs = attrs;
-         Code.startElement(qName == null ? lName : qName, this);
-      }
-
-      @Override
-      public final void skippedEntity(String n){ /* NOOP */ }
-
-      @Override
-      public final void startPrefixMapping(String pfx, String uri){ /* NOOP */ }
-
-      @Override
-      public final void endPrefixMapping(String pfx){ /* NOOP */ }
-
-      @Override
-      public final int getLength(){ return attrs.getLength(); }
-
-      @Override
-      public final String getName(int i){
-         String n = attrs.getQName(i);
-         return n == null ? attrs.getLocalName(i) : n;
-      }
-
-      @Override
-      public final String getType(int i){ return attrs.getType(i); }
-
-      @Override
-      public final String getType(String name){ return attrs.getType(name); }
-
-      @Override
-      public final String getValue(int i){ return attrs.getValue(i); }
-
-      @Override
-      public final String getValue(String name){ return attrs.getValue(name); }
-   }
 }
