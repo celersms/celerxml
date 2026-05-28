@@ -14,16 +14,10 @@ public final class SAXParserFactoryImpl extends javax.xml.parsers.SAXParserFacto
    private final InputFactoryImpl Code;
 
    public SAXParserFactoryImpl(){ Code = new InputFactoryImpl(); }
-
    public static final SAXParserFactoryImpl newInstance(){ return new SAXParserFactoryImpl(); }
-
-   @Override
    public final javax.xml.parsers.SAXParser newSAXParser(){ return new SAXParserImpl(Code); }
-
-   @Override
    public final boolean getFeature(String n) throws SAXNotRecognizedException{ return fix(n); }
 
-   @Override
    public final void setFeature(String n, boolean enabled) throws SAXNotRecognizedException, SAXNotSupportedException{
       boolean ok = false;
       switch(Code(n)){
@@ -50,10 +44,9 @@ public final class SAXParserFactoryImpl extends javax.xml.parsers.SAXParserFacto
             throw new SAXNotRecognizedException(new StrB(22 + n.length()).a("Unrecognized feature ").a(n).toString());
       }
       if(!ok)
-         throw new SAXNotSupportedException(new StrB(29 + n.length()).a("Unsupported setting ").a(n).a(enabled ? " to true" : " to false").toString());
+         throw new SAXNotSupportedException(new StrB(22 + n.length()).a("Unsupported ").a(n).a(enabled ? "=true" : "=false").toString());
    }
 
-   @Override
    public final void setValidating(boolean value){
       if(value)
          throw new IllegalArgumentException("Validating mode not supported");
