@@ -363,14 +363,14 @@ final class ReaderScanner extends XmlScanner{
 
    private final int startElem(char c) throws XMLStreamException{
       currToken = 1; // START_ELEMENT
-      PN elemName;
+      PN pn;
       String prefix;
       int xx;
       nsCnt = xx = 0;
       boolean allBound = true;
-      if((prefix = (elemName = parsePN(c)).pfx) != null)
-         allBound = (elemName = bindName(elemName, prefix)).isBound();
-      curr = new Node(tokName = elemName, curr);
+      if((prefix = (pn = parsePN(c)).pfx) != null)
+         allBound = (pn = bindName(pn, prefix)).isBound();
+      curr = new Node(tokName = pn, curr);
       while(true){
          if(inPtr >= end)
             assertMore();
@@ -466,13 +466,11 @@ final class ReaderScanner extends XmlScanner{
       attrCount = xx;
       ++depth;
       if(!allBound){
-         if(!elemName.isBound())
+         if(!pn.isBound())
             thUnbPfx(tokName, false);
-         for(int i = 0, len = attrCount; i < len; ++i){
-            PN attrName;
-            if(!(attrName = names[i]).isBound())
-               thUnbPfx(attrName, true);
-         }
+         for(int i = 0, len = attrCount; i < len; ++i)
+            if(!(pn = names[i]).isBound())
+               thUnbPfx(pn, true);
       }
       return 1; // START_ELEMENT
    }
@@ -483,25 +481,22 @@ final class ReaderScanner extends XmlScanner{
       char c = 0;
       while(true){
          int ptr = inPtr;
-         boolean adv = true;
-         do{
+adv:     while(true){
             if(ptr >= end){
                assertMore();
                ptr = 0;
             }
             if(attrPtr >= attrBuffer.length)
                attrBuffer = xpand();
-            int max = end, max2 = ptr + attrBuffer.length - attrPtr;
-            if(max2 < max)
+            int max, max2;
+            if((max2 = ptr + attrBuffer.length - attrPtr) < (max = end))
                max = max2;
             while(ptr < max){
-               if((c = buf[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
-                  adv = false;
-                  break;
-               }
+               if((c = buf[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0))
+                  break adv;
                attrBuffer[attrPtr++] = c;
             }
-         }while(adv);
+         }
          inPtr = ptr;
          if(c <= 0xFF)
             switch(TYPES[c]){
@@ -537,11 +532,9 @@ final class ReaderScanner extends XmlScanner{
                   thUnxp(c, " in attribute value");
             }
          else if(c >= 0xD800 && c < 0xE000){
-            char d = chkSurrgCh(c);
-            attrBuffer[attrPtr++] = c;
+            c = chkSurrgCh(attrBuffer[attrPtr++] = c);
             if(attrPtr >= attrBuffer.length)
                attrBuffer = xpand();
-            c = d;
          }else if(c >= 0xFFFE)
             thC(c);
          attrBuffer[attrPtr++] = c;
@@ -554,14 +547,14 @@ final class ReaderScanner extends XmlScanner{
       while(true){
          if(inPtr >= end)
             assertMore();
-         char c = buf[inPtr++];
-         if(c == quote){
+         char c;
+         if((c = buf[inPtr++]) == quote){
             bindNs(name, attrPtr == 0 ? "" : impl.Code(attrBuffer, attrPtr));
             return;
          }
          if(c == '&'){
-            int d = entInTxt();
-            if(d == 0)
+            int d;
+            if((d = entInTxt()) == 0)
                thEnt();
             if((d >> 16) != 0){
                if(attrPtr >= attrBuffer.length)
@@ -607,8 +600,8 @@ final class ReaderScanner extends XmlScanner{
       }while(++i < len);
       if(inPtr >= end)
          assertMore();
-      char c = buf[inPtr++];
-      if(c <= ' ')
+      char c;
+      if((c = buf[inPtr++]) <= ' ')
          c = Code(false);
       else if(c == ':' || Chr.is10N(c))
          thUnxp(pname);
@@ -620,8 +613,8 @@ final class ReaderScanner extends XmlScanner{
    private final int entInTxt() throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      char c = buf[inPtr++];
-      if(c == '#')
+      char c;
+      if((c = buf[inPtr++]) == '#')
          return chrEnt();
       char[] cbuf = nameBuf;
       int cix = 0;
@@ -719,8 +712,8 @@ final class ReaderScanner extends XmlScanner{
                thSurr(c);
             if(inPtr >= end)
                assertMore();
-            char sec = buf[inPtr++];
-            if(sec < 0xDC00 || sec >= 0xE000)
+            char sec;
+            if((sec = buf[inPtr++]) < 0xDC00 || sec >= 0xE000)
                thSurr(sec);
             if(cix >= cbuf.length)
                nameBuf = cbuf = xpand(cbuf);
@@ -742,8 +735,8 @@ final class ReaderScanner extends XmlScanner{
       }
       if(impl.Code(16))
          thInErr("Entity ref. in entity expanding mode");
-      String pname = new String(cbuf, 0, cix);
-      tokName = new PN(pname, null, pname, 0);
+      String pname;
+      tokName = new PN(pname = new String(cbuf, 0, cix), null, pname, 0);
       return 0;
    }
 
@@ -751,12 +744,11 @@ final class ReaderScanner extends XmlScanner{
       final byte[] TYPES = Code.OTH;
       final char[] inputBuffer = buf;
       char[] outputBuffer = reset();
-      int outPtr = 0;
-      char c = 0;
+      char c;
+      int outPtr = c = 0;
       while(true){
          int ptr = inPtr;
-         boolean adv = true;
-         do{
+adv:     while(true){
             if(ptr >= end){
                assertMore();
                ptr = 0;
@@ -765,17 +757,15 @@ final class ReaderScanner extends XmlScanner{
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            int max = end, max2 = ptr + outputBuffer.length - outPtr;
-            if(max2 < max)
+            int max, max2;
+            if((max2 = ptr + outputBuffer.length - outPtr) < (max = end))
                max = max2;
             while(ptr < max){
-               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
-                  adv = false;
-                  break;
-               }
+               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0))
+                  break adv;
                outputBuffer[outPtr++] = c;
             }
-         }while(adv);
+         }
          inPtr = ptr;
          if(c <= 0xFF)
             switch(TYPES[c]){
@@ -793,8 +783,7 @@ final class ReaderScanner extends XmlScanner{
                   if(ptr >= end)
                      assertMore();
                   if(buf[inPtr] == '-'){
-                     ++inPtr;
-                     if(inPtr >= end)
+                     if(++inPtr >= end)
                         assertMore();
                      if(buf[inPtr++] != '>')
                         thHyph();
@@ -806,13 +795,11 @@ final class ReaderScanner extends XmlScanner{
                   thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000){
-            char d = chkSurrgCh(c);
-            outputBuffer[outPtr++] = c;
+            c = chkSurrgCh(outputBuffer[outPtr++] = c);
             if(outPtr >= outputBuffer.length) {
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            c = d;
          }else if(c >= 0xFFFE)
             thC(c);
          outputBuffer[outPtr++] = c;
@@ -823,12 +810,11 @@ final class ReaderScanner extends XmlScanner{
       final byte[] TYPES = Code.OTH;
       final char[] inputBuffer = buf;
       char[] outputBuffer = reset();
-      int outPtr = 0;
-      char c = 0;
+      char c;
+      int outPtr = c = 0;
       while(true){
          int ptr = inPtr;
-         boolean adv = true;
-         do{
+adv:     while(true){
             if(ptr >= end){
                assertMore();
                ptr = 0;
@@ -837,17 +823,15 @@ final class ReaderScanner extends XmlScanner{
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            int max = end, max2 = ptr + outputBuffer.length - outPtr;
-            if(max2 < max)
+            int max, max2;
+            if((max2 = ptr + outputBuffer.length - outPtr) < (max = end))
                max = max2;
             while(ptr < max){
-               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
-                  adv = false;
-                  break;
-               }
+               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0))
+                  break adv;
                outputBuffer[outPtr++] = c;
             }
-         }while(adv);
+         }
          inPtr = ptr;
          if(c <= 0xFF)
             switch(TYPES[c]){
@@ -871,13 +855,11 @@ final class ReaderScanner extends XmlScanner{
                   }
             }
          else if(c >= 0xD800 && c < 0xE000){
-            char d = chkSurrgCh(c);
-            outputBuffer[outPtr++] = c;
+            c = chkSurrgCh(outputBuffer[outPtr++] = c);
             if(outPtr >= outputBuffer.length){
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            c = d;
          }else if(c >= 0xFFFE)
             thC(c);
          outputBuffer[outPtr++] = c;
@@ -886,13 +868,12 @@ final class ReaderScanner extends XmlScanner{
 
    private final void endDTD() throws XMLStreamException{
       char[] outBuf = reset();
-      int outPtr = 0, quoteChar = 0;
       final byte[] TYPES = Code.DTD;
-      char c = 0;
+      char c;
+      int outPtr, quoteChar = outPtr = c = 0;
       while(true){
          int ptr = inPtr;
-         boolean adv = true;
-         do{
+adv:     while(true){
             if(ptr >= end){
                assertMore();
                ptr = 0;
@@ -901,18 +882,17 @@ final class ReaderScanner extends XmlScanner{
                outBuf = endSeg();
                outPtr = 0;
             }
-            int max = end, max2 = ptr + outBuf.length - outPtr;
-            if(max2 < max)
+            int max, max2;
+            if((max2 = ptr + outBuf.length - outPtr) < (max = end))
                max = max2;
             while(ptr < max){
-               if((c = buf[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
-                  adv = false;
-                  break;
-               }
+               if((c = buf[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0))
+                  break adv;
                outBuf[outPtr++] = c;
             }
-         }while(adv);
+         }
          inPtr = ptr;
+         boolean adv = false;
          if(c <= 0xFF)
             switch(TYPES[c]){
                case 2:  // WS_CR
@@ -950,8 +930,7 @@ final class ReaderScanner extends XmlScanner{
                   thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000){
-            outBuf[outPtr++] = c;
-            c = chkSurrgCh(c);
+            c = chkSurrgCh(outBuf[outPtr++] = c);
             if(outPtr >= outBuf.length){
                outBuf = endSeg();
                outPtr = 0;
@@ -963,29 +942,25 @@ final class ReaderScanner extends XmlScanner{
    }
 
    final void skipDTD() throws XMLStreamException{
-      int quoteChar = 0;
       final byte[] TYPES = Code.DTD;
-      char c = 0;
+      char c;
+      int quoteChar = c = 0;
       while(true){
-         int ptr = inPtr;
-         boolean adv = true;
-         do{
-            if(ptr >= end){
-               assertMore();
-               ptr = 0;
-            }
-            int max = end;
+         int ptr = inPtr, max;
+adv:     while(true){
+            max = end;
             while(ptr < max)
-               if((c = buf[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
-                  adv = false;
-                  break;
-               }
-         }while(adv);
+               if((c = buf[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0))
+                  break adv;
+            assertMore();
+            ptr = 0;
+         }
          inPtr = ptr;
+         boolean adv = false;
          if(c <= 0xFF)
             switch(TYPES[c]){
                case 2:  // WS_CR
-                  if(ptr >= end)
+                  if(ptr >= max)
                      assertMore();
                   if(buf[inPtr] == '\n')
                      ++inPtr;
@@ -1028,12 +1003,11 @@ final class ReaderScanner extends XmlScanner{
       final byte[] TYPES = Code.OTH;
       final char[] inputBuffer = buf;
       char[] outputBuffer = reset();
-      int outPtr = 0;
-      char c = 0;
+      char c;
+      int outPtr = c = 0;
       while(true){
          int ptr = inPtr;
-         boolean adv = true;
-         do{
+adv:     while(true){
             if(ptr >= end){
                assertMore();
                ptr = 0;
@@ -1042,17 +1016,15 @@ final class ReaderScanner extends XmlScanner{
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            int max = end, max2 = ptr + outputBuffer.length - outPtr;
-            if(max2 < max)
+            int max, max2;
+            if((max2 = ptr + outputBuffer.length - outPtr) < (max = end))
                max = max2;
             while(ptr < max){
-               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
-                  adv = false;
-                  break;
-               }
+               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0))
+                  break adv;
                outputBuffer[outPtr++] = c;
             }
-         }while(adv);
+         }
          inPtr = ptr;
          if(c <= 0xFF)
             switch(TYPES[c]){
@@ -1067,7 +1039,7 @@ final class ReaderScanner extends XmlScanner{
                   ++currRow;
                   break;
                case 11: // RBRACKET
-                  int count = 0;
+                  ptr = 0;
                   char d;
                   do{
                      if(inPtr >= end)
@@ -1075,12 +1047,12 @@ final class ReaderScanner extends XmlScanner{
                      if((d = buf[inPtr]) != ']')
                         break;
                      ++inPtr;
-                     ++count;
+                     ++ptr;
                   }while(true);
-                  boolean ok = d == '>' && count >= 1;
-                  if(ok)
-                     --count;
-                  for(; count > 0; --count){
+                  boolean ok;
+                  if(ok = d == '>' && ptr >= 1)
+                     --ptr;
+                  while(ptr-- > 0){
                      outputBuffer[outPtr++] = ']';
                      if(outPtr >= outputBuffer.length){
                         outputBuffer = endSeg();
@@ -1099,13 +1071,11 @@ final class ReaderScanner extends XmlScanner{
                   thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000){
-            char d = chkSurrgCh(c);
-            outputBuffer[outPtr++] = c;
+            c = chkSurrgCh(outputBuffer[outPtr++] = c);
             if(outPtr >= outputBuffer.length){
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            c = d;
          }else if(c >= 0xFFFE)
             thC(c);
          outputBuffer[outPtr++] = c;
@@ -1114,8 +1084,8 @@ final class ReaderScanner extends XmlScanner{
 
    private final void endC() throws XMLStreamException{
       char[] outputBuffer;
-      int outPtr = 0, t = cTmp;
-      if(t < 0){
+      int outPtr = 0, t;
+      if((t = cTmp) < 0){
          outputBuffer = reset();
          if(((t = -t) >> 16) != 0){
             outputBuffer[outPtr++] = (char)(0xD800 | (t -= 0x10000) >> 10);
@@ -1134,8 +1104,7 @@ final class ReaderScanner extends XmlScanner{
       char c = 0;
 outl: while(true){
          int ptr = inPtr;
-         boolean adv = true;
-         do{
+adv:     while(true){
             if(ptr >= end){
                assertMore();
                ptr = 0;
@@ -1144,17 +1113,15 @@ outl: while(true){
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            int max = end, max2 = ptr + outputBuffer.length - outPtr;
-            if(max2 < max)
+            int max, max2;
+            if((max2 = ptr + outputBuffer.length - outPtr) < (max = end))
                max = max2;
             while(ptr < max){
-               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
-                  adv = false;
-                  break;
-               }
+               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0))
+                  break adv;
                outputBuffer[outPtr++] = c;
             }
-         }while(adv);
+         }
          inPtr = ptr;
          if(c <= 0xFF)
             switch(TYPES[c]){
@@ -1172,8 +1139,8 @@ outl: while(true){
                   --inPtr;
                   break outl;
                case 10: // AMP
-                  int d = entInTxt();
-                  if(d == 0){
+                  int d;
+                  if((d = entInTxt()) == 0){
                      pend = true;
                      break outl;
                   }
@@ -1188,24 +1155,23 @@ outl: while(true){
                   c = (char)d;
                   break;
                case 11: // RBRACKET
-                  int count = 1;
+                  ptr = 1;
                   while(true){
                      if(inPtr >= end)
                         assertMore();
                      if((c = inputBuffer[inPtr]) != ']')
                         break;
                      ++inPtr;
-                     ++count;
+                     ++ptr;
                   }
-                  if(c == '>' && count > 1)
+                  if(c == '>' && ptr > 1)
                      thCDEnd();
-                  while(count > 1){
+                  while(ptr-- > 1){
                      outputBuffer[outPtr++] = ']';
                      if(outPtr >= outputBuffer.length){
                         outputBuffer = endSeg();
                         outPtr = 0;
                      }
-                     --count;
                   }
                   c = ']';
                   break;
@@ -1213,13 +1179,11 @@ outl: while(true){
                   thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000){
-            char d = chkSurrgCh(c);
-            outputBuffer[outPtr++] = c;
+            c = chkSurrgCh(outputBuffer[outPtr++] = c);
             if(outPtr >= outputBuffer.length){
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            c = d;
          }else if(c >= 0xFFFE)
             thC(c);
          outputBuffer[outPtr++] = c;
@@ -1230,10 +1194,10 @@ outl: while(true){
    }
 
    private final void endWS() throws XMLStreamException{
-      char tmp = (char)cTmp;
+      char tmp;
       char[] outputBuffer;
       int outPtr = 1;
-      if(tmp == '\r' || tmp == '\n'){
+      if((tmp = (char)cTmp) == '\r' || tmp == '\n'){
          if((outPtr = prolog(tmp)) < 0)
             return;
          outputBuffer = currSeg;
@@ -1246,8 +1210,8 @@ outl: while(true){
                break;
             ptr = 0;
          }
-         char c = buf[ptr];
-         if(c > 0x20)
+         char c;
+         if((c = buf[ptr]) > 0x20)
             break;
          ++ptr;
          if(c == '\n'){
@@ -1315,8 +1279,7 @@ outl: while(true){
       char c = 0;
       while(true){
          int ptr = inPtr;
-         boolean adv = true;
-         do{
+adv:     while(true){
             if(ptr >= end){
                assertMore();
                ptr = 0;
@@ -1325,17 +1288,15 @@ outl: while(true){
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            int max = end, max2 = ptr + outputBuffer.length - outPtr;
-            if(max2 < max)
+            int max, max2;
+            if((max2 = ptr + outputBuffer.length - outPtr) < (max = end))
                max = max2;
             while(ptr < max){
-               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
-                  adv = false;
-                  break;
-               }
+               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0))
+                  break adv;
                outputBuffer[outPtr++] = c;
             }
-         }while(adv);
+         }
          inPtr = ptr;
          if(c <= 0xFF)
             switch(TYPES[c]){
@@ -1350,7 +1311,7 @@ outl: while(true){
                   ++currRow;
                   break;
                case 11: // RBRACKET
-                  int count = 0;
+                  ptr = 0;
                   char d;
                   do{
                      if(inPtr >= end)
@@ -1358,12 +1319,12 @@ outl: while(true){
                      if((d = buf[inPtr]) != ']')
                         break;
                      ++inPtr;
-                     ++count;
+                     ++ptr;
                   }while(true);
-                  boolean ok = d == '>' && count >= 1;
-                  if(ok)
-                     --count;
-                  for(; count > 0; --count){
+                  boolean ok;
+                  if(ok = d == '>' && ptr >= 1)
+                     --ptr;
+                  while(ptr-- > 0){
                      outputBuffer[outPtr++] = ']';
                      if(outPtr >= outputBuffer.length){
                         outputBuffer = endSeg();
@@ -1380,13 +1341,11 @@ outl: while(true){
                   thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000){
-            char d = chkSurrgCh(c);
-            outputBuffer[outPtr++] = c;
+            c = chkSurrgCh(outputBuffer[outPtr++] = c);
             if(outPtr >= outputBuffer.length){
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            c = d;
          }else if(c >= 0xFFFE)
             thC(c);
          outputBuffer[outPtr++] = c;
@@ -1401,8 +1360,7 @@ outl: while(true){
       char c = 0;
 outl: while(true){
          int ptr = inPtr;
-         boolean adv = true;
-         do{
+adv:     while(true){
             if(ptr >= end){
                assertMore();
                ptr = 0;
@@ -1411,17 +1369,15 @@ outl: while(true){
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            int max = end, max2 = ptr + outputBuffer.length - outPtr;
-            if(max2 < max)
+            int max, max2;
+            if((max2 = ptr + outputBuffer.length - outPtr) < (max = end))
                max = max2;
             while(ptr < max){
-               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
-                  adv = false;
-                  break;
-               }
+               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0))
+                  break adv;
                outputBuffer[outPtr++] = c;
             }
-         }while(adv);
+         }
          inPtr = ptr;
          if(c <= 0xFF)
             switch(TYPES[c]){
@@ -1439,8 +1395,8 @@ outl: while(true){
                   --inPtr;
                   break outl;
                case 10: // AMP
-                  int d = entInTxt();
-                  if(d == 0){
+                  int d;
+                  if((d = entInTxt()) == 0){
                      pend = true;
                      break outl;
                   }
@@ -1455,24 +1411,23 @@ outl: while(true){
                   c = (char)d;
                   break;
                case 11: // RBRACKET
-                  int count = 1;
+                  ptr = 1;
                   while(true){
                      if(inPtr >= end)
                         assertMore();
                      if((c = inputBuffer[inPtr]) != ']')
                         break;
                      ++inPtr;
-                     ++count;
+                     ++ptr;
                   }
-                  if(c == '>' && count > 1)
+                  if(c == '>' && ptr > 1)
                      thCDEnd();
-                  while(count > 1){
+                  while(ptr-- > 1){
                      outputBuffer[outPtr++] = ']';
                      if(outPtr >= outputBuffer.length){
                         outputBuffer = endSeg();
                         outPtr = 0;
                      }
-                     --count;
                   }
                   c = ']';
                   break;
@@ -1480,13 +1435,11 @@ outl: while(true){
                   thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000){
-            char d = chkSurrgCh(c);
-            outputBuffer[outPtr++] = c;
+            c = chkSurrgCh(outputBuffer[outPtr++] = c);
             if(outPtr >= outputBuffer.length){
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            c = d;
          }else if(c >= 0xFFFE)
             thC(c);
          outputBuffer[outPtr++] = c;
@@ -1519,20 +1472,15 @@ outl: while(true){
       final char[] inputBuffer = buf;
       char c = 0;
       while(true){
-         int ptr = inPtr, max = end;
-         boolean adv = true;
-         do{
-            if(ptr >= max){
-               assertMore();
-               ptr = 0;
-               max = end;
-            }
+         int ptr = inPtr, max;
+adv:     while(true){
+            max = end;
             while(ptr < max)
-               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
-                  adv = false;
-                  break;
-               }
-         }while(adv);
+               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0))
+                  break adv;
+            assertMore();
+            ptr = 0;
+         }
          inPtr = ptr;
          if(c <= 0xFF)
             switch(TYPES[c]){
@@ -1549,8 +1497,7 @@ outl: while(true){
                   if(ptr >= max)
                      assertMore();
                   if(buf[inPtr] == '-'){
-                     ++inPtr;
-                     if(inPtr >= end)
+                     if(++inPtr >= end)
                         assertMore();
                      if(buf[inPtr++] != '>')
                         thHyph();
@@ -1568,20 +1515,15 @@ outl: while(true){
       final char[] inputBuffer = buf;
       char c = 0;
       while(true){
-         int ptr = inPtr, max = end;
-         boolean adv = true;
-         do{
-            if(ptr >= max){
-               assertMore();
-               ptr = 0;
-               max = end;
-            }
+         int ptr = inPtr, max;
+adv:     while(true){
+            max = end;
             while(ptr < max)
-               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
-                  adv = false;
-                  break;
-               }
-         }while(adv);
+               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0))
+                  break adv;
+            assertMore();
+            ptr = 0;
+         }
          inPtr = ptr;
          if(c <= 0xFF)
             switch(TYPES[c]){
@@ -1614,20 +1556,15 @@ outl: while(true){
       final char[] inputBuffer = buf;
       char c = 0;
       while(true){
-         int ptr = inPtr, max = end;
-         boolean adv = true;
-         do{
-            if(ptr >= max){
-               assertMore();
-               ptr = 0;
-               max = end;
-            }
+         int ptr = inPtr, max;
+adv:     while(true){
+            max = end;
             while(ptr < max)
-               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
-                  adv = false;
-                  break;
-               }
-         }while(adv);
+               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0))
+                  break adv;
+            assertMore();
+            ptr = 0;
+         }
          inPtr = ptr;
          if(c <= 0xFF)
             switch(TYPES[c]){
@@ -1675,20 +1612,15 @@ outl: while(true){
       final char[] inputBuffer = buf;
       char c = 0;
       while(true){
-         int ptr = inPtr, max = end;
-         boolean adv = true;
-         do{
-            if(ptr >= max){
-               assertMore();
-               ptr = 0;
-               max = end;
-            }
+         int ptr = inPtr, max;
+adv:     while(true){
+            max = end;
             while(ptr < max)
-               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0)){
-                  adv = false;
-                  break;
-               }
-         }while(adv);
+               if((c = inputBuffer[ptr++]) >= 0xD800 || (c <= 0xFF && TYPES[c] != 0))
+                  break adv;
+            assertMore();
+            ptr = 0;
+         }
          inPtr = ptr;
          if(c <= 0xFF)
             switch(TYPES[c]){
@@ -1702,14 +1634,14 @@ outl: while(true){
                   ++currRow;
                   continue;
                case 11: // RBRACKET
-                  int count = 0;
+                  ptr = 0;
                   do{
                      if(inPtr >= end)
                         assertMore();
-                     ++count;
+                     ++ptr;
                   }while((c = buf[inPtr++]) == ']');
                   if(c == '>'){
-                     if(count > 1)
+                     if(ptr > 1)
                         return;
                   }else
                      --inPtr;
@@ -1804,9 +1736,8 @@ outl: while(true){
          if(buf[inPtr] == '\n')
             ++inPtr;
       }
-      rowOff = inPtr;
       ++currRow;
-      if(inPtr >= end)
+      if((rowOff = inPtr) >= end)
          assertMore();
       if((c = buf[inPtr]) != ' ' && c != '\t'){
          if(c == '<' && inPtr + 1 < end && buf[inPtr + 1] != '!'){
@@ -1832,8 +1763,8 @@ outl: while(true){
          ++inPtr;
          ++count;
       }
-      final char[] outputBuffer = reset();
-      outputBuffer[0] = '\n';
+      final char[] outputBuffer;
+      (outputBuffer = reset())[0] = '\n';
       for(int i = 1; i <= count; ++i)
          outputBuffer[i] = c;
       return currSize = ++count;
@@ -1848,9 +1779,8 @@ outl: while(true){
          if(buf[inPtr] == '\n')
             ++inPtr;
       }
-      rowOff = inPtr;
       ++currRow;
-      if(inPtr >= end && !more()){
+      if((rowOff = inPtr) >= end && !more()){
          indent(0, ' ');
          return -1;
       }
@@ -1865,8 +1795,8 @@ outl: while(true){
       int count = 1, max = c == ' ' ? 32 : 8;
       while((++inPtr < end || more()) && buf[inPtr] == c)
          if(++count >= max){
-            char[] outputBuffer = reset();
-            outputBuffer[0] = '\n';
+            final char[] outputBuffer;
+            (outputBuffer = reset())[0] = '\n';
             for(int i = 1; i <= count; ++i)
                outputBuffer[i] = c;
             ++inPtr;
@@ -1893,9 +1823,8 @@ outl: while(true){
                if(!Chr.is10NS(c))
                   thInvNCh(c);
             }else{
-               if(ptr == 1)
+               if(ptr == 1 || c >= 0xDC00 || (c = nameBuffer[1]) < 0xDC00 || c >= 0xE000)
                   thSurr(c);
-               Code(c, nameBuffer[1]);
                ++namePtr;
             }
             for(; namePtr < ptr; ++namePtr)
@@ -1906,11 +1835,8 @@ outl: while(true){
                      lastColon = namePtr;
                   }else if(!Chr.is10N(c))
                      thInvNCh(c);
-               }else{
-                  if(namePtr + 1 >= ptr)
-                     thSurr(c);
-                  Code(c, nameBuffer[namePtr + 1]);
-               }
+               }else if(namePtr + 1 >= ptr || c >= 0xDC00 || (c = nameBuffer[namePtr + 1]) < 0xDC00 || c >= 0xE000)
+                  thSurr(c);
             return syms.add(nameBuffer, ptr, hash);
          }
          ++inPtr;
@@ -1949,11 +1875,6 @@ outl: while(true){
             nameBuf = outputBuffer = xpand(outputBuffer);
          outputBuffer[outPtr++] = c;
       }
-   }
-
-   private final void Code(char chr, char sec) throws XMLStreamException{
-      if(chr >= 0xDC00 || (chr = sec) < 0xDC00 || chr >= 0xE000)
-         thSurr(chr);
    }
 
    private final void thSurr(char ch) throws XMLStreamException{ thInErr(new StrB(23).a("Invalid surrogate ").apos((int)ch).toString()); }
