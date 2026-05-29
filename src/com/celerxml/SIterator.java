@@ -16,10 +16,6 @@ final class SIterator implements java.util.Iterator{
       this.done = done;
    }
 
-   @Override
-   public final boolean hasNext(){ return !done; }
-
-   @Override
    public final Object next(){
       if(done)
          throw new java.util.NoSuchElementException();
@@ -27,6 +23,6 @@ final class SIterator implements java.util.Iterator{
       return val;
    }
 
-   @Override
+   public final boolean hasNext(){ return !done; }
    public final void remove(){ throw new UnsupportedOperationException(); }
 }
