@@ -12,6 +12,6 @@ com.celerxml.PNn:equals,eq
 com.celerxml.ReaderImpl:getTextStart,isAttributeSpecified
 com.celerxml.ReaderScanner:doPrologDecl,doDtdStart,commOrCdataStart,doPIStart,startElem,doEndE,entInTxt,prolog
 com.celerxml.SAXParserImpl:getParser,getXMLReader,isDeclared,isSpecified,isNamespaceAware,isValidating
-com.celerxml.StrB:append,a,apos,subSequence
+com.celerxml.StrB:append,a,apos,length,charAt,subSequence
 com.celerxml.Utf8Scanner:doPrologDecl,commOrCdataStart,doPIStart,doEndE,prolog,startElem,entInTxt
 com.celerxml.XmlScanner:skipTok,isWS,getNamespaceURI,getPrefix,findIdx
