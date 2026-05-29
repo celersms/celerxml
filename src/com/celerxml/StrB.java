@@ -16,13 +16,6 @@ public final class StrB implements CharSequence{
 
    public StrB(int capacity){ val = new char[capacity]; }
 
-   public final int length(){ return count; }
-
-   public final void ensureCapacity(int minCapacity){
-      if(minCapacity > val.length)
-         Code(minCapacity);
-   }
-
    public final StrB append(CharSequence seq){
       if(seq instanceof String)
          return append((String)seq);
@@ -144,24 +137,12 @@ public final class StrB implements CharSequence{
       int newcapacity;
       if(minCapacity > (newcapacity = (val.length + 1) << 1))
          newcapacity = minCapacity;
-      char[] newval = new char[newcapacity];
-      System.arraycopy(val, 0, newval, 0, count);
-      val = newval;
+      System.arraycopy(val, 0, val = new char[newcapacity], 0, count);
    }
 
-   public final void setLength(int newLength){ count = newLength; }
-
-   public final char charAt(int index){ return val[index]; }
-
-   public final char[] getChars(){ return val; }
-
-   public final void setCharAt(int index, char ch){ val[index] = ch; }
-
-   public final String substring(int start){ return new String(val, start, count - start); }
-
-   public final String substring(int start, int end){ return new String(val, start, end - start); }
-
    public final String toString(){ return new String(val, 0, count); }
-
+   public final void setLength(int newLength){ count = newLength; }
+   public final int length(){ return 0; }                            // count
+   public final char charAt(int index){ return 0; }                  // val[index]
    public final CharSequence subSequence(int start, int end){ return null; }
 }
