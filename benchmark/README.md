@@ -1,20 +1,21 @@
 # Benchmark
 
-This benchmark measures the average XML parsing time and the classload time for the selected XML processor. The following
+These benchmarks measures the average XML parsing time and the classload time for the selected XML processor. The following
 processors were benchmarked:
  * *Xerces2* (the default XML processor)
  * *FasterXML/aalto-xml* v1.3.3
  * *CelerXML* v1.0.2
 
-The following table summarizes the benchmark settings and environment:
+The following table summarizes the benchmark settings and environment characteristics:
 
-|                 |                 |
-| ---------------:| :-------------- |
-| Iterations      | 50.000          |
-| XML file size   | 1.361 Kb        |
-| XML lines count | 42.161          |
-| CPU             | i5-7400 / 3 GHz |
-| RAM             | 8 Gb            |
+|                 |                                       |
+| ---------------:| :------------------------------------ |
+| Iterations      | 50.000                                |
+| XML file size   | 1.361 Kb                              |
+| XML lines count | 42.161                                |
+| CPU             | i5-7400 / 3 GHz                       |
+| RAM             | 8 Gb                                  |
+| JVM             | Oracle JDK 1.8.0_144 / OpenJDK 26.0.1 |
 
 ## Selecting the XML processor
 
