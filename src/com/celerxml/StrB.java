@@ -9,28 +9,14 @@ package com.celerxml;
 // String builder replacement.
 // The "a" methods do the same as "append", but without capacity checks.
 // Useful for performance when the maximum size of the text is known in advance.
-public final class StrB implements CharSequence{
+public final class StrB{
 
    private char[] val;
    private int count;
 
    public StrB(int capacity){ val = new char[capacity]; }
 
-   public final StrB append(CharSequence seq){
-      if(seq instanceof String)
-         return append((String)seq);
-      if(seq instanceof StrB){
-         StrB sb = (StrB)seq;
-         int newCount, len = sb.count;
-         if((newCount = count + len) > val.length)
-            Code(newCount);
-         System.arraycopy(sb.val, 0, val, count, len);
-         count = newCount;
-      }
-      return this;
-   }
-
-   public final StrB append(String str){
+   final StrB append(String str){
       String lstr;
       if((lstr = str) == null)
          lstr = "null";
@@ -42,14 +28,14 @@ public final class StrB implements CharSequence{
       return this;
    }
 
-   public final StrB a(String str){
+   final StrB a(String str){
       int len = str.length();
       str.getChars(0, len, val, count);
       count += len;
       return this;
    }
 
-   public final StrB append(char[] str){
+   final StrB append(char[] str){
       int newCount, len = str.length;
       if((newCount = count + len) > val.length)
          Code(newCount);
@@ -58,7 +44,7 @@ public final class StrB implements CharSequence{
       return this;
    }
 
-   public final StrB append(char[] str, int offset, int len){
+   final StrB append(char[] str, int offset, int len){
       int newCount;
       if((newCount = count + len) > val.length)
          Code(newCount);
@@ -67,25 +53,7 @@ public final class StrB implements CharSequence{
       return this;
    }
 
-   public final StrB a(char[] str){
-      int len = str.length;
-      System.arraycopy(str, 0, val, count, len);
-      count += len;
-      return this;
-   }
-
-   public final StrB append(byte[] str){
-      int newCount, ii = 0, jj = count, len = str.length;
-      if((newCount = jj + len) > val.length)
-         Code(newCount);
-      char[] lval = val;
-      while(ii < len)
-         lval[jj++] = (char)(str[ii++] & 0xFF);
-      count = jj;
-      return this;
-   }
-
-   public final StrB append(char ch){
+   final StrB append(char ch){
       int newCount;
       if((newCount = count + 1) > val.length)
          Code(newCount);
@@ -93,34 +61,12 @@ public final class StrB implements CharSequence{
       return this;
    }
 
-   public final StrB a(char ch){
+   final StrB a(char ch){
       val[count++] = ch;
       return this;
    }
 
-   public final StrB append(int ii){
-      if(ii == 0x80000000)
-         return append("-2147483648");
-      int xx, len, jj, sgnlen = 0;
-      if((jj = ii) < 0){
-         sgnlen = 1;
-         jj = -jj;
-      }
-      len = jj <= 9 ? 1 : jj <= 99 ? 2 : jj <= 999 ? 3 : jj <= 9999 ? 4 : jj <= 99999 ? 5 : jj <= 999999 ? 6 : jj <= 9999999 ? 7 : jj <= 99999999 ? 8 : jj <= 999999999 ? 9 : 10; // NOSONAR
-      if((xx = count + sgnlen + len) > val.length)
-         Code(xx);
-      count = xx;
-      char[] lval = val;
-      while(len-- > 0){
-         lval[--xx] = (char)(0x30 + jj % 10);
-         jj /= 10;
-      }
-      if(sgnlen != 0)
-         lval[--xx] = '-';
-      return this;
-   }
-
-   public final StrB apos(int ii){
+   final StrB apos(int ii){
       int xx, jj = ii & 0x7FFFFFFF, len = jj <= 9 ? 1 : jj <= 99 ? 2 : jj <= 999 ? 3 : jj <= 9999 ? 4 : jj <= 99999 ? 5 : jj <= 999999 ? 6 : jj <= 9999999 ? 7 : jj <= 99999999 ? 8 : jj <= 999999999 ? 9 : 10;
       if((xx = count + len) > val.length)
          Code(xx);
@@ -141,8 +87,4 @@ public final class StrB implements CharSequence{
    }
 
    public final String toString(){ return new String(val, 0, count); }
-   public final void setLength(int newLength){ count = newLength; }
-   public final int length(){ return 0; }                            // count
-   public final char charAt(int index){ return 0; }                  // val[index]
-   public final CharSequence subSequence(int start, int end){ return null; }
 }
