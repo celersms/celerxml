@@ -9,69 +9,69 @@ package com.celerxml;
 // String builder replacement.
 // The "a" methods do the same as "append", but without capacity checks.
 // Useful for performance when the maximum size of the text is known in advance.
-public final class StrB{
+final class StrB{
 
-   private char[] val;
-   private int count;
+   private char[] v;
+   private int cap;
 
-   public StrB(int capacity){ val = new char[capacity]; }
+   public StrB(int capacity){ v = new char[capacity]; }
 
    final StrB append(String str){
       String lstr;
       if((lstr = str) == null)
          lstr = "null";
-      int newCount, len = lstr.length();
-      if((newCount = count + len) > val.length)
+      int newCount, len;
+      if((newCount = cap + (len = lstr.length())) > v.length)
          Code(newCount);
-      lstr.getChars(0, len, val, count);
-      count = newCount;
+      lstr.getChars(0, len, v, cap);
+      cap = newCount;
       return this;
    }
 
    final StrB a(String str){
-      int len = str.length();
-      str.getChars(0, len, val, count);
-      count += len;
+      int len;
+      str.getChars(0, len = str.length(), v, cap);
+      cap += len;
       return this;
    }
 
    final StrB append(char[] str){
-      int newCount, len = str.length;
-      if((newCount = count + len) > val.length)
+      int newCount, len;
+      if((newCount = cap + (len = str.length)) > v.length)
          Code(newCount);
-      System.arraycopy(str, 0, val, count, len);
-      count = newCount;
+      System.arraycopy(str, 0, v, cap, len);
+      cap = newCount;
       return this;
    }
 
    final StrB append(char[] str, int offset, int len){
       int newCount;
-      if((newCount = count + len) > val.length)
+      if((newCount = cap + len) > v.length)
          Code(newCount);
-      System.arraycopy(str, offset, val, count, len);
-      count = newCount;
+      System.arraycopy(str, offset, v, cap, len);
+      cap = newCount;
       return this;
    }
 
    final StrB append(char ch){
       int newCount;
-      if((newCount = count + 1) > val.length)
+      if((newCount = cap + 1) > v.length)
          Code(newCount);
-      val[count++] = ch;
+      v[cap++] = ch;
       return this;
    }
 
    final StrB a(char ch){
-      val[count++] = ch;
+      v[cap++] = ch;
       return this;
    }
 
    final StrB apos(int ii){
       int xx, jj = ii & 0x7FFFFFFF, len = jj <= 9 ? 1 : jj <= 99 ? 2 : jj <= 999 ? 3 : jj <= 9999 ? 4 : jj <= 99999 ? 5 : jj <= 999999 ? 6 : jj <= 9999999 ? 7 : jj <= 99999999 ? 8 : jj <= 999999999 ? 9 : 10;
-      if((xx = count + len) > val.length)
+      if((xx = cap + len) > v.length)
          Code(xx);
-      count = xx;
-      char[] lval = val;
+      cap = xx;
+      char[] lval = v;
       while(len-- > 0){
          lval[--xx] = (char)(0x30 + jj % 10);
          jj /= 10;
@@ -81,10 +81,10 @@ public final class StrB{
 
    private final void Code(int minCapacity){
       int newcapacity;
-      if(minCapacity > (newcapacity = (val.length + 1) << 1))
+      if(minCapacity > (newcapacity = (v.length + 1) << 1))
          newcapacity = minCapacity;
-      System.arraycopy(val, 0, val = new char[newcapacity], 0, count);
+      System.arraycopy(v, 0, v = new char[newcapacity], 0, cap);
    }
 
-   public final String toString(){ return new String(val, 0, count); }
+   public final String toString(){ return new String(v, 0, cap); }
 }
