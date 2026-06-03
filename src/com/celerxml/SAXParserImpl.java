@@ -158,12 +158,12 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
          while((type = scan.nxtFromProlog(true)) != 1) // START_ELEMENT
             if(type != 6) // SPACE
                Code(type);
-         attrc = scan.attrCount;
+         attrc = scan.attrCnt;
          scan.startElement(cntH, this);
          int depth = 1;
          while(true)
             if((type = scan.nxtFromTree()) == 1){ // START_ELEMENT
-               attrc = scan.attrCount;
+               attrc = scan.attrCnt;
                scan.startElement(cntH, this);
                ++depth;
             }else if(type == 2){ // END_ELEMENT
