@@ -287,14 +287,14 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
             if(type == 2 && scan.depth == 0) // END_ELEMENT
                state = 2;
             if(type == 1)
-               aCnt = scan.attrCount;
+               aCnt = scan.attrCnt;
          }
          return type;
       }
       if(state == 0){
          if((type = scan.nxtFromProlog(true)) == 1){
             state = 1;
-            aCnt = scan.attrCount;
+            aCnt = scan.attrCnt;
          }else if(type == 11){ // DTD
             if(rootN != null)
                throw new XMLStreamException("Duplicate DOCTYPE", scan.loc());
