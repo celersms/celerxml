@@ -55,7 +55,7 @@ final class ReaderScanner extends XmlScanner{
 
    final void endTok() throws XMLStreamException{
       inc = false;
-      switch(currToken){
+      switch(currTok){
          case 3:  // PROCESSING_INSTRUCTION
             endPI();
             return;
@@ -125,21 +125,21 @@ final class ReaderScanner extends XmlScanner{
       if(inc){
          if(skipTok()){
             reset();
-            return currToken = 9; // ENTITY_REFERENCE
+            return currTok = 9; // ENTITY_REFERENCE
          }
-      }else if(currToken == 1){ // START_ELEMENT
+      }else if(currTok == 1){ // START_ELEMENT
          if(empty){
             --depth;
-            return currToken = 2; // END_ELEMENT
+            return currTok = 2; // END_ELEMENT
          }
-      }else if(currToken == 2){ // END_ELEMENT
+      }else if(currTok == 2){ // END_ELEMENT
          curr = curr.nxt;
          while(lastNs != null && lastNs.lvl >= depth)
             lastNs = lastNs.Code();
       }else if(pend){
          pend = false;
          reset();
-         return currToken = 9; // ENTITY_REFERENCE
+         return currTok = 9; // ENTITY_REFERENCE
       }
       iniRawOff = bOrC + inPtr;
       startRow = currRow;
@@ -162,14 +162,14 @@ final class ReaderScanner extends XmlScanner{
       if(c == '&'){
          ++inPtr;
          if((c = -entInTxt()) == 0)
-            return currToken = 9; // ENTITY_REFERENCE
+            return currTok = 9; // ENTITY_REFERENCE
       }
       cTmp = c;
       if(lazy)
          inc = true;
       else
          endC();
-      return currToken = 4; // CHARACTERS
+      return currTok = 4; // CHARACTERS
    }
 
    private final int doPrologDecl(boolean isProlog) throws XMLStreamException{
@@ -184,7 +184,7 @@ final class ReaderScanner extends XmlScanner{
                inc = true;
             else
                endComm();
-            return currToken = 5; // COMMENT
+            return currTok = 5; // COMMENT
          }
       }else if(isProlog && c == 'D'){
          doDtdStart();
@@ -195,7 +195,7 @@ final class ReaderScanner extends XmlScanner{
          return 11; // DTD
       }
       inc = true;
-      currToken = 4; // CHARACTERS
+      currTok = 4; // CHARACTERS
       thPlogUnxpCh(isProlog, c);
       return 0;
    }
@@ -245,7 +245,7 @@ final class ReaderScanner extends XmlScanner{
       }else
          dtdPub = dtdSys = null;
       if((inc = c == '[') || c == '>')
-         return currToken = 11; // DTD
+         return currTok = 11; // DTD
       thUnxp(c, ", expected '[' or '>'");
       return 0;
    }
@@ -263,10 +263,10 @@ final class ReaderScanner extends XmlScanner{
             inc = true;
          else
             endComm();
-         return currToken = 5; // COMMENT
+         return currTok = 5; // COMMENT
       }
       if(c == '['){
-         currToken = 12; // CDATA
+         currTok = 12; // CDATA
          for(int i = 0; i < 6; ++i){
             if(inPtr >= end)
                assertMore();
@@ -284,7 +284,7 @@ final class ReaderScanner extends XmlScanner{
    }
 
    private final int doPIStart() throws XMLStreamException{
-      currToken = 3; // PROCESSING_INSTRUCTION
+      currTok = 3; // PROCESSING_INSTRUCTION
       if(inPtr >= end)
          assertMore();
       String ln;
@@ -362,7 +362,7 @@ final class ReaderScanner extends XmlScanner{
    }
 
    private final int startElem(char c) throws XMLStreamException{
-      currToken = 1; // START_ELEMENT
+      currTok = 1; // START_ELEMENT
       PN pn;
       String prefix;
       int xx;
@@ -463,12 +463,12 @@ final class ReaderScanner extends XmlScanner{
       }
       if((xx = endLastV(xx)) < 0)
          thInErr(err);
-      attrCount = xx;
+      attrCnt = xx;
       ++depth;
       if(!allBound){
          if(!pn.isBound())
             thUnbPfx(tokName, false);
-         for(int i = 0, len = attrCount; i < len; ++i)
+         for(int i = 0, len = attrCnt; i < len; ++i)
             if(!(pn = names[i]).isBound())
                thUnbPfx(pn, true);
       }
@@ -588,7 +588,7 @@ adv:     while(true){
 
    private final int doEndE() throws XMLStreamException{
       --depth;
-      currToken = 2; // END_ELEMENT
+      currTok = 2; // END_ELEMENT
       tokName = curr.Code;
       String pname = tokName.Code;
       int i = 0, len = pname.length();
@@ -787,7 +787,7 @@ adv:     while(true){
                         assertMore();
                      if(buf[inPtr++] != '>')
                         thHyph();
-                     currSize = outPtr;
+                     currSz = outPtr;
                      return;
                   }
                   break;
@@ -850,7 +850,7 @@ adv:     while(true){
                      assertMore();
                   if(buf[inPtr] == '>'){
                      ++inPtr;
-                     currSize = outPtr;
+                     currSz = outPtr;
                      return;
                   }
             }
@@ -920,7 +920,7 @@ adv:     while(true){
                   break;
                case 11: // RBRACKET
                   if(!adv && quoteChar == 0){
-                     currSize = outPtr;
+                     currSz = outPtr;
                      if((c = Code(false)) != '>')
                         thUnxp(c, ", not '>' after internal subset");
                      return;
@@ -1061,7 +1061,7 @@ adv:     while(true){
                   }
                   if(ok){
                      ++inPtr;
-                     currSize = outPtr;
+                     currSz = outPtr;
                      if(cls && !pend)
                         endClsTxt();
                      return;
@@ -1188,7 +1188,7 @@ adv:     while(true){
             thC(c);
          outputBuffer[outPtr++] = c;
       }
-      currSize = outPtr;
+      currSz = outPtr;
       if(cls && !pend)
          endClsTxt();
    }
@@ -1245,7 +1245,7 @@ adv:     while(true){
          outputBuffer[outPtr++] = c;
       }
       inPtr = ptr;
-      currSize = outPtr;
+      currSz = outPtr;
    }
 
    private final void endClsTxt() throws XMLStreamException{
@@ -1275,7 +1275,7 @@ adv:     while(true){
       final byte[] TYPES = Code.OTH;
       final char[] inputBuffer = buf;
       char[] outputBuffer = currSeg;
-      int outPtr = currSize;
+      int outPtr = currSz;
       char c = 0;
       while(true){
          int ptr = inPtr;
@@ -1333,7 +1333,7 @@ adv:     while(true){
                   }
                   if(ok){
                      ++inPtr;
-                     currSize = outPtr;
+                     currSz = outPtr;
                      return;
                   }
                   break;
@@ -1356,7 +1356,7 @@ adv:     while(true){
       final byte[] TYPES = Code.TXT;
       final char[] inputBuffer = buf;
       char[] outputBuffer = currSeg;
-      int outPtr = currSize;
+      int outPtr = currSz;
       char c = 0;
 outl: while(true){
          int ptr = inPtr;
@@ -1444,7 +1444,7 @@ adv:     while(true){
             thC(c);
          outputBuffer[outPtr++] = c;
       }
-      currSize = outPtr;
+      currSz = outPtr;
    }
 
    final boolean skipCTxt() throws XMLStreamException{
@@ -1745,7 +1745,7 @@ adv:     while(true){
             return -1;
          }
          reset()[0] = '\n';
-         return currSize = 1;
+         return currSz = 1;
       }
       ++inPtr;
       int count = 1, max = c == ' ' ? 32 : 8;
@@ -1767,7 +1767,7 @@ adv:     while(true){
       (outputBuffer = reset())[0] = '\n';
       for(int i = 1; i <= count; ++i)
          outputBuffer[i] = c;
-      return currSize = ++count;
+      return currSz = ++count;
    }
 
    private final int prolog(char c) throws XMLStreamException{
@@ -1790,7 +1790,7 @@ adv:     while(true){
             return -1;
          }
          reset()[0] = '\n';
-         return currSize = 1;
+         return currSz = 1;
       }
       int count = 1, max = c == ' ' ? 32 : 8;
       while((++inPtr < end || more()) && buf[inPtr] == c)
@@ -1800,7 +1800,7 @@ adv:     while(true){
             for(int i = 1; i <= count; ++i)
                outputBuffer[i] = c;
             ++inPtr;
-            return currSize = ++count;
+            return currSz = ++count;
          }
       indent(count, c);
       return -1;
