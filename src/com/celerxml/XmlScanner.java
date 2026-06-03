@@ -19,7 +19,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
 
    final InputFactoryImpl impl;
    boolean inc, pend, empty;
-   int depth, nsCnt, attrCount, currSize, attrs, currToken, currRow, rowOff, bOrC, iniRawOff, startRow, startCol, inPtr;
+   int depth, nsCnt, attrCnt, currSz, attrs, currTok, currRow, rowOff, bOrC, iniRawOff, startRow, startCol, inPtr;
    char[] nameBuf, currSeg;
    PN tokName;
    NsD lastNs;
@@ -47,7 +47,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
       nameBuf = (this.impl = impl).getCB1();
       defNs = new NsB(null);
       startRow = startCol = -1;
-      currToken = 7; // START_DOCUMENT
+      currTok = 7; // START_DOCUMENT
       doRst = true;
    }
 
@@ -63,13 +63,13 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
 
    final boolean skipTok() throws XMLStreamException{
       inc = false;
-      switch(currToken){
+      switch(currTok){
          case 3:  // PROCESSING_INSTRUCTION
             skipPI();
             return false;
          case 4:  // CHARACTERS
             if(skipChars() || (cls && skipCTxt())){
-               currToken = 9; // ENTITY_REFERENCE
+               currTok = 9; // ENTITY_REFERENCE
                return true;
             }
             break;
@@ -84,7 +84,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
             if(cls){
                skipCTxt();
                if(pend){
-                  currToken = 9; // ENTITY_REFERENCE
+                  currTok = 9; // ENTITY_REFERENCE
                   return true;
                }
             }
@@ -104,7 +104,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
          if(arr != null)
             result = new String(arr);
          else{
-            int segLen, currLen = currSize;
+            int segLen, currLen = currSz;
             if((segLen = segSize) == 0)
                return result = currLen == 0 ? "" : new String(currSeg, 0, currLen);
             StrB sb = new StrB(segLen + currLen);
@@ -119,14 +119,14 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
    final int getTextLength() throws XMLStreamException{
       if(inc)
          endTok();
-      return currSize < 0 ? rLen : currSize + segSize;
+      return currSz < 0 ? rLen : currSz + segSize;
    }
 
    private final char[] buildR(){
       if(result != null)
          return result.toCharArray();
       int size;
-      if((size = currSize < 0 ? rLen : currSize + segSize) < 1)
+      if((size = currSz < 0 ? rLen : currSz + segSize) < 1)
          return arr0;
       int offset = 0;
       char[] curr, res = new char[size];
@@ -134,7 +134,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
          System.arraycopy(curr = (char[])segments.get(i), 0, res, offset, size = curr.length);
          offset += size;
       }
-      System.arraycopy(currSeg, 0, res, offset, currSize);
+      System.arraycopy(currSeg, 0, res, offset, currSz);
       return res;
    }
 
@@ -170,7 +170,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
             srcStart = 0;
          }
       if(len > 0){
-         if((amount = currSize - srcStart) > len)
+         if((amount = currSz - srcStart) > len)
             amount = len;
          if(amount > 0){
             System.arraycopy(currSeg, srcStart, dst, dstStart, amount);
@@ -186,7 +186,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
       if(indent)
          return true;
       char[] buf = currSeg;
-      for(int i = 0, len = currSize; i < len; ++i)
+      for(int i = 0, len = currSz; i < len; ++i)
          if(buf[i] > 0x20)
             return false;
       if(segments != null)
@@ -197,12 +197,12 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
       return true;
    }
 
-   final int getNC(){ return currToken == 1 ? nsCnt : (lastNs == null ? 0 : lastNs.Code(depth)); } // START_ELEMENT
+   final int getNC(){ return currTok == 1 ? nsCnt : (lastNs == null ? 0 : lastNs.Code(depth)); } // START_ELEMENT
 
    final NsD findCurrNsDecl(int idx){
       NsD nsDecl = lastNs;
       int level = depth, count = idx;
-      if(currToken == 1){ // START_ELEMENT
+      if(currTok == 1){ // START_ELEMENT
          count = nsCnt - 1 - idx;
          --level;
       }
@@ -366,7 +366,7 @@ findOrCreate:
          segments.clear();
          segSize = 0;
       }
-      currSize = 0;
+      currSz = 0;
       if(currSeg == null)
          currSeg = impl.getCB2();
       return currSeg;
@@ -377,7 +377,7 @@ findOrCreate:
          segments.clear();
          segSize = 0;
       }
-      currSize = -1;
+      currSz = -1;
       indent = true;
       String text;
       int strlen = rLen = indCharCount + 1;
@@ -400,7 +400,7 @@ findOrCreate:
       segments.add(currSeg);
       int oldLen;
       segSize += oldLen = currSeg.length;
-      currSize = 0;
+      currSz = 0;
       return currSeg = new char[Math.min(oldLen + (oldLen < 8000 ? oldLen : oldLen >> 1), 0x40000)];
    }
 
@@ -546,8 +546,8 @@ findOrCreate:
                   char[] ch;
                   h.characters(ch = (char[])segments.get(i), 0, ch.length);
                }
-            if(currSize > 0)
-               h.characters(currSeg, 0, currSize);
+            if(currSz > 0)
+               h.characters(currSeg, 0, currSz);
          }
       }
    }
@@ -564,8 +564,8 @@ findOrCreate:
                   char[] ch;
                   h.ignorableWhitespace(ch = (char[])segments.get(i), 0, ch.length);
                }
-            if(currSize > 0)
-               h.ignorableWhitespace(currSeg, 0, currSize);
+            if(currSz > 0)
+               h.ignorableWhitespace(currSeg, 0, currSz);
          }
       }
    }
@@ -609,7 +609,7 @@ findOrCreate:
          else if(segments != null && segments.size() > 0)
             h.comment(arr = buildR(), 0, arr.length);
          else
-            h.comment(currSeg, 0, currSize);
+            h.comment(currSeg, 0, currSz);
       }
    }
 
