@@ -169,13 +169,11 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
             dstStart += amount;
             srcStart = 0;
          }
-      if(len > 0){
-         if((amount = currSz - srcStart) > len)
-            amount = len;
-         if(amount > 0){
-            System.arraycopy(currSeg, srcStart, dst, dstStart, amount);
-            totalAmount += amount;
-         }
+      if((amount = currSz - srcStart) > len)
+         amount = len;
+      if(amount > 0){
+         System.arraycopy(currSeg, srcStart, dst, dstStart, amount);
+         totalAmount += amount;
       }
       return totalAmount;
    }
@@ -216,7 +214,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
 
    public String getNamespaceURI(String pfx){
       if(pfx == null)
-         throw new IllegalArgumentException("Illegal null argument");
+         throw new IllegalArgumentException("null argument");
       if(pfx.length() == 0){
          String uri;
          return (uri = defNs.Code) == null ? "" : uri;
@@ -233,7 +231,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
 
    public final String getPrefix(String nsURI){
       if(nsURI == null)
-         throw new IllegalArgumentException("Illegal null argument");
+         throw new IllegalArgumentException("null argument");
       if(nsURI.equals(XMLConstants.XML_NS_URI))
          return XMLConstants.XML_NS_PREFIX;
       if(nsURI.equals(XMLConstants.XMLNS_ATTRIBUTE_NS_URI))
@@ -255,7 +253,7 @@ loop_pfx:
    @SuppressWarnings("unchecked")
    public final Iterator getPrefixes(String nsURI){
       if(nsURI == null)
-         throw new IllegalArgumentException("Illegal null argument");
+         throw new IllegalArgumentException("null argument");
       if(nsURI.equals(XMLConstants.XML_NS_URI))
          return new SIterator(XMLConstants.XML_NS_PREFIX, false);
       if(nsURI.equals(XMLConstants.XMLNS_ATTRIBUTE_NS_URI))
