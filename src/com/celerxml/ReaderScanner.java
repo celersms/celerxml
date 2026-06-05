@@ -487,7 +487,7 @@ adv:     while(true){
                ptr = 0;
             }
             if(attrPtr >= attrBuffer.length)
-               attrBuffer = xpand();
+               attrBuffer = vals = xpand(vals);
             int max, max2;
             if((max2 = ptr + attrBuffer.length - attrPtr) < (max = end))
                max = max2;
@@ -518,7 +518,7 @@ adv:     while(true){
                      attrBuffer[attrPtr++] = (char)(0xD800 | (ptr -= 0x10000) >> 10);
                      ptr = 0xDC00 | ptr & 0x3FF;
                      if(attrPtr >= attrBuffer.length)
-                        attrBuffer = xpand();
+                        attrBuffer = vals = xpand(vals);
                   }
                   c = (char)ptr;
                   break;
@@ -534,7 +534,7 @@ adv:     while(true){
          else if(c >= 0xD800 && c < 0xE000){
             c = chkSurrgCh(attrBuffer[attrPtr++] = c);
             if(attrPtr >= attrBuffer.length)
-               attrBuffer = xpand();
+               attrBuffer = vals = xpand(vals);
          }else if(c >= 0xFFFE)
             thC(c);
          attrBuffer[attrPtr++] = c;
