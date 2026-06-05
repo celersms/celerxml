@@ -20,7 +20,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
    final InputFactoryImpl impl;
    boolean inc, pend, empty;
    int depth, nsCnt, attrCnt, currSz, attrs, currTok, currRow, rowOff, bOrC, iniRawOff, startRow, startCol, inPtr;
-   char[] nameBuf, currSeg;
+   char[] nameBuf, currSeg, vals;
    PN tokName;
    NsD lastNs;
    final NsB defNs;
@@ -28,7 +28,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
    private PN[] nsCache;
    private ArrayList segments;
    private int bCnt, bindMiss, segSize, rLen, hashSize, spillEnd;
-   private char[] arr, vals;
+   private char[] arr;
    private String result, attrV;
    private boolean indent, doRst;
    private int[] attrMap, offsets;
@@ -160,7 +160,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
                srcStart -= segLen;
                continue;
             }
-            if(amount >= len)
+            if(amount > len)
                amount = len;
             System.arraycopy(segment, srcStart, dst, dstStart, amount);
             totalAmount += amount;
@@ -287,7 +287,7 @@ loop_pfx:
          NsB b;
          if((b = nsBind[i]).pfx != pfx)
             continue;
-         if(i > 0) {
+         if(i > 0){
             nsBind[i] = nsBind[i - 1];
             nsBind[i - 1] = b;
          }
@@ -295,7 +295,7 @@ loop_pfx:
          if(nsCache == null){
             if(++bindMiss < 10)
                return cn;
-             nsCache = new PN[0x40];
+            nsCache = new PN[0x40];
          }
          return nsCache[cn.Code.hashCode() & 0x3F] = cn;
       }
@@ -438,7 +438,7 @@ findOrCreate:
       doRst = true;
       int count;
       offsets[(count = attrs) - 1] = endingOffset;
-      PN[] names = this.names;
+      final PN[] names = this.names;
       if(count < 3){
          hashSize = 0;
          if(count == 2 && names[0].Code(names[1])){
@@ -448,24 +448,22 @@ findOrCreate:
          return count;
       }
       int[] map;
-      int min = count + (count >> 2), hashCount = (min + 7) & ~7, mask = hashCount - 1; // next multiple of 8 (never 0)
-      hashSize = hashCount;
-      min = hashCount + (hashCount >> 4);
+      int hashCount = hashSize = (count + (count >> 2) + 7) & ~7, min = hashCount + (hashCount >> 4), mask = hashCount - 1; // next multiple of 8 (never 0)
       if((map = attrMap) == null || map.length < min)
          map = new int[min];
       else
          for(int i = 0; i < hashCount; ++i)
             map[i] = 0;
       for(int i = 0; i < count; ++i){
-         PN newName = names[i];
-         int hash = newName.ln.hashCode(), index = hash & mask, oldNameIdx;
+         PN newName;
+         int hash = (newName = names[i]).ln.hashCode(), index = hash & mask, oldNameIdx;
          if((oldNameIdx = map[index]) == 0)
             map[index] = i + 1;
          else{
-            if(names[--oldNameIdx].Code(newName) && err == null)
+            if(err == null && names[--oldNameIdx].Code(newName))
                dupAttr(oldNameIdx, i);
-            if(hashCount + 1 >= map.length)
-               map = xpand(map, 8);
+            // if(hashCount + 1 >= map.length)
+            //   map = xpand(map);
             // for(int j = hashCount; j < spillIndex; j += 2)
             //   if(map[j] == hash && names[oldNameIdx = map[j + 1]].Code(newName)){
             //      if(err == null)
@@ -481,11 +479,9 @@ findOrCreate:
       return err == null ? count : -1;
    }
 
-   final char[] xpand(){ return vals = xpand(vals); }
-
-   static final int[] xpand(int[] arr, int more){
+   static final int[] xpand(int[] arr){
       int len;
-      System.arraycopy(arr, 0, arr = new int[(len = arr.length) + more], 0, len);
+      System.arraycopy(arr, 0, arr = new int[(len = arr.length) + len], 0, len);
       return arr;
    }
 
@@ -515,7 +511,7 @@ findOrCreate:
 
    final int findIdx(String nsUri, String name){
       int xx;
-      if((xx = hashSize) < 1){
+      if((xx = hashSize) == 0){
          for(int i = 0, len = attrs; i < len; ++i)
             if(names[i].Code(nsUri, name))
                return i;
