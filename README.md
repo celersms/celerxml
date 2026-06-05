@@ -4,7 +4,7 @@
 # Overview
 
 **CelerXML** is a lightweight implementation of the standard Java XML parsers: *Simple API for XML* (**SAX** and **SAX2**) and *Streaming API for XML* (**StAX**). It can be used as a drop-in replacement for other
-XML processors, without recompiling the user Java application source code. The main advantage of CelerXML is performance. It was designed for maximum speed and efficiency. Another advantage is
+XML processors, without recompiling the user Java application source code. The main advantage of CelerXML is performance. It was designed for [maximum speed and efficiency](https://github.com/celersms/celerxml/discussions/5). Another advantage is
 compatibility with older Java versions. CelerXML can be used with Java 1.6 and later, while other XML processors typically require at least Java 8.  
 
 CelerXML is free even for commercial use and redistribution of any kind, as long as all copyrights are preserved. The whole package is provided "AS IS". Check the [license](/LICENSE) file for additional information.  
@@ -34,4 +34,4 @@ If you use Maven, you can include the CelerXML dependency by adding the followin
 
 # Benchmarks
 
-CelerXML features the highest XML parsing speed and lowest classloading time. Please, check the latest [benchmarks report](benchmark) for more details. This is the result of 10+ years of optimization and profiling, as mentioned in [this article](https://github.com/celersms/celerxml/discussions/5).
+CelerXML features the highest XML parsing speed and lowest classloading time. Please, check the latest [benchmarks report](benchmark) for more details.
