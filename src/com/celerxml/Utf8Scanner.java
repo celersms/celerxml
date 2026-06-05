@@ -588,7 +588,7 @@ public final class Utf8Scanner extends XmlScanner{
          if((i2 = (int)(inPtr < end ? inBuf[inPtr++] : loadOne()) & 0xFF) < 45 || (i2 > 58 && i2 < 65) || i2 == 47)
             return findPName(q, quads, qix, 4);
          if(qix >= quads.length)
-            qBuf = quads = xpand(quads, quads.length);
+            qBuf = quads = xpand(quads);
          quads[qix++] = q;
          q = i2;
       }
@@ -622,7 +622,7 @@ public final class Utf8Scanner extends XmlScanner{
             quads[1] = q;
          }else{
             if(qix >= quads.length)
-               qBuf = quads = xpand(quads, quads.length);
+               qBuf = quads = xpand(quads);
             quads[qix] = q;
          }
          ++qix;
@@ -660,7 +660,7 @@ public final class Utf8Scanner extends XmlScanner{
    private final PN findPName(int lastQuad, int[] quads, int qlen, int lastByteCount) throws XMLStreamException{
       --inPtr;
       if(qlen >= quads.length)
-         qBuf = quads = xpand(quads, quads.length);
+         qBuf = quads = xpand(quads);
       quads[qlen++] = lastQuad;
       int hash = quads[0];
       for(int i = 1; i < qlen; ++i)
@@ -984,7 +984,7 @@ public final class Utf8Scanner extends XmlScanner{
                ptr = 0;
             }
             if(attrPtr >= attrBuffer.length)
-               attrBuffer = xpand();
+               attrBuffer = vals = xpand(vals);
             int max = end, max2 = ptr + attrBuffer.length - attrPtr;
             if(max2 < max)
                max = max2;
@@ -1018,7 +1018,7 @@ public final class Utf8Scanner extends XmlScanner{
                attrBuffer[attrPtr++] = (char)(0xD800 | (c = decUTF_4(c)) >> 10);
                c = 0xDC00 | c & 0x3FF;
                if(attrPtr >= attrBuffer.length)
-                  attrBuffer = xpand();
+                  attrBuffer = vals = xpand(vals);
                break;
             case 10: // AMP
                if((c = entInTxt()) == 0)
@@ -1027,7 +1027,7 @@ public final class Utf8Scanner extends XmlScanner{
                   attrBuffer[attrPtr++] = (char)(0xD800 | (c -= 0x10000) >> 10);
                   c = 0xDC00 | c & 0x3FF;
                   if(attrPtr >= attrBuffer.length)
-                     attrBuffer = xpand();
+                     attrBuffer = vals = xpand(vals);
                }
                break;
             case 14: // ATTR_QUOTE
