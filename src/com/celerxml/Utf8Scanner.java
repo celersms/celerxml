@@ -587,8 +587,9 @@ public final class Utf8Scanner extends XmlScanner{
          q = q << 8 | i2;
          if((i2 = (int)(inPtr < end ? inBuf[inPtr++] : loadOne()) & 0xFF) < 45 || (i2 > 58 && i2 < 65) || i2 == 47)
             return findPName(q, quads, qix, 4);
-         if(qix >= quads.length)
-            qBuf = quads = xpand(quads);
+         int len;
+         if(qix >= (len = quads.length))
+            System.arraycopy(quads, 0, qBuf = quads = new int[len + len], 0, len);
          quads[qix++] = q;
          q = i2;
       }
@@ -621,8 +622,9 @@ public final class Utf8Scanner extends XmlScanner{
             quads[0] = firstQuad;
             quads[1] = q;
          }else{
-            if(qix >= quads.length)
-               qBuf = quads = xpand(quads);
+            int len;
+            if(qix >= (len = quads.length))
+               System.arraycopy(quads, 0, qBuf = quads = new int[len + len], 0, len);
             quads[qix] = q;
          }
          ++qix;
@@ -659,17 +661,18 @@ public final class Utf8Scanner extends XmlScanner{
 
    private final PN findPName(int lastQuad, int[] quads, int qlen, int lastByteCount) throws XMLStreamException{
       --inPtr;
-      if(qlen >= quads.length)
-         qBuf = quads = xpand(quads);
+      int ll;
+      if(qlen >= (ll = quads.length))
+         System.arraycopy(quads, 0, qBuf = quads = new int[ll + ll], 0, ll);
       quads[qlen++] = lastQuad;
-      int hash = quads[0];
+      ll = quads[0];
       for(int i = 1; i < qlen; ++i)
-         hash = hash * 31 + quads[i];
-      hash ^= hash >>> 16;
-      hash ^= hash >>> 8;
-      PN name = syms.find(hash, quads, qlen);
+         ll = ll * 31 + quads[i];
+      ll ^= ll >>> 16;
+      ll ^= ll >>> 8;
+      PN name = syms.find(ll, quads, qlen);
       if(name == null)
-         name = Code(hash, quads, qlen, lastByteCount);
+         name = Code(ll, quads, qlen, lastByteCount);
       return name;
    }
 

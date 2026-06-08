@@ -302,10 +302,11 @@ loop_pfx:
       if(pfx == "xml")
          return name.Code(NsB.XML);
       ++bindMiss;
+      int len;
       if(bCnt == 0)
          nsBind = new NsB[16];
-      else if(bCnt >= nsBind.length)
-         nsBind = xpand(nsBind);
+      else if(bCnt >= (len = nsBind.length))
+         System.arraycopy(nsBind, 0, nsBind = new NsB[len + len], 0, len);
       return name.Code(nsBind[bCnt++] = new NsB(pfx));
    }
 
@@ -330,10 +331,11 @@ findOrCreate:
                ns = NsB.XMLNS;
             else{
                ns = new NsB(pfx);
+               int len;
                if(bCnt == 0)
                   nsBind = new NsB[16];
-               else if(bCnt >= nsBind.length)
-                  nsBind = xpand(nsBind);
+               else if(bCnt >= (len = nsBind.length))
+                  System.arraycopy(nsBind, 0, nsBind = new NsB[len + len], 0, len);
                nsBind[bCnt++] = ns;
             }
          }
@@ -456,20 +458,18 @@ findOrCreate:
             map[i] = 0;
       for(int i = 0; i < count; ++i){
          PN newName;
-         int hash = (newName = names[i]).ln.hashCode(), index = hash & mask, oldNameIdx;
-         if((oldNameIdx = map[index]) == 0)
-            map[index] = i + 1;
+         int hash = (newName = names[i]).ln.hashCode(), ll = hash & mask, oldNameIdx;
+         if((oldNameIdx = map[ll]) == 0)
+            map[ll] = i + 1;
          else{
             if(err == null && names[--oldNameIdx].Code(newName))
                dupAttr(oldNameIdx, i);
-            // if(hashCount + 1 >= map.length)
-            //   map = xpand(map);
             // for(int j = hashCount; j < spillIndex; j += 2)
-            //   if(map[j] == hash && names[oldNameIdx = map[j + 1]].Code(newName)){
-            //      if(err == null)
-            //         dupAttr(oldNameIdx, i);
-            //      break;
-            //   }
+            //    if(map[j] == hash && names[oldNameIdx = map[j + 1]].Code(newName)){
+            //       if(err == null)
+            //          dupAttr(oldNameIdx, i);
+            //       break;
+            //    }
             map[hashCount++] = hash;
             map[hashCount++] = i;
          }
@@ -479,21 +479,9 @@ findOrCreate:
       return err == null ? count : -1;
    }
 
-   static final int[] xpand(int[] arr){
-      int len;
-      System.arraycopy(arr, 0, arr = new int[(len = arr.length) + len], 0, len);
-      return arr;
-   }
-
    static final char[] xpand(char[] arr){
       int len;
       System.arraycopy(arr, 0, arr = new char[(len = arr.length) + len], 0, len);
-      return arr;
-   }
-
-   static final NsB[] xpand(NsB[] arr){
-      int len;
-      System.arraycopy(arr, 0, arr = new NsB[(len = arr.length) + len], 0, len);
       return arr;
    }
 
