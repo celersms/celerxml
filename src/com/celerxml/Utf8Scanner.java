@@ -405,11 +405,11 @@ public final class Utf8Scanner extends XmlScanner{
             endPI();
       }else{
          if(c != '?')
-            thNoPISp(decChr((byte)c));
+            thUnxp(decChr((byte)c));
          if(inPtr >= end)
             assertMore();
          if((b = inBuf[inPtr++]) != (byte)'>')
-            thNoPISp(decChr(b));
+            thUnxp(decChr(b));
          reset();
          inc = false;
       }
@@ -721,7 +721,7 @@ public final class Utf8Scanner extends XmlScanner{
    private final int inTree(int c) throws XMLStreamException{
       if(c == '\r'){
          if(inPtr >= end && !more()){
-            indent(0, ' ');
+            indent(0, (char)0);
             return -1;
          }
          if(inBuf[inPtr] == (byte)'\n')
@@ -733,7 +733,7 @@ public final class Utf8Scanner extends XmlScanner{
       byte b = inBuf[inPtr];
       if(b != (byte)' ' && b != 9){
          if(b == (byte)'<' && inPtr + 1 < end && inBuf[inPtr + 1] != (byte)'!'){
-            indent(0, ' ');
+            indent(0, (char)0);
             return -1;
          }
          reset()[0] = '\n';
@@ -765,7 +765,7 @@ public final class Utf8Scanner extends XmlScanner{
    private final int prolog(int c) throws XMLStreamException{
       if(c == '\r'){
          if(inPtr >= end && !more()){
-            indent(0, ' ');
+            indent(0, (char)0);
             return -1;
          }
          if(inBuf[inPtr] == (byte)'\n')
@@ -773,13 +773,13 @@ public final class Utf8Scanner extends XmlScanner{
       }
       markLF();
       if(inPtr >= end && !more()){
-         indent(0, ' ');
+         indent(0, (char)0);
          return -1;
       }
       byte b = inBuf[inPtr];
       if(b != (byte)' ' && b != 9){
          if(b == (byte)'<'){
-            indent(0, ' ');
+            indent(0, (char)0);
             return -1;
          }
          reset()[0] = '\n';
@@ -1295,7 +1295,7 @@ public final class Utf8Scanner extends XmlScanner{
                   ++count;
                }
                if(b == (byte)'>' && count > 1)
-                  thCDEnd();
+                  thUnxp();
                continue;
             case 1:  // INVALID
                thC(c);
@@ -1748,7 +1748,7 @@ public final class Utf8Scanner extends XmlScanner{
                   ++count;
                }
                if(b == (byte)'>' && count > 1)
-                  thCDEnd();
+                  thUnxp();
                while(count > 1){
                   outputBuffer[outPtr++] = ']';
                   if(outPtr >= outputBuffer.length){
@@ -2225,7 +2225,7 @@ public final class Utf8Scanner extends XmlScanner{
                   ++count;
                }
                if(b == (byte)'>' && count > 1)
-                  thCDEnd();
+                  thUnxp();
                while(count > 1){
                   outputBuffer[outPtr++] = ']';
                   if(outPtr >= outputBuffer.length){

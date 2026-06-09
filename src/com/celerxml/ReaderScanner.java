@@ -319,11 +319,11 @@ final class ReaderScanner extends XmlScanner{
             endPI();
       }else{
          if(c != (int)'?')
-            thNoPISp(c);
+            thUnxp(c);
          if(inPtr >= end)
             assertMore();
          if((c = buf[inPtr++]) != '>')
-            thNoPISp(c);
+            thUnxp(c);
          reset();
          inc = false;
       }
@@ -1165,7 +1165,7 @@ adv:     while(true){
                      ++ptr;
                   }
                   if(c == '>' && ptr > 1)
-                     thCDEnd();
+                     thUnxp();
                   while(ptr-- > 1){
                      outputBuffer[outPtr++] = ']';
                      if(outPtr >= outputBuffer.length){
@@ -1421,7 +1421,7 @@ adv:     while(true){
                      ++ptr;
                   }
                   if(c == '>' && ptr > 1)
-                     thCDEnd();
+                     thUnxp();
                   while(ptr-- > 1){
                      outputBuffer[outPtr++] = ']';
                      if(outPtr >= outputBuffer.length){
@@ -1595,7 +1595,7 @@ adv:     while(true){
                      ncount = true;
                   }
                   if(c == '>' && ncount)
-                     thCDEnd();
+                     thUnxp();
                   continue;
                case 1:  // INVALID
                   thC(c);
@@ -1730,7 +1730,7 @@ adv:     while(true){
    private final int inTree(char c) throws XMLStreamException{
       if(c == '\r'){
          if(inPtr >= end && !more()){
-            indent(0, ' ');
+            indent(0, (char)0);
             return -1;
          }
          if(buf[inPtr] == '\n')
@@ -1741,7 +1741,7 @@ adv:     while(true){
          assertMore();
       if((c = buf[inPtr]) != ' ' && c != '\t'){
          if(c == '<' && inPtr + 1 < end && buf[inPtr + 1] != '!'){
-            indent(0, ' ');
+            indent(0, (char)0);
             return -1;
          }
          reset()[0] = '\n';
@@ -1773,7 +1773,7 @@ adv:     while(true){
    private final int prolog(char c) throws XMLStreamException{
       if(c == '\r'){
          if(inPtr >= end && !more()){
-            indent(0, ' ');
+            indent(0, (char)0);
             return -1;
          }
          if(buf[inPtr] == '\n')
@@ -1781,12 +1781,12 @@ adv:     while(true){
       }
       ++currRow;
       if((rowOff = inPtr) >= end && !more()){
-         indent(0, ' ');
+         indent(0, (char)0);
          return -1;
       }
       if((c = buf[inPtr]) != ' ' && c != '\t'){
          if(c == '<'){
-            indent(0, ' ');
+            indent(0, (char)0);
             return -1;
          }
          reset()[0] = '\n';

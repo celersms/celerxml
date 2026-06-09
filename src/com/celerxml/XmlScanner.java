@@ -419,8 +419,8 @@ findOrCreate:
          if((count = attrs) >= offsets.length){
             final int[] oldVal = offsets;
             final PN[] oldNames = names;
-            final int oldLen = oldVal.length;
-            offsets = new int[oldLen + oldLen];
+            final int oldLen;
+            offsets = new int[(oldLen = oldVal.length) + oldLen];
             names = new PN[oldLen + oldLen];
             for(int i = 0; i < oldLen; ++i){
                offsets[i] = oldVal[i];
@@ -505,8 +505,8 @@ findOrCreate:
                return i;
          return -1;
       }
-      int hash = name.hashCode(), ix;
-      if((ix = attrMap[hash & (xx - 1)]) > 0){
+      int hash, ix;
+      if((ix = attrMap[(hash = name.hashCode()) & (xx - 1)]) > 0){
          if(names[--ix].Code(nsUri, name))
             return ix;
          for(int len = spillEnd; xx < len; xx += 2)
@@ -563,7 +563,7 @@ findOrCreate:
    final void startElement(ContentHandler h, org.xml.sax.Attributes attrs) throws SAXException{
       if(h != null){
          String ss;
-         int level = depth - 1;
+         final int level = depth - 1;
          for(NsD nsDecl = lastNs; nsDecl != null && nsDecl.lvl == level; nsDecl = nsDecl.prvD)
             h.startPrefixMapping((ss = nsDecl.bind.pfx) == null ? "" : ss, nsDecl.bind.Code);
          PN n;
@@ -576,7 +576,7 @@ findOrCreate:
          PN n;
          String ss;
          h.endElement((ss = (n = tokName).getNsUri()) == null ? "" : ss, n.ln, n.Code);
-         int level = depth;
+         final int level = depth;
          for(NsD nsDecl = lastNs; nsDecl != null && nsDecl.lvl == level; nsDecl = nsDecl.prvD)
             h.endPrefixMapping((ss = nsDecl.bind.pfx) == null ? "" : ss);
       }
@@ -664,8 +664,6 @@ findOrCreate:
         : new StrB(20).a("Name char ").apos(ch).toString());
    }
 
-   final void thNoPISp(int ch) throws XMLStreamException{ thUnxp(ch, ", not space or closing '?>'"); }
-
    final void thHyph() throws XMLStreamException{ thInErr("'--' in comment"); }
 
    final void thUnbPfx(PN name, boolean isAttr) throws XMLStreamException{
@@ -673,8 +671,8 @@ findOrCreate:
    }
 
    final void thUnxp(String n) throws XMLStreamException{ thInErr(new StrB(24 + n.length()).a("Unexpected end tag, not ").a(n).toString()); }
-
-   final void thCDEnd() throws XMLStreamException{ thInErr("']]>' must only close CDATA"); }
+   final void thUnxp() throws XMLStreamException{ thInErr("']]>' must only close CDATA"); }
+   final void thUnxp(int ch) throws XMLStreamException{ thUnxp(ch, ", not space or closing '?>'"); }
 
    final void thUnxp(int ch, String msg) throws XMLStreamException{
       if(ch < 32 && ch != '\r' && ch != '\n' && ch != '\t')
