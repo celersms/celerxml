@@ -98,7 +98,7 @@ final class ReaderScanner extends XmlScanner{
                if(c == '?')
                   return doPIStart();
                if(c == '/' || !isProlog)
-                  thRoot(isProlog, c);
+                  thUnxp(c, isProlog);
                return startElem(c);
             case '\r':
                if(inPtr >= end && !more()){
@@ -116,7 +116,7 @@ final class ReaderScanner extends XmlScanner{
             case '\t':
                continue;
             default:
-               thPlogUnxpCh(isProlog, c);
+               thUnxp(isProlog, c);
          }
       }
    }
@@ -196,7 +196,7 @@ final class ReaderScanner extends XmlScanner{
       }
       inc = true;
       currTok = 4; // CHARACTERS
-      thPlogUnxpCh(isProlog, c);
+      thUnxp(isProlog, c);
       return 0;
    }
 
@@ -725,7 +725,7 @@ adv:     while(true){
          else
             ok = true;
          if(!ok)
-            thInvNCh(c);
+            thInErr(c);
          if(cix >= cbuf.length)
             nameBuf = cbuf = xpand(cbuf);
          cbuf[cix++] = c;
@@ -1821,7 +1821,7 @@ adv:     while(true){
             int namePtr = 1, lastColon = -1;
             if((c = nameBuffer[0]) < 0xD800 || c >= 0xE000){
                if(!Chr.is10NS(c))
-                  thInvNCh(c);
+                  thInErr(c);
             }else{
                if(ptr == 1 || c >= 0xDC00 || (c = nameBuffer[1]) < 0xDC00 || c >= 0xE000)
                   thSurr(c);
@@ -1834,7 +1834,7 @@ adv:     while(true){
                         thInErr("Multiple ':'");
                      lastColon = namePtr;
                   }else if(!Chr.is10N(c))
-                     thInvNCh(c);
+                     thInErr(c);
                }else if(namePtr + 1 >= ptr || c >= 0xDC00 || (c = nameBuffer[namePtr + 1]) < 0xDC00 || c >= 0xE000)
                   thSurr(c);
             return syms.add(nameBuffer, ptr, hash);
