@@ -3,7 +3,7 @@
 
 # Overview
 
-**CelerXML** is a lightweight implementation of the standard Java XML parsers: *Simple API for XML* (**SAX** and **SAX2**) and *Streaming API for XML* (**StAX**). It can be used as a drop-in replacement for other
+**CelerXML** is a lightweight Java XML parser. It implements the *Simple API for XML* (**SAX** and **SAX2**) and *Streaming API for XML* (**StAX**). It can be used as a drop-in replacement for other
 XML processors, without recompiling the user Java application source code. The main advantage of CelerXML is performance. It was designed for [maximum speed and efficiency](https://github.com/celersms/celerxml/discussions/5). Another advantage is
 compatibility with older Java versions. CelerXML can be used with Java 1.6 and later, while other XML processors typically require at least Java 8.  
 
