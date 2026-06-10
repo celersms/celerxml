@@ -44,8 +44,8 @@ final class Wrap extends InputStream{
     
    public final int read(byte[] b, int offset, int len) throws IOException{
       if(Code != null){
-         int avail = end - off;
-         if(len > avail)
+         int avail;
+         if(len > (avail = end - off))
             len = avail;
          System.arraycopy(Code, off, b, offset, len);
          if((off += len) >= end)
@@ -57,10 +57,8 @@ final class Wrap extends InputStream{
 
    private final void Code(){
       if(Code != null){
-         byte[] data = Code;
+         impl.setBB(Code);
          Code = null;
-         if(impl != null)
-            impl.setBB(data);
       }
    }
 }
