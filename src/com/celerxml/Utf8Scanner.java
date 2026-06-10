@@ -100,7 +100,7 @@ public final class Utf8Scanner extends XmlScanner{
             }
       }
       if(!ok)
-         thInvNCh(ch);
+         thInErr(ch);
       cbuf[cix++] = (char)ch;
       int lastColon = -1;
       while(ix < byteLen){
@@ -153,7 +153,7 @@ public final class Utf8Scanner extends XmlScanner{
                }
          }
          if(!ok)
-            thInvNCh(ch);
+            thInErr(ch);
          if(cix >= cbuf.length)
             nameBuf = cbuf = xpand(cbuf);
          cbuf[cix++] = (char)ch;
@@ -183,7 +183,7 @@ public final class Utf8Scanner extends XmlScanner{
                if(b == (byte)'?')
                   return doPIStart();
                if(b == (byte)'/' || !isProlog)
-                  thRoot(isProlog, b);
+                  thUnxp(b, isProlog);
                return startElem(b);
             case 0x20:
             case '\t':
@@ -200,7 +200,7 @@ public final class Utf8Scanner extends XmlScanner{
                markLF();
                continue;
             default:
-               thPlogUnxpCh(isProlog, decChr((byte)c));
+               thUnxp(isProlog, decChr((byte)c));
          }
       }
    }
@@ -279,7 +279,7 @@ public final class Utf8Scanner extends XmlScanner{
       }
       inc = true;
       currTok = 4; // CHARACTERS
-      thPlogUnxpCh(isProlog, decChr(b));
+      thUnxp(isProlog, decChr(b));
       return 0;
    }
 
@@ -1178,7 +1178,7 @@ public final class Utf8Scanner extends XmlScanner{
                }
          }
          if(!ok)
-            thInvNCh(c);
+            thInErr(c);
          if(cix >= cbuf.length)
             nameBuf = cbuf = xpand(cbuf);
          cbuf[cix++] = (char)c;
