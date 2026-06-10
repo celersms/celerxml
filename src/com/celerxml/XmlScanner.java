@@ -444,7 +444,7 @@ findOrCreate:
       if(count < 3){
          hashSize = 0;
          if(count == 2 && names[0].Code(names[1])){
-            dupAttr(0, 1);
+            dup(0, 1);
             return -1;
          }
          return count;
@@ -463,11 +463,11 @@ findOrCreate:
             map[ll] = i + 1;
          else{
             if(err == null && names[--oldNameIdx].Code(newName))
-               dupAttr(oldNameIdx, i);
+               dup(oldNameIdx, i);
             // for(int j = hashCount; j < spillIndex; j += 2)
             //    if(map[j] == hash && names[oldNameIdx = map[j + 1]].Code(newName)){
             //       if(err == null)
-            //          dupAttr(oldNameIdx, i);
+            //          dup(oldNameIdx, i);
             //       break;
             //    }
             map[hashCount++] = hash;
@@ -640,36 +640,26 @@ findOrCreate:
 
    final int col(){ return inPtr - iniRawOff; }
 
-   private final void dupAttr(int idx1, int idx2){
-      err = new StrB(48).a("Duplicate '").append(names[idx1].toString()).append('\'').append('@').apos(idx1
-         ).append(", '").append(names[idx2].toString()).append('\'').append('@').apos(idx2).toString();
+   private final void dup(int x1, int x2){
+      err = new StrB(48).a("Duplicate ").append(names[x1].toString()).append('@').apos(x1).append(',').append(' ').append(names[x2].toString()).append('@').apos(x2).toString();
    }
 
    final void thInErr(String msg) throws XMLStreamException{ throw new XMLStreamException(msg, loc()); }
 
-   final void thEnt() throws XMLStreamException{ thInErr("Unexpanded ENTITY_REF"); }
-
-   final void thRoot(boolean isProlog, int ch) throws XMLStreamException{
-      if((ch &= 0x7FFFF) == '/')
-         thInErr(isProlog ? "Unexpected end element in prolog" : "Unexpected end element in epilog");
-      if(ch < 32)
-         thUnxp(ch, isProlog ? ", unrecognized prolog directive" : ", unrecognized epilog directive");
-      thInErr("Only one root element allowed");
-   }
-    
-   final void thPlogUnxpCh(boolean isProl, int ch) throws XMLStreamException{ thUnxp(ch, isProl ? " in prolog" : " in epilog"); }
-
-   final void thInvNCh(int ch) throws XMLStreamException{
+   final void thInErr(int ch) throws XMLStreamException{
       thInErr(ch == (int)':' ? "Single ':' allowed in elem./attr. names, none in PI target/entity"
         : new StrB(20).a("Name char ").apos(ch).toString());
    }
 
    final void thHyph() throws XMLStreamException{ thInErr("'--' in comment"); }
 
+   final void thEnt() throws XMLStreamException{ thInErr("Unexpanded ENTITY_REF"); }
+
    final void thUnbPfx(PN name, boolean isAttr) throws XMLStreamException{
       thInErr(new StrB(48).a("Unbound prefix ").append(name.pfx).append(isAttr ? ", attribute " : ", element ").append(name.Code).toString());
    }
 
+   final void thUnxp(boolean isProl, int ch) throws XMLStreamException{ thUnxp(ch, isProl ? " in prolog" : " in epilog"); }
    final void thUnxp(String n) throws XMLStreamException{ thInErr(new StrB(24 + n.length()).a("Unexpected end tag, not ").a(n).toString()); }
    final void thUnxp() throws XMLStreamException{ thInErr("']]>' must only close CDATA"); }
    final void thUnxp(int ch) throws XMLStreamException{ thUnxp(ch, ", not space or closing '?>'"); }
@@ -678,6 +668,14 @@ findOrCreate:
       if(ch < 32 && ch != '\r' && ch != '\n' && ch != '\t')
          thC(ch);
       thInErr(new StrB(24 + msg.length()).a("Unexpected ").apos(ch).a(msg).toString());
+   }
+
+   final void thUnxp(int ch, boolean isProl) throws XMLStreamException{
+      if((ch &= 0x7FFFF) == '/')
+         thInErr(isProl ? "Unexpected end element in prolog" : "Unexpected end element in epilog");
+      if(ch < 32)
+         thUnxp(ch, isProl ? ", unrecognized prolog directive" : ", unrecognized epilog directive");
+      thInErr("Only one root element allowed");
    }
 
    final void thC(int ch) throws XMLStreamException{ thInErr(new StrB(24).a("Illegal char ").apos(ch).toString()); }
