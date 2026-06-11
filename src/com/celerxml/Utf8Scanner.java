@@ -89,7 +89,7 @@ public final class Utf8Scanner extends XmlScanner{
             }else                          // 5+ bytes not valid
                badUTF(ch);
             if((ix += needed) > byteLen)
-               thInErr(EOI);
+               thErr(EOI);
             int q = quads[0], ch2 = q >> 16 & 0xFF;
             if((ch2 & 0xC0) != 0x80 || (needed > 1 && (((ch2 = q >> 8 & 0xFF) & 0xC0) != 0x80 || (needed > 2 && ((ch2 = q & 0xFF) & 0xC0) != 0x80))))
                badUTF(ch2);
@@ -100,7 +100,7 @@ public final class Utf8Scanner extends XmlScanner{
             }
       }
       if(!ok)
-         thInErr(ch);
+         thErr(ch);
       cbuf[cix++] = (char)ch;
       int lastColon = -1;
       while(ix < byteLen){
@@ -111,7 +111,7 @@ public final class Utf8Scanner extends XmlScanner{
                break;
             case 1:  // NAME_COLON
                if(lastColon >= 0)
-                  thInErr("Multiple ':'");
+                  thErr("Multiple ':'");
                lastColon = cix;
             case 2:  // NAME_NONFIRST
             case 3:  // NAME_ANY
@@ -130,7 +130,7 @@ public final class Utf8Scanner extends XmlScanner{
                }else                          // 5+ bytes not valid
                   badUTF(ch);
                if(ix + needed > byteLen)
-                  thInErr(EOI);
+                  thErr(EOI);
                int ch2 = quads[ix >> 2] >> ((ix++ & 3 ^ 3) << 3);
                if((ch2 & 0xC0) != 0x80)
                   badUTF(ch2);
@@ -153,7 +153,7 @@ public final class Utf8Scanner extends XmlScanner{
                }
          }
          if(!ok)
-            thInErr(ch);
+            thErr(ch);
          if(cix >= cbuf.length)
             nameBuf = cbuf = xpand(cbuf);
          cbuf[cix++] = (char)ch;
@@ -344,7 +344,7 @@ public final class Utf8Scanner extends XmlScanner{
          if(inPtr >= end)
             assertMore();
          if(inBuf[inPtr++] != (byte)'-')
-            thInErr("Expected '-'");
+            thErr("Expected '-'");
          if(lazy)
             inc = true;
          else
@@ -357,7 +357,7 @@ public final class Utf8Scanner extends XmlScanner{
             if(inPtr >= end)
                assertMore();
             if(inBuf[inPtr++] != (byte)CDATA.charAt(i))
-               thInErr("Expected '[CDATA['");
+               thErr("Expected '[CDATA['");
          }
          if(lazy)
             inc = true;
@@ -365,7 +365,7 @@ public final class Utf8Scanner extends XmlScanner{
             endCData();
          return 12; // CDATA
       }
-      thInErr("Expected '-' or '[CDATA['");
+      thErr("Expected '-' or '[CDATA['");
       return 0;
    }
 
@@ -377,7 +377,7 @@ public final class Utf8Scanner extends XmlScanner{
       tokName = parsePN(b);
       String ln = tokName.ln;
       if(ln.length() == 3 && ln.equalsIgnoreCase("xml") && tokName.pfx == null)
-         thInErr("Target 'xml' reserved");
+         thErr("Target 'xml' reserved");
       if(inPtr >= end)
          assertMore();
       int c = (int)inBuf[inPtr++] & 0xFF;
@@ -801,13 +801,13 @@ public final class Utf8Scanner extends XmlScanner{
 
    private final byte nxtB() throws XMLStreamException{
       if(inPtr >= end && !more())
-         thInErr(EOI);
+         thErr(EOI);
       return inBuf[inPtr++];
    }
 
    private final byte loadOne() throws XMLStreamException{
       if(!more())
-         thInErr(EOI);
+         thErr(EOI);
       return inBuf[inPtr++];
    }
 
@@ -903,7 +903,7 @@ public final class Utf8Scanner extends XmlScanner{
             break;
          }
          if(c == '<')
-            thInErr("Unexpected '<'");
+            thErr("Unexpected '<'");
          PN attrName = parsePN(b);
          boolean isNsDecl = true;
          if((prefix = attrName.pfx) == null)
@@ -958,16 +958,16 @@ public final class Utf8Scanner extends XmlScanner{
       }
       int act = endLastV(attrPtr);
       if(act < 0)
-         thInErr(err);
+         thErr(err);
       attrCnt = act;
       ++depth;
       if(!allBound){
          if(!elemName.isBound())
-            thUnbPfx(tokName, false);
+            thUnb(tokName, false);
          for(int i = 0, len = attrCnt; i < len; ++i){
             PN attrName = names[i];
             if(!attrName.isBound())
-               thUnbPfx(attrName, true);
+               thUnb(attrName, true);
          }
       }
       return 1; // START_ELEMENT
@@ -1025,7 +1025,7 @@ public final class Utf8Scanner extends XmlScanner{
                break;
             case 10: // AMP
                if((c = entInTxt()) == 0)
-                  thEnt();
+                  thC();
                if((c >> 16) != 0){
                   attrBuffer[attrPtr++] = (char)(0xD800 | (c -= 0x10000) >> 10);
                   c = 0xDC00 | c & 0x3FF;
@@ -1061,7 +1061,7 @@ public final class Utf8Scanner extends XmlScanner{
          }
          if(b == (byte)'&'){
             if((c = entInTxt()) == 0)
-               thEnt();
+               thC();
             if((c >> 16) != 0){
                if(attrPtr >= attrBuffer.length)
                   nameBuf = attrBuffer = xpand(attrBuffer);
@@ -1178,7 +1178,7 @@ public final class Utf8Scanner extends XmlScanner{
                }
          }
          if(!ok)
-            thInErr(c);
+            thErr(c);
          if(cix >= cbuf.length)
             nameBuf = cbuf = xpand(cbuf);
          cbuf[cix++] = (char)c;
@@ -1187,7 +1187,7 @@ public final class Utf8Scanner extends XmlScanner{
          b = inBuf[inPtr++];
       }
       if(impl.Code(16))
-         thInErr("Entity ref. in entity expanding mode");
+         thErr("Entity ref. in entity expanding mode");
       String pname = new String(cbuf, 0, cix);
       tokName = new PN(pname, null, pname, 0);
       return 0;
@@ -1349,7 +1349,7 @@ public final class Utf8Scanner extends XmlScanner{
                   if(++inPtr >= end)
                      assertMore();
                   if(inBuf[inPtr++] != (byte)'>')
-                     thHyph();
+                     thErr();
                   return;
                }
                continue;
@@ -1826,7 +1826,7 @@ public final class Utf8Scanner extends XmlScanner{
                   if(++inPtr >= end)
                      assertMore();
                   if(inBuf[inPtr++] != (byte)'>')
-                     thHyph();
+                     thErr();
                   currSz = outPtr;
                   return;
                }
@@ -2131,7 +2131,7 @@ public final class Utf8Scanner extends XmlScanner{
                if(inPtr >= end)
                   assertMore();
                if(inBuf[inPtr++] != (byte)CDATA.charAt(i))
-                  thInErr("Expected '[CDATA['");
+                  thErr("Expected '[CDATA['");
             }
             endClsCData();
          }else{
@@ -2346,7 +2346,7 @@ public final class Utf8Scanner extends XmlScanner{
                if(inPtr >= end)
                   assertMore();
                if(inBuf[inPtr++] != (byte)CDATA.charAt(i))
-                  thInErr("Expected '[CDATA['");
+                  thErr("Expected '[CDATA['");
             }
             skipCData();
          }else if(skipChars())
@@ -2509,5 +2509,5 @@ public final class Utf8Scanner extends XmlScanner{
       }
    }
 
-   private final void badUTF(int mask) throws XMLStreamException{ thInErr(new StrB(12).a("Bad UTF8 ").apos(mask & 0xFF).toString()); }
+   private final void badUTF(int mask) throws XMLStreamException{ thErr(new StrB(12).a("Bad UTF8 ").apos(mask & 0xFF).toString()); }
 }
