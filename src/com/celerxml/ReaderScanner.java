@@ -152,7 +152,7 @@ final class ReaderScanner extends XmlScanner{
       int c;
       if((c = buf[inPtr]) == '<'){
          if(++inPtr >= end && !more())
-            thInErr(EOI);
+            thErr(EOI);
          if((c = buf[inPtr++]) == '!')
             return commOrCdataStart();
          if(c == '?')
@@ -258,7 +258,7 @@ final class ReaderScanner extends XmlScanner{
          if(inPtr >= end)
             assertMore();
          if(buf[inPtr++] != '-')
-            thInErr("Expected '-'");
+            thErr("Expected '-'");
          if(lazy)
             inc = true;
          else
@@ -271,7 +271,7 @@ final class ReaderScanner extends XmlScanner{
             if(inPtr >= end)
                assertMore();
             if(buf[inPtr++] != CDATA.charAt(i))
-               thInErr("Expected '[CDATA['");
+               thErr("Expected '[CDATA['");
          }
          if(lazy)
             inc = true;
@@ -279,7 +279,7 @@ final class ReaderScanner extends XmlScanner{
             endCData();
          return 12; // CDATA
       }
-      thInErr("Expected '-' or '[CDATA['");
+      thErr("Expected '-' or '[CDATA['");
       return 0;
    }
 
@@ -289,7 +289,7 @@ final class ReaderScanner extends XmlScanner{
          assertMore();
       String ln;
       if((ln = (tokName = parsePN(buf[inPtr++])).ln).length() == 3 && ln.equalsIgnoreCase("xml") && tokName.pfx == null)
-         thInErr("Target 'xml' reserved");
+         thErr("Target 'xml' reserved");
       if(inPtr >= end)
          assertMore();
       char c;
@@ -404,7 +404,7 @@ final class ReaderScanner extends XmlScanner{
             empty = false;
             break;
          }else if(c == '<')
-            thInErr("Unexpected '<'");
+            thErr("Unexpected '<'");
          PN attrName;
          boolean isNsDecl = true;
          if((prefix = (attrName = parsePN(c)).pfx) == null)
@@ -462,15 +462,15 @@ final class ReaderScanner extends XmlScanner{
             xx = Code(xx, c, attrName);
       }
       if((xx = endLastV(xx)) < 0)
-         thInErr(err);
+         thErr(err);
       attrCnt = xx;
       ++depth;
       if(!allBound){
          if(!pn.isBound())
-            thUnbPfx(tokName, false);
+            thUnb(tokName, false);
          for(int i = 0, len = attrCnt; i < len; ++i)
             if(!(pn = names[i]).isBound())
-               thUnbPfx(pn, true);
+               thUnb(pn, true);
       }
       return 1; // START_ELEMENT
    }
@@ -513,7 +513,7 @@ adv:     while(true){
                   break;
                case 10: // AMP
                   if((ptr = entInTxt()) == 0)
-                     thEnt();
+                     thC();
                   if((ptr >> 16) != 0){
                      attrBuffer[attrPtr++] = (char)(0xD800 | (ptr -= 0x10000) >> 10);
                      ptr = 0xDC00 | ptr & 0x3FF;
@@ -555,7 +555,7 @@ adv:     while(true){
          if(c == '&'){
             int d;
             if((d = entInTxt()) == 0)
-               thEnt();
+               thC();
             if((d >> 16) != 0){
                if(attrPtr >= attrBuffer.length)
                   nameBuf = attrBuffer = xpand(attrBuffer);
@@ -725,7 +725,7 @@ adv:     while(true){
          else
             ok = true;
          if(!ok)
-            thInErr(c);
+            thErr(c);
          if(cix >= cbuf.length)
             nameBuf = cbuf = xpand(cbuf);
          cbuf[cix++] = c;
@@ -734,7 +734,7 @@ adv:     while(true){
          c = buf[inPtr++];
       }
       if(impl.Code(16))
-         thInErr("Entity ref. in entity expanding mode");
+         thErr("Entity ref. in entity expanding mode");
       String pname;
       tokName = new PN(pname = new String(cbuf, 0, cix), null, pname, 0);
       return 0;
@@ -786,7 +786,7 @@ adv:     while(true){
                      if(++inPtr >= end)
                         assertMore();
                      if(buf[inPtr++] != '>')
-                        thHyph();
+                        thErr();
                      currSz = outPtr;
                      return;
                   }
@@ -1260,7 +1260,7 @@ adv:     while(true){
                if(inPtr >= end)
                   assertMore();
                if(buf[inPtr++] != CDATA.charAt(i))
-                  thInErr("Expected '[CDATA['");
+                  thErr("Expected '[CDATA['");
             }
             endClsCData();
          }else{
@@ -1459,7 +1459,7 @@ adv:     while(true){
                if(inPtr >= end)
                   assertMore();
                if(buf[inPtr++] != CDATA.charAt(i))
-                  thInErr("Expected '[CDATA['");
+                  thErr("Expected '[CDATA['");
             }
             skipCData();
          }else if(skipChars())
@@ -1500,7 +1500,7 @@ adv:     while(true){
                      if(++inPtr >= end)
                         assertMore();
                      if(buf[inPtr++] != '>')
-                        thHyph();
+                        thErr();
                      return;
                   }
                   continue;
@@ -1821,7 +1821,7 @@ adv:     while(true){
             int namePtr = 1, lastColon = -1;
             if((c = nameBuffer[0]) < 0xD800 || c >= 0xE000){
                if(!Chr.is10NS(c))
-                  thInErr(c);
+                  thErr(c);
             }else{
                if(ptr == 1 || c >= 0xDC00 || (c = nameBuffer[1]) < 0xDC00 || c >= 0xE000)
                   thSurr(c);
@@ -1831,10 +1831,10 @@ adv:     while(true){
                if((c = nameBuffer[namePtr]) < 0xD800 || c >= 0xE000){
                   if(c == ':'){
                      if(lastColon >= 0)
-                        thInErr("Multiple ':'");
+                        thErr("Multiple ':'");
                      lastColon = namePtr;
                   }else if(!Chr.is10N(c))
-                     thInErr(c);
+                     thErr(c);
                }else if(namePtr + 1 >= ptr || c >= 0xDC00 || (c = nameBuffer[namePtr + 1]) < 0xDC00 || c >= 0xE000)
                   thSurr(c);
             return syms.add(nameBuffer, ptr, hash);
@@ -1877,7 +1877,7 @@ adv:     while(true){
       }
    }
 
-   private final void thSurr(char ch) throws XMLStreamException{ thInErr(new StrB(23).a("Invalid surrogate ").apos((int)ch).toString()); }
+   private final void thSurr(char ch) throws XMLStreamException{ thErr(new StrB(23).a("Invalid surrogate ").apos((int)ch).toString()); }
 
    final javax.xml.stream.Location loc(){ return new LocImpl(impl.pubId, impl.sysId, inPtr - rowOff, currRow, bOrC + inPtr); }
 
