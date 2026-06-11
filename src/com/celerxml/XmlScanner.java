@@ -340,22 +340,22 @@ findOrCreate:
             }
          }
          if(pfx != null && ns.Code() && (pfx != "xml" || !uri.equals(XMLConstants.XML_NS_URI)))
-            thInErr(new StrB(20 + pfx.length()).a("Can't rebind prefix ").a(pfx).toString());
+            thErr(new StrB(20 + pfx.length()).a("Can't rebind prefix ").a(pfx).toString());
       }
       if(!ns.Code()){
          if(uri == XMLConstants.XML_NS_URI)
-            thInErr("Can't bind 'http://www.w3.org/XML/1998/namespace' to prefix other than 'xml'");
+            thErr("Can't bind 'http://www.w3.org/XML/1998/namespace' to prefix other than 'xml'");
          if(uri == XMLConstants.XMLNS_ATTRIBUTE_NS_URI)
-            thInErr("Can't bind 'http://www.w3.org/2000/xmlns/' to prefix other than 'xmlns'");
+            thErr("Can't bind 'http://www.w3.org/2000/xmlns/' to prefix other than 'xmlns'");
       }
       if(lastNs != null && lastNs.Code(pfx, depth))
-         thInErr(pfx == null ? "Duplicate default namespace" : new StrB(24 + pfx.length()).a("Duplicate decl., prefix ").a(pfx).toString());
+         thErr(pfx == null ? "Duplicate default namespace" : new StrB(24 + pfx.length()).a("Duplicate decl., prefix ").a(pfx).toString());
       lastNs = new NsD(ns, uri, lastNs, depth);
    }
 
    final void assertMore() throws XMLStreamException{
       if(!more())
-         thInErr(EOI);
+         thErr(EOI);
    }
 
    final char[] reset(){
@@ -444,7 +444,7 @@ findOrCreate:
       if(count < 3){
          hashSize = 0;
          if(count == 2 && names[0].Code(names[1])){
-            dup(0, 1);
+            err = new StrB(48).a("Duplicate ").append(names[0].toString()).append('@').append('0').append(',').append(' ').append(names[1].toString()).append('@').append('1').toString();
             return -1;
          }
          return count;
@@ -458,18 +458,12 @@ findOrCreate:
             map[i] = 0;
       for(int i = 0; i < count; ++i){
          PN newName;
-         int hash = (newName = names[i]).ln.hashCode(), ll = hash & mask, oldNameIdx;
-         if((oldNameIdx = map[ll]) == 0)
+         int hash = (newName = names[i]).ln.hashCode(), ll = hash & mask, oldI;
+         if((oldI = map[ll]) == 0)
             map[ll] = i + 1;
          else{
-            if(err == null && names[--oldNameIdx].Code(newName))
-               dup(oldNameIdx, i);
-            // for(int j = hashCount; j < spillIndex; j += 2)
-            //    if(map[j] == hash && names[oldNameIdx = map[j + 1]].Code(newName)){
-            //       if(err == null)
-            //          dup(oldNameIdx, i);
-            //       break;
-            //    }
+            if(err == null && names[--oldI].Code(newName))
+               err = new StrB(48).a("Duplicate ").append(names[oldI].toString()).append('@').apos(oldI).append(',').append(' ').append(newName.toString()).append('@').apos(i).toString();
             map[hashCount++] = hash;
             map[hashCount++] = i;
          }
@@ -640,43 +634,37 @@ findOrCreate:
 
    final int col(){ return inPtr - iniRawOff; }
 
-   private final void dup(int x1, int x2){
-      err = new StrB(48).a("Duplicate ").append(names[x1].toString()).append('@').apos(x1).append(',').append(' ').append(names[x2].toString()).append('@').apos(x2).toString();
-   }
+   final void thErr(String msg) throws XMLStreamException{ throw new XMLStreamException(msg, loc()); }
+   final void thErr() throws XMLStreamException{ thErr("'--' in comment"); }
 
-   final void thInErr(String msg) throws XMLStreamException{ throw new XMLStreamException(msg, loc()); }
-
-   final void thInErr(int ch) throws XMLStreamException{
-      thInErr(ch == (int)':' ? "Single ':' allowed in elem./attr. names, none in PI target/entity"
+   final void thErr(int ch) throws XMLStreamException{
+      thErr(ch == (int)':' ? "Single ':' allowed in elem./attr. names, none in PI target/entity"
         : new StrB(20).a("Name char ").apos(ch).toString());
    }
 
-   final void thHyph() throws XMLStreamException{ thInErr("'--' in comment"); }
-
-   final void thEnt() throws XMLStreamException{ thInErr("Unexpanded ENTITY_REF"); }
-
-   final void thUnbPfx(PN name, boolean isAttr) throws XMLStreamException{
-      thInErr(new StrB(48).a("Unbound prefix ").append(name.pfx).append(isAttr ? ", attribute " : ", element ").append(name.Code).toString());
+   final void thUnb(PN name, boolean isAttr) throws XMLStreamException{
+      thErr(new StrB(48).a("Unbound prefix ").append(name.pfx).append(isAttr ? ", attribute " : ", element ").append(name.Code).toString());
    }
 
    final void thUnxp(boolean isProl, int ch) throws XMLStreamException{ thUnxp(ch, isProl ? " in prolog" : " in epilog"); }
-   final void thUnxp(String n) throws XMLStreamException{ thInErr(new StrB(24 + n.length()).a("Unexpected end tag, not ").a(n).toString()); }
-   final void thUnxp() throws XMLStreamException{ thInErr("']]>' must only close CDATA"); }
+   final void thUnxp(String n) throws XMLStreamException{ thErr(new StrB(24 + n.length()).a("Unexpected end tag, not ").a(n).toString()); }
+   final void thUnxp() throws XMLStreamException{ thErr("']]>' must only close CDATA"); }
    final void thUnxp(int ch) throws XMLStreamException{ thUnxp(ch, ", not space or closing '?>'"); }
 
    final void thUnxp(int ch, String msg) throws XMLStreamException{
       if(ch < 32 && ch != '\r' && ch != '\n' && ch != '\t')
          thC(ch);
-      thInErr(new StrB(24 + msg.length()).a("Unexpected ").apos(ch).a(msg).toString());
+      thErr(new StrB(24 + msg.length()).a("Unexpected ").apos(ch).a(msg).toString());
    }
 
    final void thUnxp(int ch, boolean isProl) throws XMLStreamException{
       if((ch &= 0x7FFFF) == '/')
-         thInErr(isProl ? "Unexpected end element in prolog" : "Unexpected end element in epilog");
+         thErr(isProl ? "Unexpected end element in prolog" : "Unexpected end element in epilog");
       if(ch < 32)
          thUnxp(ch, isProl ? ", unrecognized prolog directive" : ", unrecognized epilog directive");
-      thInErr("Only one root element allowed");
+      thErr("Only one root element allowed");
    }
 
-   final void thC(int ch) throws XMLStreamException{ thInErr(new StrB(24).a("Illegal char ").apos(ch).toString()); }
+   final void thC() throws XMLStreamException{ thErr("Unexpanded ENTITY_REF"); }
+   final void thC(int ch) throws XMLStreamException{ thErr(new StrB(24).a("Illegal char ").apos(ch).toString()); }
 }
