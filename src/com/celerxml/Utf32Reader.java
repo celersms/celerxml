@@ -9,7 +9,6 @@ package com.celerxml;
 import java.io.Reader;
 import java.io.InputStream;
 import java.io.IOException;
-import java.io.CharConversionException;
 
 final class Utf32Reader extends Reader{
 
@@ -31,8 +30,8 @@ final class Utf32Reader extends Reader{
    }
 
    public final void close() throws IOException{
-      InputStream in = mIn;
-      if(in != null){
+      InputStream in;
+      if((in = mIn) != null){
          mIn = null;
          Code();
          in.close();
@@ -79,15 +78,14 @@ final class Utf32Reader extends Reader{
             if((xx = mIn.read(mBuf, mLen, 4096 - mLen)) < 1){
                if(xx < 0){
                   Code();
-                  throw new CharConversionException(new StrB(48).a("EOF reading UTF32 char: got ").apos(mLen).a(" bytes, not 4").toString());
+                  throw new IOException(new StrB(37).a("EOF in UTF32: expected 4 bytes, got ").a((char)('0' + mLen)).toString());
                }
                throw new IOException("Stream read 0");
             }
             mLen += xx;
          }
       }
-      byte[] buf = mBuf;
-parseUTF32:
+      final byte[] buf = mBuf;
       while(outPtr < len){
          yy = mPtr;
          xx = bigEnd ? buf[yy] << 24 | (buf[yy + 1] & 0xFF) << 16 | (buf[yy + 2] & 0xFF) << 8 | buf[yy + 3] & 0xFF
@@ -95,21 +93,21 @@ parseUTF32:
          mPtr += 4;
          if(xx >= 0xD800){
             if(xx > 0x10FFFF || xx < 0xE000 || xx == 0xFFFE || xx == 0xFFFF)
-               throw new CharConversionException(new StrB(30).a("Invalid UTF32 char ").apos(xx).toString());
+               throw new IOException(new StrB(30).a("Invalid UTF32 char ").apos(xx).toString());
             if(xx > 0xFFFF){
                cbuf[outPtr++] = (char)(0xD800 + ((xx -= 0x10000) >> 10));
                xx = 0xDC00 | xx & 0x03FF;
                if(outPtr >= len){
                   cSurrgt = (char)xx;
-                  break parseUTF32;
+                  break;
                }
             }
          }
          cbuf[outPtr++] = (char)xx;
          if(mPtr >= mLen)
-            break parseUTF32;
+            break;
       }
-      return len = outPtr - start;
+      return outPtr - start;
    }
 
    private final void Code(){
