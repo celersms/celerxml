@@ -51,18 +51,16 @@ public final class Utf8Scanner extends XmlScanner{
       }
    }
 
-   private final void setStartLoc(){
+   private final void setLoc(){
       iniRawOff = bOrC + inPtr;
       startRow = currRow;
       startCol = inPtr - rowOff;
    }
 
    private final PN Code(int hash, int[] quads, int qlen, int lastQuadBytes) throws XMLStreamException{
-      int lastQuad = 0, byteLen = (qlen << 2) - 4 + lastQuadBytes;
-      if(lastQuadBytes < 4){
-         lastQuad = quads[qlen - 1];
-         quads[qlen - 1] = lastQuad << ((4 - lastQuadBytes) << 3);
-      }
+      int lastQuad = 0, byteLen = ((qlen - 1) << 2) + lastQuadBytes;
+      if(lastQuadBytes < 4)
+         quads[qlen - 1] = (lastQuad = quads[qlen - 1]) << ((4 - lastQuadBytes) << 3);
       int ch = quads[0] >>> 24, ix = 1, needed = 1, cix = 0;
       boolean ok;
       char[] cbuf = nameBuf;
@@ -90,9 +88,9 @@ public final class Utf8Scanner extends XmlScanner{
                badUTF(ch);
             if((ix += needed) > byteLen)
                thErr(EOI);
-            int q = quads[0], ch2 = q >> 16 & 0xFF;
-            if((ch2 & 0xC0) != 0x80 || (needed > 1 && (((ch2 = q >> 8 & 0xFF) & 0xC0) != 0x80 || (needed > 2 && ((ch2 = q & 0xFF) & 0xC0) != 0x80))))
-               badUTF(ch2);
+            int q = quads[0], ch2 = q >> 16;
+            if((ch2 & 0xC0) != 0x80 || (needed > 1 && (((ch2 = q >> 8) & 0xC0) != 0x80 || (needed > 2 && ((ch2 = q) & 0xC0) != 0x80))))
+               badUTF(ch2 & 0xFF);
             ok = Chr.is10NS(ch = ch << 6 | ch2 & 0x3F);
             if(needed > 2){
                cbuf[cix++] = (char)(0xD800 + ((ch -= 0x10000) >> 10));
@@ -131,18 +129,14 @@ public final class Utf8Scanner extends XmlScanner{
                   badUTF(ch);
                if(ix + needed > byteLen)
                   thErr(EOI);
-               int ch2 = quads[ix >> 2] >> ((ix++ & 3 ^ 3) << 3);
-               if((ch2 & 0xC0) != 0x80)
+               int ch2;
+               if(((ch2 = quads[ix >> 2] >> ((ix++ & 3 ^ 3) << 3)) & 0xC0) != 0x80)
                   badUTF(ch2);
                if(needed > 1){
                   if(((ch2 = quads[ix >> 2] >> ((ix++ & 3 ^ 3) << 3)) & 0xC0) != 0x80)
                      badUTF(ch2);
-                  if(needed > 2){
-                     ch2 = quads[ix >> 2] >> ((ix & 3 ^ 3) << 3);
-                     ++ix;
-                     if((ch2 & 0xC0) != 0x80)
-                        badUTF(ch2);
-                  }
+                  if(needed > 2 && ((ch2 = quads[ix >> 2] >> ((ix++ & 3 ^ 3) << 3)) & 0xC0) != 0x80)
+                     badUTF(ch2);
                }
                ok = Chr.is10N(ch = ch << 6 | ch2 & 0x3F);
                if(needed > 2){
@@ -166,10 +160,10 @@ public final class Utf8Scanner extends XmlScanner{
    public final int nxtFromProlog(boolean isProlog) throws XMLStreamException{
       if(inc)
          skipTok();
-      setStartLoc();
+      setLoc();
       while(true){
          if(inPtr >= end && !more()){
-            setStartLoc();        
+            setLoc();        
             return -1;
          }
          int c = inBuf[inPtr++] & 0xFF;
@@ -191,7 +185,7 @@ public final class Utf8Scanner extends XmlScanner{
             case '\r':
                if(inPtr >= end && !more()){
                   markLF();
-                  setStartLoc();        
+                  setLoc();        
                   return -1;
                }
                if(inBuf[inPtr] == (byte)'\n')
@@ -225,9 +219,9 @@ public final class Utf8Scanner extends XmlScanner{
          reset();
          return currTok = 9; // ENTITY_REFERENCE
       }
-      setStartLoc();        
+      setLoc();        
       if(inPtr >= end && !more()){
-         setStartLoc();        
+         setLoc();        
          return -1;
       }
       byte b = inBuf[inPtr];
