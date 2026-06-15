@@ -166,22 +166,19 @@ public final class Utf8Scanner extends XmlScanner{
             setLoc();        
             return -1;
          }
-         int c = inBuf[inPtr++] & 0xFF;
-         switch(c){
+         int c;
+         switch(c = inBuf[inPtr++] & 0xFF){
             case '<':
                if(inPtr >= end)
                   assertMore();
-               byte b = inBuf[inPtr++];
-               if(b == (byte)'!')
+               byte b;
+               if((b = inBuf[inPtr++]) == (byte)'!')
                   return doPrologDecl(isProlog);
                if(b == (byte)'?')
                   return doPIStart();
                if(b == (byte)'/' || !isProlog)
                   thUnxp(b, isProlog);
                return startElem(b);
-            case 0x20:
-            case '\t':
-               continue;
             case '\r':
                if(inPtr >= end && !more()){
                   markLF();
@@ -192,6 +189,8 @@ public final class Utf8Scanner extends XmlScanner{
                   ++inPtr;
             case '\n':
                markLF();
+            case 0x20:
+            case '\t':
                continue;
             default:
                thUnxp(isProlog, decChr((byte)c));
