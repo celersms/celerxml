@@ -61,11 +61,11 @@ public final class Utf8Scanner extends XmlScanner{
       int lastQuad = 0, byteLen = ((qlen - 1) << 2) + lastQuadBytes;
       if(lastQuadBytes < 4)
          quads[qlen - 1] = (lastQuad = quads[qlen - 1]) << ((4 - lastQuadBytes) << 3);
-      int ch = quads[0] >>> 24, ix = 1, needed = 1, cix = 0;
+      int ch, ix = 1, needed = 1, cix = 0;
       boolean ok;
       char[] cbuf = nameBuf;
       final byte[] TYPES = chrT.NAM;
-      switch(TYPES[ch]){
+      switch(TYPES[ch = quads[0] >>> 24]){
          case 0:  // NAME_NONE
          case 1:  // NAME_COLON
          case 2:  // NAME_NONFIRST
@@ -88,12 +88,13 @@ public final class Utf8Scanner extends XmlScanner{
                badUTF(ch);
             if((ix += needed) > byteLen)
                thErr(EOI);
-            int q = quads[0], ch2 = q >> 16;
-            if((ch2 & 0xC0) != 0x80 || (needed > 1 && (((ch2 = q >> 8) & 0xC0) != 0x80 || (needed > 2 && ((ch2 = q) & 0xC0) != 0x80))))
+            int q = quads[0], ch2;
+            if(((ch2 = q >> 16) & 0xC0) != 0x80 || needed > 1 && ((ch2 = q >> 8) & 0xC0) != 0x80 || needed > 2 && ((ch2 = q) & 0xC0) != 0x80)
                badUTF(ch2 & 0xFF);
             ok = Chr.is10NS(ch = ch << 6 | ch2 & 0x3F);
             if(needed > 2){
-               cbuf[cix++] = (char)(0xD800 + ((ch -= 0x10000) >> 10));
+               cbuf[0] = (char)(0xD800 + ((ch -= 0x10000) >> 10));
+               cix = 1;
                ch = 0xDC00 | ch & 0x3FF;
             }
       }
@@ -130,14 +131,9 @@ public final class Utf8Scanner extends XmlScanner{
                if(ix + needed > byteLen)
                   thErr(EOI);
                int ch2;
-               if(((ch2 = quads[ix >> 2] >> ((ix++ & 3 ^ 3) << 3)) & 0xC0) != 0x80)
+               if(((ch2 = quads[ix >> 2] >> ((ix++ & 3 ^ 3) << 3)) & 0xC0) != 0x80 || needed > 1 && ((ch2 = quads[ix >> 2] >> ((ix++ & 3 ^ 3) << 3)) & 0xC0) != 0x80
+                     || needed > 2 && ((ch2 = quads[ix >> 2] >> ((ix++ & 3 ^ 3) << 3)) & 0xC0) != 0x80)
                   badUTF(ch2);
-               if(needed > 1){
-                  if(((ch2 = quads[ix >> 2] >> ((ix++ & 3 ^ 3) << 3)) & 0xC0) != 0x80)
-                     badUTF(ch2);
-                  if(needed > 2 && ((ch2 = quads[ix >> 2] >> ((ix++ & 3 ^ 3) << 3)) & 0xC0) != 0x80)
-                     badUTF(ch2);
-               }
                ok = Chr.is10N(ch = ch << 6 | ch2 & 0x3F);
                if(needed > 2){
                   if(cix >= cbuf.length)
@@ -212,7 +208,7 @@ public final class Utf8Scanner extends XmlScanner{
       }else if(currTok == 2){ // END_ELEMENT
          curr = curr.nxt;
          while(lastNs != null && lastNs.lvl >= depth)
-            lastNs =lastNs.Code();
+            lastNs = lastNs.Code();
       }else if(pend){
          pend = false;
          reset();
@@ -223,20 +219,20 @@ public final class Utf8Scanner extends XmlScanner{
          setLoc();        
          return -1;
       }
-      byte b = inBuf[inPtr];
-      if(b == (byte)'<'){
+      byte b;
+      if((b = inBuf[inPtr]) == (byte)'<'){
          if((b = ++inPtr < end ? inBuf[inPtr++] : loadOne()) == (byte)'!')
-             return commOrCdataStart();
+            return commOrCdataStart();
          if(b == (byte)'?')
-             return doPIStart();
+            return doPIStart();
          if(b == (byte)'/')
-             return doEndE();
+            return doEndE();
          return startElem(b);
       }
       if(b == (byte)'&'){
          ++inPtr;
-         int i = entInTxt();
-         if(i == 0)
+         int i;
+         if((i = entInTxt()) == 0)
             return currTok = 9; // ENTITY_REFERENCE
          cTmp = -i;
       }else
@@ -251,8 +247,8 @@ public final class Utf8Scanner extends XmlScanner{
    private final int doPrologDecl(boolean isProlog) throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      byte b = inBuf[inPtr++];
-      if(b == (byte)'-'){
+      byte b;
+      if((b = inBuf[inPtr++]) == (byte)'-'){
          if(inPtr >= end)
             assertMore();
          if((b = inBuf[inPtr++]) == (byte)'-'){
@@ -279,8 +275,8 @@ public final class Utf8Scanner extends XmlScanner{
    private final int doDtdStart() throws XMLStreamException{
       Code("DOCTYPE");
       tokName = parsePN(Code(true));
-      byte q, b = Code(false);
-      if(b == (byte)'P'){
+      byte q, b;
+      if((b = Code(false)) == (byte)'P'){
          Code("PUBLIC");
          q = Code(true);
          char[] outputBuffer = nameBuf;
@@ -292,8 +288,8 @@ public final class Utf8Scanner extends XmlScanner{
                assertMore();
             if((b = inBuf[inPtr++]) == q)
                break;
-            int c = (int)b & 0xFF;
-            if(TYPES[c] != 1) // PUBID_OK
+            int c;
+            if(TYPES[c = (int)b & 0xFF] != 1) // PUBID_OK
                thUnxp(c, " in public ID");
             if(c <= 0x20){
                addSpace = true;
@@ -332,8 +328,8 @@ public final class Utf8Scanner extends XmlScanner{
    private final int commOrCdataStart() throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      byte b = inBuf[inPtr++];
-      if(b == (byte)'-'){
+      byte b;
+      if((b = inBuf[inPtr++]) == (byte)'-'){
          if(inPtr >= end)
             assertMore();
          if(inBuf[inPtr++] != (byte)'-')
