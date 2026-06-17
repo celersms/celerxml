@@ -229,14 +229,13 @@ public final class Utf8Scanner extends XmlScanner{
             return doEndE();
          return startElem(b);
       }
-      if(b == (byte)'&'){
+      int i;
+      if((i = b & 0xFF) == '&'){
          ++inPtr;
-         int i;
-         if((i = entInTxt()) == 0)
+         if((i = -entInTxt()) == 0)
             return currTok = 9; // ENTITY_REFERENCE
-         cTmp = -i;
-      }else
-         cTmp = (int)b & 0xFF;
+      }
+      cTmp = i;
       if(lazy)
          inc = true;
       else
@@ -362,15 +361,15 @@ public final class Utf8Scanner extends XmlScanner{
       currTok = 3; // PROCESSING_INSTRUCTION
       if(inPtr >= end)
          assertMore();
-      byte b = inBuf[inPtr++];
-      tokName = parsePN(b);
-      String ln = tokName.ln;
-      if(ln.length() == 3 && ln.equalsIgnoreCase("xml") && tokName.pfx == null)
+      byte b;
+      tokName = parsePN(b = inBuf[inPtr++]);
+      String ln;
+      if((ln = tokName.ln).length() == 3 && ln.equalsIgnoreCase("xml") && tokName.pfx == null)
          thErr("Target 'xml' reserved");
       if(inPtr >= end)
          assertMore();
-      int c = (int)inBuf[inPtr++] & 0xFF;
-      if(c <= 0x20){
+      int c;
+      if((c = (int)inBuf[inPtr++] & 0xFF) <= 0x20){
          while(true){
             if(c == '\n')
                markLF();
@@ -408,9 +407,9 @@ public final class Utf8Scanner extends XmlScanner{
    private final int chrEnt() throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      byte b = inBuf[inPtr++];
+      byte b;
       int c, value = 0;
-      if(b == (byte)'x')
+      if((b = inBuf[inPtr++]) == (byte)'x')
          while(true){
             if(inPtr >= end)
                assertMore();
@@ -440,18 +439,18 @@ public final class Utf8Scanner extends XmlScanner{
       --depth;
       currTok = 2; // END_ELEMENT
       tokName = curr.Code;
-      int size = tokName.len(), ptr = inPtr;
-      if(end - ptr < (size << 2) + 1)
+      int size = tokName.len(), ptr;
+      if(end - (ptr = inPtr) < (size << 2) + 1)
          return doEndESlow(size);
-      byte[] buf = inBuf;
+      final byte[] buf = inBuf;
       --size;
       for(int qix = 0; qix < size; ++qix)
          if((buf[ptr++] << 24 | (buf[ptr++] & 0xFF) << 16 | (buf[ptr++] & 0xFF) << 8 | buf[ptr++] & 0xFF) != tokName.Code(qix)){
             inPtr = ptr;
             thUnxp(tokName.Code);
          }
-      int lastQ = tokName.Code(size), q = buf[ptr++] & 0xFF;
-      if(q != lastQ && (q = q << 8 | buf[ptr++] & 0xFF) != lastQ && (q = q << 8 | buf[ptr++] & 0xFF) != lastQ && (q << 8 | buf[ptr++] & 0xFF) != lastQ){
+      int lQ, q;
+      if((q = buf[ptr++] & 0xFF) != (lQ = tokName.Code(size)) && (q = q << 8 | buf[ptr++] & 0xFF) != lQ && (q = q << 8 | buf[ptr++] & 0xFF) != lQ && (q << 8 | buf[ptr++] & 0xFF) != lQ){
          inPtr = ptr;
          thUnxp(tokName.Code);
       }
@@ -461,17 +460,17 @@ public final class Utf8Scanner extends XmlScanner{
          if(q == '\n')
             markLF();
          else if(q == '\r'){
-            byte b = inPtr < end ? inBuf[inPtr++] : loadOne();
-            if(b != (byte)'\n'){
+            byte b;
+            if((b = inPtr < end ? inBuf[inPtr++] : loadOne()) != (byte)'\n'){
                rowOff = inPtr - 1;
                ++currRow;
-               q = (int)b & 0xFF;
+               q = b & 0xFF;
                continue;
             }
             markLF();
          }else if(q != 0x20 && q != '\t')
             thC(q);
-         q = (int)(inPtr < end ? inBuf[inPtr++] : loadOne()) & 0xFF;
+         q = (inPtr < end ? inBuf[inPtr++] : loadOne()) & 0xFF;
       }
       if(q != '>')
          thUnxp(decChr((byte)q), ", not space or closing '>'");
@@ -490,11 +489,11 @@ public final class Utf8Scanner extends XmlScanner{
          if(q != tokName.Code(qix))
             thUnxp(tokName.Code);
       }
-      int lastQ = tokName.Code(size), q = 0, i = 0;
+      int lQ = tokName.Code(size), q = 0, i = 0;
       while(true){
          if(inPtr >= end)
             assertMore();
-         if((q = q << 8 | inBuf[inPtr++] & 0xFF) == lastQ){
+         if((q = q << 8 | inBuf[inPtr++] & 0xFF) == lQ){
             if(inPtr >= end)
                assertMore();
             q = inBuf[inPtr++];
