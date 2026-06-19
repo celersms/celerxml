@@ -27,7 +27,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
    private NsB[] nsBind;
    private PN[] nsCache;
    private ArrayList segments;
-   private int bCnt, bindMiss, segSize, rLen, hashSize, spillEnd;
+   private int bCnt, bindX, segSize, rLen, hashSz, spill;
    private char[] arr;
    private String result, attrV;
    private boolean indent, doRst;
@@ -293,7 +293,7 @@ loop_pfx:
          }
          PN cn = name.Code(b);
          if(nsCache == null){
-            if(++bindMiss < 10)
+            if(++bindX < 10)
                return cn;
             nsCache = new PN[0x40];
          }
@@ -301,7 +301,7 @@ loop_pfx:
       }
       if(pfx == "xml")
          return name.Code(NsB.XML);
-      ++bindMiss;
+      ++bindX;
       int len;
       if(bCnt == 0)
          nsBind = new NsB[16];
@@ -442,7 +442,7 @@ findOrCreate:
       offsets[(count = attrs) - 1] = endingOffset;
       final PN[] names = this.names;
       if(count < 3){
-         hashSize = 0;
+         hashSz = 0;
          if(count == 2 && names[0].Code(names[1])){
             err = new StrB(48).a("Duplicate ").append(names[0].toString()).append('@').append('0').append(',').append(' ').append(names[1].toString()).append('@').append('1').toString();
             return -1;
@@ -450,7 +450,7 @@ findOrCreate:
          return count;
       }
       int[] map;
-      int hashCount = hashSize = (count + (count >> 2) + 7) & ~7, min = hashCount + (hashCount >> 4), mask = hashCount - 1; // next multiple of 8 (never 0)
+      int hashCount = hashSz = (count + (count >> 2) + 7) & ~7, min = hashCount + (hashCount >> 4), mask = hashCount - 1; // next multiple of 8 (never 0)
       if((map = attrMap) == null || map.length < min)
          map = new int[min];
       else
@@ -458,17 +458,19 @@ findOrCreate:
             map[i] = 0;
       for(int i = 0; i < count; ++i){
          PN newName;
-         int hash = (newName = names[i]).ln.hashCode(), ll = hash & mask, oldI;
-         if((oldI = map[ll]) == 0)
+         int hash, ll, xx;
+         if((xx = map[ll = (hash = (newName = names[i]).ln.hashCode()) & mask]) == 0)
             map[ll] = i + 1;
          else{
-            if(err == null && names[--oldI].Code(newName))
-               err = new StrB(48).a("Duplicate ").append(names[oldI].toString()).append('@').apos(oldI).append(',').append(' ').append(newName.toString()).append('@').apos(i).toString();
+            if(err == null && names[--xx].Code(newName))
+               err = new StrB(48).a("Duplicate ").append(names[xx].toString()).append('@').apos(xx).append(',').append(' ').append(newName.toString()).append('@').apos(i).toString();
+            if(hashCount + 1 >= (xx = map.length))
+               System.arraycopy(map, 0, map = new int[xx + 8], 0, xx);
             map[hashCount++] = hash;
             map[hashCount++] = i;
          }
       }
-      spillEnd = hashCount;
+      spill = hashCount;
       attrMap = map;
       return err == null ? count : -1;
    }
@@ -493,7 +495,7 @@ findOrCreate:
 
    final int findIdx(String nsUri, String name){
       int xx;
-      if((xx = hashSize) == 0){
+      if((xx = hashSz) == 0){
          for(int i = 0, len = attrs; i < len; ++i)
             if(names[i].Code(nsUri, name))
                return i;
@@ -503,7 +505,7 @@ findOrCreate:
       if((ix = attrMap[(hash = name.hashCode()) & (xx - 1)]) > 0){
          if(names[--ix].Code(nsUri, name))
             return ix;
-         for(int len = spillEnd; xx < len; xx += 2)
+         for(int len = spill; xx < len; xx += 2)
             if(attrMap[xx] == hash && names[ix = attrMap[xx + 1]].Code(nsUri, name))
                return ix;
       }
