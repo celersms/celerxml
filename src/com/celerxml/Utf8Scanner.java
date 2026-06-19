@@ -781,8 +781,6 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    private final boolean loadNRet() throws XMLStreamException{
-      if(in == null)
-         return false;
       bOrC += inPtr;
       rowOff -= inPtr;
       System.arraycopy(inBuf, inPtr, inBuf, 0, end -= inPtr);
@@ -790,7 +788,7 @@ public final class Utf8Scanner extends XmlScanner{
       try{
          do{
             int xx;
-            if((xx = in.read(inBuf, end, 4096 - end)) < 1)
+            if(in == null || (xx = in.read(inBuf, end, 4096 - end)) < 1)
                return false;
             end += xx;
          }while(end < 3);
@@ -826,10 +824,10 @@ public final class Utf8Scanner extends XmlScanner{
    private final int startElem(byte b) throws XMLStreamException{
       currTok = 1; // START_ELEMENT
       nsCnt = 0;
-      PN elemName = parsePN(b);
-      String prefix = elemName.pfx;
+      PN elemName;
+      String prefix;
       boolean allBound = true;
-      if(prefix != null){
+      if((prefix = (elemName = parsePN(b)).pfx) != null){
          elemName = bindName(elemName, prefix);
          allBound = elemName.isBound();
       }
@@ -840,8 +838,8 @@ public final class Utf8Scanner extends XmlScanner{
       while(true){
          if(inPtr >= end)
             assertMore();
-         int c = (b = buf[inPtr++]) & 0xFF;
-         if(c <= 0x20)
+         int c;
+         if((c = (b = buf[inPtr++]) & 0xFF) <= 0x20)
             do{
                if(c == '\n')
                   ln();
@@ -872,9 +870,9 @@ public final class Utf8Scanner extends XmlScanner{
          }
          if(c == '<')
             thErr("Unexpected '<'");
-         PN attrName = parsePN(b);
          boolean isNsDecl = true;
-         if((prefix = attrName.pfx) == null)
+         PN attrName;
+         if((prefix = (attrName = parsePN(b)).pfx) == null)
             isNsDecl = attrName.ln == "xmlns";
          else if(prefix != "xmlns"){
             attrName = bindName(attrName, prefix);
@@ -924,8 +922,8 @@ public final class Utf8Scanner extends XmlScanner{
          }else
             attrPtr = Code(attrPtr, b, attrName);
       }
-      int act = endLastV(attrPtr);
-      if(act < 0)
+      int act;
+      if((act = endLastV(attrPtr)) < 0)
          thErr(err);
       attrCnt = act;
       ++depth;
@@ -933,8 +931,8 @@ public final class Utf8Scanner extends XmlScanner{
          if(!elemName.isBound())
             thUnb(tokName, false);
          for(int i = 0, len = attrCnt; i < len; ++i){
-            PN attrName = names[i];
-            if(!attrName.isBound())
+            PN attrName;
+            if(!(attrName = names[i]).isBound())
                thUnb(attrName, true);
          }
       }
@@ -944,7 +942,6 @@ public final class Utf8Scanner extends XmlScanner{
    private final int Code(int attrPtr, byte quoteByte, PN attrName) throws XMLStreamException{
       char[] attrBuffer = startNewV(attrName, attrPtr);
       final byte[] TYPES = chrT.ATT;
-      final int quoteChar = quoteByte;
       int c = 0;
       while(true){
          int ptr = inPtr;
@@ -956,8 +953,8 @@ public final class Utf8Scanner extends XmlScanner{
             }
             if(attrPtr >= attrBuffer.length)
                attrBuffer = vals = xpand(vals);
-            int max = end, max2 = ptr + attrBuffer.length - attrPtr;
-            if(max2 < max)
+            int max, max2;
+            if((max2 = ptr + attrBuffer.length - attrPtr) < (max = end))
                max = max2;
             while(ptr < max){
                if(TYPES[c = inBuf[ptr++] & 0xFF] != 0){
@@ -1002,7 +999,7 @@ public final class Utf8Scanner extends XmlScanner{
                }
                break;
             case 14: // ATTR_QUOTE
-               if(c == quoteChar)
+               if(c == quoteByte)
                   return attrPtr;
                break;
             case 1:  // INVALID
@@ -1022,8 +1019,8 @@ public final class Utf8Scanner extends XmlScanner{
       while(true){
          if(inPtr >= end)
             assertMore();
-         byte b = inBuf[inPtr++];
-         if(b == quoteByte){
+         byte b;
+         if((b = inBuf[inPtr++]) == quoteByte){
             bindNs(name, attrPtr == 0 ? "" : impl.Code(attrBuffer, attrPtr));
             return;
          }
@@ -1064,8 +1061,8 @@ public final class Utf8Scanner extends XmlScanner{
    private final int entInTxt() throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      byte b = inBuf[inPtr++];
-      if(b == (byte)'#')
+      byte b;
+      if((b = inBuf[inPtr++]) == (byte)'#')
          return chrEnt();
       char[] cbuf = nameBuf;
       int cix = 0;
@@ -1120,8 +1117,8 @@ public final class Utf8Scanner extends XmlScanner{
       final byte[] TYPES = chrT.NAM;
       while(b != (byte)';'){
          boolean ok = false;
-         int c = b & 0xFF;
-         switch(TYPES[c]){
+         int c;
+         switch(TYPES[c = b & 0xFF]){
             case 0:  // NAME_NONE
             case 1:  // NAME_COLON
             case 2:  // NAME_NONFIRST
@@ -1156,8 +1153,8 @@ public final class Utf8Scanner extends XmlScanner{
       }
       if(impl.Code(16))
          thErr("Entity ref. in entity expanding mode");
-      String pname = new String(cbuf, 0, cix);
-      tokName = new PN(pname, null, pname, 0);
+      String pname;
+      tokName = new PN(pname = new String(cbuf, 0, cix), null, pname, 0);
       return 0;
    }
 
@@ -1168,8 +1165,8 @@ public final class Utf8Scanner extends XmlScanner{
       while(true){
          if(inPtr >= end)
             assertMore();
-         int c = inBuf[inPtr++] & 0xFF;
-         if(c == quote)
+         int c;
+         if((c = inBuf[inPtr++] & 0xFF) == quote)
             return new String(outputBuffer, 0, outPtr);
          switch(TYPES[c]){
             case 2:  // WS_CR
@@ -1450,8 +1447,8 @@ public final class Utf8Scanner extends XmlScanner{
                break;
             ptr = 0;
          }
-         int c = inputBuffer[ptr] & 0xFF;
-         if(c > 0x20)
+         int c;
+         if((c = inputBuffer[ptr] & 0xFF) > 0x20)
             break;
          ++ptr;
          if(c == '\n'){
@@ -1478,21 +1475,20 @@ public final class Utf8Scanner extends XmlScanner{
    private final void skipUTF_2() throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      int c = inBuf[inPtr++];
-      if((c & 0xC0) != 0x80)
+      int c;
+      if(((c = inBuf[inPtr++]) & 0xC0) != 0x80)
          badUTF(c);
    }
 
    private final void skipUTF_3(int c) throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      int d = inBuf[inPtr++];
-      if((d & 0xC0) != 0x80)
+      int d, e;
+      if(((d = inBuf[inPtr++]) & 0xC0) != 0x80)
          badUTF(d);
       if(inPtr >= end)
          assertMore();
-      int e = inBuf[inPtr++];
-      if((e & 0xC0) != 0x80)
+      if(((e = inBuf[inPtr++]) & 0xC0) != 0x80)
          badUTF(e);
       if((c &= 0xF) >= 0xD && (((c = (c << 6 | d & 0x3F) << 6 | e & 0x3F) >= 0xD800 && c < 0xE000) || c == 0xFFFE || c == 0xFFFF))
          thC(c);
@@ -1511,18 +1507,14 @@ public final class Utf8Scanner extends XmlScanner{
             badUTF(d);
          if(inPtr >= end)
             assertMore();
-      }else{
-         if(((d = inBuf[inPtr++]) & 0xC0) != 0x80)
-            badUTF(d);
-         if(((d = inBuf[inPtr++]) & 0xC0) != 0x80)
-            badUTF(d);
-      }
+      }else if(((d = inBuf[inPtr++]) & 0xC0) != 0x80 || ((d = inBuf[inPtr++]) & 0xC0) != 0x80)
+         badUTF(d);
       if(((d = inBuf[inPtr++]) & 0xC0) != 0x80)
          badUTF(d);
    }
 
    private final void endCData() throws XMLStreamException{
-      final byte[] TYPES = chrT.OTH, inputBuffer = inBuf;
+      final byte[] TYPES = chrT.OTH, buf = inBuf;
       char[] outputBuffer = reset();
       int outPtr = 0, c = 0;
       while(true){
@@ -1537,11 +1529,11 @@ public final class Utf8Scanner extends XmlScanner{
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            int max = end, max2 = ptr + outputBuffer.length - outPtr;
-            if(max2 < max)
+            int max, max2;
+            if((max2 = ptr + outputBuffer.length - outPtr) < (max = end))
                max = max2;
             while(ptr < max){
-               if(TYPES[c = inputBuffer[ptr++] & 0xFF] != 0){
+               if(TYPES[c = buf[ptr++] & 0xFF] != 0){
                   adv = false;
                   break;
                }
@@ -1553,7 +1545,7 @@ public final class Utf8Scanner extends XmlScanner{
             case 2:  // WS_CR
                if(ptr >= end)
                   assertMore();
-               if(inputBuffer[inPtr] == (byte)'\n')
+               if(buf[inPtr] == (byte)'\n')
                   ++inPtr;
                c = '\n';
             case 3:  // WS_LF
@@ -1584,8 +1576,8 @@ public final class Utf8Scanner extends XmlScanner{
                   ++inPtr;
                   ++count;
                }while(true);
-               boolean ok = b == (byte)'>' && count >= 1;
-               if(ok)
+               boolean ok;
+               if(ok = b == (byte)'>' && count >= 1)
                   --count;
                while(count > 0){
                   --count;
@@ -1608,7 +1600,7 @@ public final class Utf8Scanner extends XmlScanner{
             case 4:  // MULTIBYTE_N
                badUTF(c);
          }
-         outputBuffer[outPtr++] = (char) c;
+         outputBuffer[outPtr++] = (char)c;
       }
    }
 
@@ -1632,7 +1624,7 @@ public final class Utf8Scanner extends XmlScanner{
          outputBuffer = reset();
          outPtr = 0;
       }
-      final byte[] TYPES = chrT.TXT, inputBuffer = inBuf;
+      final byte[] TYPES = chrT.TXT, buf = inBuf;
       while(true){
          int ptr = inPtr;
          boolean adv = true;
@@ -1645,11 +1637,11 @@ public final class Utf8Scanner extends XmlScanner{
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            int max = end, max2 = ptr + outputBuffer.length - outPtr;
-            if(max2 < max)
+            int max, max2;
+            if((max2 = ptr + outputBuffer.length - outPtr) < (max = end))
                max = max2;
             while(ptr < max){
-               if(TYPES[c = inputBuffer[ptr++] & 0xFF] != 0){
+               if(TYPES[c = buf[ptr++] & 0xFF] != 0){
                   adv = false;
                   break;
                }
@@ -1661,7 +1653,7 @@ public final class Utf8Scanner extends XmlScanner{
             case 2:  // WS_CR
                if(ptr >= end)
                   assertMore();
-               if(inputBuffer[inPtr] == (byte)'\n')
+               if(buf[inPtr] == (byte)'\n')
                   ++inPtr;
                c = '\n';
             case 3:  // WS_LF
@@ -1691,8 +1683,6 @@ public final class Utf8Scanner extends XmlScanner{
                if((c = entInTxt()) == 0){
                   pend = true;
                   currSz = outPtr;
-                  // if(cls && !pend)
-                  //    endClsTxt();
                   return;
                }
                if((c >> 16) != 0){
@@ -1705,19 +1695,19 @@ public final class Utf8Scanner extends XmlScanner{
                }
                break;
             case 11: // RBRACKET
-               int count = 1;
+               int count = 0;
                byte b;
                while(true){
                   if(inPtr >= end)
                      assertMore();
-                  if((b = inputBuffer[inPtr]) != (byte)']')
+                  if((b = buf[inPtr]) != (byte)']')
                      break;
                   ++inPtr;
                   ++count;
                }
-               if(b == (byte)'>' && count > 1)
+               if(b == (byte)'>' && count > 0)
                   thUnxp();
-               while(count > 1){
+               while(count > 0){
                   outputBuffer[outPtr++] = ']';
                   if(outPtr >= outputBuffer.length){
                      outputBuffer = endSeg();
@@ -1736,7 +1726,7 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    private final void endComm() throws XMLStreamException{
-      final byte[] TYPES = chrT.OTH, inputBuffer = inBuf;
+      final byte[] TYPES = chrT.OTH, buf = inBuf;
       char[] outputBuffer = reset();
       int outPtr = 0, c = 0;
       while(true){
@@ -1751,11 +1741,11 @@ public final class Utf8Scanner extends XmlScanner{
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            int max = end, max2 = ptr + outputBuffer.length - outPtr;
-            if(max2 < max)
+            int max, max2;
+            if((max2 = ptr + outputBuffer.length - outPtr) < (max = end))
                max = max2;
             while(ptr < max){
-               if(TYPES[c = inputBuffer[ptr++] & 0xFF] != 0){
+               if(TYPES[c = buf[ptr++] & 0xFF] != 0){
                   adv = false;
                   break;
                }
@@ -1767,7 +1757,7 @@ public final class Utf8Scanner extends XmlScanner{
             case 2:  // WS_CR
                if(ptr >= end)
                   assertMore();
-               if(inputBuffer[inPtr] == (byte)'\n')
+               if(buf[inPtr] == (byte)'\n')
                   ++inPtr;
                c = '\n';
             case 3:  // WS_LF
@@ -1825,8 +1815,8 @@ public final class Utf8Scanner extends XmlScanner{
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            int max = end, max2 = ptr + outputBuffer.length - outPtr;
-            if(max2 < max)
+            int max, max2;
+            if((max2 = ptr + outputBuffer.length - outPtr) < (max = end))
                max = max2;
             while(ptr < max){
                if(TYPES[c = inBuf[ptr++] & 0xFF] != 0){
@@ -1877,8 +1867,8 @@ public final class Utf8Scanner extends XmlScanner{
             case 11: // RBRACKET
                if(!inDecl && quoteChar == 0){
                   currSz = outPtr;
-                  byte b = Code(false);
-                  if(b != (byte)'>')
+                  byte b;
+                  if((b = Code(false)) != (byte)'>')
                      thUnxp(decChr(b), ", not '>' after internal subset");
                   return;
                }
@@ -1946,8 +1936,8 @@ public final class Utf8Scanner extends XmlScanner{
                continue;
             case 11: // RBRACKET
                if(!inDecl && quoteChar == 0){
-                  byte b = Code(false);
-                  if(b != (byte)'>')
+                  byte b;
+                  if((b = Code(false)) != (byte)'>')
                      thUnxp(decChr(b), ", not '>' after internal subset");
                }
                continue;
@@ -1960,7 +1950,7 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    private final void endPI() throws XMLStreamException{
-      final byte[] TYPES = chrT.OTH, inputBuffer = inBuf;
+      final byte[] TYPES = chrT.OTH, buf = inBuf;
       char[] outputBuffer = reset();
       int c = 0, outPtr = 0;
       while(true){
@@ -1975,11 +1965,11 @@ public final class Utf8Scanner extends XmlScanner{
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            int max = end, max2 = ptr + outputBuffer.length - outPtr;
-            if(max2 < max)
+            int max, max2;
+            if((max2 = ptr + outputBuffer.length - outPtr) < (max = end))
                max = max2;
             while(ptr < max){
-               if(TYPES[c = inputBuffer[ptr++] & 0xFF] != 0){
+               if(TYPES[c = buf[ptr++] & 0xFF] != 0){
                   adv = false;
                   break;
                }
@@ -1991,7 +1981,7 @@ public final class Utf8Scanner extends XmlScanner{
             case 2:  // WS_CR
                if(ptr >= end)
                   assertMore();
-               if(inputBuffer[inPtr] == (byte)'\n')
+               if(buf[inPtr] == (byte)'\n')
                   ++inPtr;
                c = '\n';
             case 3:  // WS_LF
@@ -2030,16 +2020,14 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    private final void endWS() throws XMLStreamException{
-      int tmp = cTmp;
+      int tmp, outPtr;
       char[] outputBuffer;
-      int outPtr;
-      if(tmp == '\r' || tmp == '\n'){
+      if((tmp = cTmp) == '\r' || tmp == '\n'){
          if((outPtr = prolog(tmp)) < 0)
             return;
          outputBuffer = currSeg;
       }else{
-         outputBuffer = reset();
-         outputBuffer[0] = (char)tmp;
+         (outputBuffer = reset())[0] = (char)tmp;
          outPtr = 1;
       }
       int ptr = inPtr;
@@ -2049,8 +2037,8 @@ public final class Utf8Scanner extends XmlScanner{
                break;
             ptr = 0;
          }
-         int c = inBuf[ptr] & 0xFF;
-         if(c > 0x20)
+         int c;
+         if((c = inBuf[ptr] & 0xFF) > 0x20)
             break;
          ++ptr;
          if(c == '\n'){
@@ -2111,7 +2099,7 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    private final void endClsC() throws XMLStreamException{
-      final byte[] TYPES = chrT.TXT, inputBuffer = inBuf;
+      final byte[] TYPES = chrT.TXT, buf = inBuf;
       char[] outputBuffer = currSeg;
       int c = 0, outPtr = currSz;
       while(true){
@@ -2126,11 +2114,11 @@ public final class Utf8Scanner extends XmlScanner{
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            int max = end, max2 = ptr + outputBuffer.length - outPtr;
-            if(max2 < max)
+            int max, max2;
+            if((max2 = ptr + outputBuffer.length - outPtr) < (max = end))
                max = max2;
             while(ptr < max){
-               if(TYPES[c = inputBuffer[ptr++] & 0xFF] != 0){
+               if(TYPES[c = buf[ptr++] & 0xFF] != 0){
                   adv = false;
                   break;
                }
@@ -2142,7 +2130,7 @@ public final class Utf8Scanner extends XmlScanner{
             case 2:  // WS_CR
                if(ptr >= end)
                   assertMore();
-               if(inputBuffer[inPtr] == (byte)'\n')
+               if(buf[inPtr] == (byte)'\n')
                   ++inPtr;
                c = '\n';
             case 3:  // WS_LF
@@ -2182,19 +2170,19 @@ public final class Utf8Scanner extends XmlScanner{
                }
                break;
             case 11: // RBRACKET
-               int count = 1;
+               int count = 0;
                byte b;
                while(true){
                   if(inPtr >= end)
                      assertMore();
-                  if((b = inputBuffer[inPtr]) != (byte)']')
+                  if((b = buf[inPtr]) != (byte)']')
                      break;
                   ++inPtr;
                   ++count;
                }
-               if(b == (byte)'>' && count > 1)
+               if(b == (byte)'>' && count > 0)
                   thUnxp();
-               while(count > 1){
+               while(count > 0){
                   outputBuffer[outPtr++] = ']';
                   if(outPtr >= outputBuffer.length){
                      outputBuffer = endSeg();
@@ -2213,7 +2201,7 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    private final void endClsCData() throws XMLStreamException{
-      final byte[] TYPES = chrT.OTH, inputBuffer = inBuf;
+      final byte[] TYPES = chrT.OTH, buf = inBuf;
       char[] outputBuffer = currSeg;
       int c = 0, outPtr = currSz;
       while(true){
@@ -2228,11 +2216,11 @@ public final class Utf8Scanner extends XmlScanner{
                outputBuffer = endSeg();
                outPtr = 0;
             }
-            int max = end, max2 = ptr + outputBuffer.length - outPtr;
-            if(max2 < max)
+            int max, max2;
+            if((max2 = ptr + outputBuffer.length - outPtr) < (max = end))
                max = max2;
             while(ptr < max){
-               if(TYPES[c = inputBuffer[ptr++] & 0xFF] != 0){
+               if(TYPES[c = buf[ptr++] & 0xFF] != 0){
                   adv = false;
                   break;
                }
@@ -2244,7 +2232,7 @@ public final class Utf8Scanner extends XmlScanner{
             case 2:  // WS_CR
                if(ptr >= end)
                   assertMore();
-               if(inputBuffer[inPtr] == (byte)'\n')
+               if(buf[inPtr] == (byte)'\n')
                   ++inPtr;
                c = '\n';
             case 3:  // WS_LF
@@ -2276,8 +2264,8 @@ public final class Utf8Scanner extends XmlScanner{
                   ++inPtr;
                   ++count;
                }while(true);
-               boolean ok = b == (byte)'>' && count >= 1;
-               if(ok)
+               boolean ok;
+               if(ok = b == (byte)'>' && count >= 1)
                   --count;
                while(count > 0){
                   outputBuffer[outPtr++] = ']';
@@ -2338,8 +2326,8 @@ public final class Utf8Scanner extends XmlScanner{
          assertMore();
          ptr = 0;
       }
-      int d = inBuf[ptr++];
-      if((d & 0xC0) != 0x80){
+      int d;
+      if(((d = inBuf[ptr++]) & 0xC0) != 0x80){
          inPtr = ptr;
          badUTF(d);
       }
@@ -2373,8 +2361,8 @@ public final class Utf8Scanner extends XmlScanner{
    private final int decUTF_2(int c) throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      int d = inBuf[inPtr++];
-      if((d & 0xC0) != 0x80)
+      int d;
+      if(((d = inBuf[inPtr++]) & 0xC0) != 0x80)
          badUTF(d);
       return (c & 0x1F) << 6 | d & 0x3F;
    }
@@ -2382,8 +2370,8 @@ public final class Utf8Scanner extends XmlScanner{
    private final int decUTF_3(int c1) throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      int d = inBuf[inPtr++];
-      if((d & 0xC0) != 0x80)
+      int d;
+      if(((d = inBuf[inPtr++]) & 0xC0) != 0x80)
          badUTF(d);
       int c = (c1 &= 0xF) << 6 | d & 0x3F;
       if(inPtr >= end)
@@ -2397,8 +2385,8 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    private final int decUTF_3f(int c1) throws XMLStreamException{
-      int d = inBuf[inPtr++];
-      if((d & 0xC0) != 0x80)
+      int d;
+      if(((d = inBuf[inPtr++]) & 0xC0) != 0x80)
          badUTF(d);
       int c = (c1 &= 0xF) << 6 | d & 0x3F;
       if(((d = inBuf[inPtr++]) & 0xC0) != 0x80)
@@ -2412,8 +2400,8 @@ public final class Utf8Scanner extends XmlScanner{
    private final int decUTF_4(int c) throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
-      int d = inBuf[inPtr++];
-      if((d & 0xC0) != 0x80)
+      int d;
+      if(((d = inBuf[inPtr++]) & 0xC0) != 0x80)
          badUTF(d);
       c = (c & 7) << 6 | d & 0x3F;
       if(inPtr >= end)
@@ -2429,8 +2417,8 @@ public final class Utf8Scanner extends XmlScanner{
    }
 
    private final int decChr(byte b) throws XMLStreamException{
-      int d, c = b, needed = 0;
-      if(c >= 0)
+      int d, c, needed = 0;
+      if((c = b) >= 0)
          return c;
       if((c & 0xE0) == 0xC0)        // 2 bytes
          c &= 0x1F;
