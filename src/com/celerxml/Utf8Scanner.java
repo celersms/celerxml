@@ -768,10 +768,13 @@ public final class Utf8Scanner extends XmlScanner{
       return -1;
    }
 
-   private final byte nxtB() throws XMLStreamException{
+   private final int nxtB() throws XMLStreamException{
       if(inPtr >= end && !more())
          thErr(EOI);
-      return inBuf[inPtr++];
+      int d;
+      if(((d = inBuf[inPtr++]) & 0xC0) != 0x80)
+         badUTF(d);
+      return d & 0x3F;
    }
 
    private final byte loadOne() throws XMLStreamException{
@@ -2376,7 +2379,7 @@ adv:     while(true){
    }
 
    private final int decChr(byte b) throws XMLStreamException{
-      int d, c, needed = 0;
+      int c, needed = 0;
       if((c = b) >= 0)
          return c;
       if((c & 0xE0) == 0xC0)        // 2 bytes
@@ -2389,18 +2392,11 @@ adv:     while(true){
          needed = 2;
       }else
          badUTF(c);
-      if(((d = nxtB()) & 0xC0) != 0x80)
-         badUTF(d);
-      c = c << 6 | d & 0x3F;
+      c = c << 6 | nxtB();
       if(needed > 0){
-         if(((d = nxtB()) & 0xC0) != 0x80)
-            badUTF(d);
-         c = c << 6 | d & 0x3F;
-         if(needed > 1){
-            if(((d = nxtB()) & 0xC0) != 0x80)
-               badUTF(d);
-            c = c << 6 | d & 0x3F;
-         }
+         c = c << 6 | nxtB();
+         if(needed > 1)
+            c = c << 6 | nxtB();
       }
       return c;
    }
