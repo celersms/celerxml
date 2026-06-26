@@ -2229,9 +2229,8 @@ adv:     while(true){
                boolean ok;
                if(ok = b == (byte)'>' && count >= 1)
                   --count;
-               while(count > 0){
+               while(count-- > 0){
                   outputBuffer[outPtr++] = ']';
-                  --count;
                   if(outPtr >= outputBuffer.length){
                      outputBuffer = endSeg();
                      outPtr = 0;
@@ -2347,11 +2346,8 @@ adv:     while(true){
    }
 
    private final int dec3f(int c1) throws XMLStreamException{
-      int d;
-      if(((d = inBuf[inPtr++]) & 0xC0) != 0x80)
-         badUTF(d);
-      int c = (c1 &= 0xF) << 6 | d & 0x3F;
-      if(((d = inBuf[inPtr++]) & 0xC0) != 0x80)
+      int d = inBuf[inPtr++], c = (c1 &= 0xF) << 6 | d & 0x3F;
+      if((d & 0xC0) != 0x80 || ((d = inBuf[inPtr++]) & 0xC0) != 0x80)
          badUTF(d);
       c = c << 6 | d & 0x3F;
       if(c1 >= 0xD && ((c >= 0xD800 && c < 0xE000) || c == 0xFFFE || c == 0xFFFF))
