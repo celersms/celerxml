@@ -223,7 +223,7 @@ public final class Utf8Scanner extends XmlScanner{
       }
       byte b;
       if((b = inBuf[inPtr]) == (byte)'<'){
-         if((b = ++inPtr < end ? inBuf[inPtr++] : loadOne()) == (byte)'!')
+         if((b = ++inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'!')
             return commOrCdataStart();
          if(b == (byte)'?')
             return doPIStart();
@@ -461,7 +461,7 @@ public final class Utf8Scanner extends XmlScanner{
             ln();
          else if(q == '\r'){
             byte b;
-            if((b = inPtr < end ? buf[inPtr++] : loadOne()) != (byte)'\n'){
+            if((b = inPtr < end ? buf[inPtr++] : load1()) != (byte)'\n'){
                rowOff = inPtr - 1;
                ++currRow;
                q = b & 0xFF;
@@ -470,7 +470,7 @@ public final class Utf8Scanner extends XmlScanner{
             ln();
          }else if(q != 0x20 && q != '\t')
             thC(q);
-         q = (inPtr < end ? buf[inPtr++] : loadOne()) & 0xFF;
+         q = (inPtr < end ? buf[inPtr++] : load1()) & 0xFF;
       }
       if(q != '>')
          thUnxp(decChr((byte)q), ", not space or closing '>'");
@@ -502,7 +502,7 @@ public final class Utf8Scanner extends XmlScanner{
                   ln();
                else if(q == '\r'){
                   byte b;
-                  if((b = inPtr < end ? inBuf[inPtr++] : loadOne()) != (byte)'\n'){
+                  if((b = inPtr < end ? inBuf[inPtr++] : load1()) != (byte)'\n'){
                      rowOff = inPtr - 1;
                      ++currRow;
                      q = b & 0xFF;
@@ -511,7 +511,7 @@ public final class Utf8Scanner extends XmlScanner{
                   ln();
                }else if(q != 0x20 && q != '\t')
                   thC(q);
-               q = (inPtr < end ? inBuf[inPtr++] : loadOne()) & 0xFF;
+               q = (inPtr < end ? inBuf[inPtr++] : load1()) & 0xFF;
             }
             if(q != '>')
                thUnxp(decChr((byte)q), ", not space or closing '>'");
@@ -563,7 +563,7 @@ public final class Utf8Scanner extends XmlScanner{
             return findPName(i2, quads, q, 1);
          for(int xx = 2; xx <= 4; xx++){
             i2 = i2 << 8 | q2;
-            if((q2 = (inPtr < end ? buf[inPtr++] : loadOne()) & 0xFF) < 45 || (q2 > 58 && q2 < 65) || q2 == 47)
+            if((q2 = (inPtr < end ? buf[inPtr++] : load1()) & 0xFF) < 45 || (q2 > 58 && q2 < 65) || q2 == 47)
                return findPName(i2, quads, q, xx);
          }
          int len;
@@ -588,7 +588,7 @@ public final class Utf8Scanner extends XmlScanner{
             return findPName(q, 1, firstQuad, qix, quads);
          for(int xx = 2; xx <= 4; xx++){
             q = q << 8 | i2;
-            if((i2 = (inPtr < end ? inBuf[inPtr++] : loadOne()) & 0xFF) < 45 || (i2 > 58 && i2 < 65) || i2 == 47)
+            if((i2 = (inPtr < end ? inBuf[inPtr++] : load1()) & 0xFF) < 45 || (i2 > 58 && i2 < 65) || i2 == 47)
                return findPName(q, xx, firstQuad, qix, quads);
          }
          if(qix == 0)
@@ -758,7 +758,7 @@ public final class Utf8Scanner extends XmlScanner{
       int count = 1, max = b == (byte)' ' ? 32 : 8;
       while((++inPtr < end || more()) && inBuf[inPtr] == b)
          if(++count >= max){
-            char[] outBuf = reset();
+            final char[] outBuf = reset();
             outBuf[0] = '\n';
             for(int i = 1; i <= count; ++i)
                 outBuf[i] = (char)b;
@@ -777,7 +777,7 @@ public final class Utf8Scanner extends XmlScanner{
       return d & 0x3F;
    }
 
-   private final byte loadOne() throws XMLStreamException{
+   private final byte load1() throws XMLStreamException{
       if(!more())
          thErr(EOI);
       return inBuf[inPtr++];
@@ -1068,47 +1068,47 @@ adv:     while(true){
       int cix = 0;
       if(b == (byte)'a'){
          cbuf[cix++] = (char)b;
-         if((b = inPtr < end ? inBuf[inPtr++] : loadOne()) == (byte)'m'){
+         if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'m'){
             cbuf[cix++] = (char)b;
-            if((b = inPtr < end ? inBuf[inPtr++] : loadOne()) == (byte)'p'){
+            if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'p'){
                cbuf[cix++] = (char)b;
-               if((b = inPtr < end ? inBuf[inPtr++] : loadOne()) == (byte)';')
+               if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)';')
                   return '&';
             }
          }else if(b == (byte)'p'){
             cbuf[cix++] = (char)b;
-            if((b = inPtr < end ? inBuf[inPtr++] : loadOne()) == (byte)'o'){
+            if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'o'){
                cbuf[cix++] = (char)b;
-               if((b = inPtr < end ? inBuf[inPtr++] : loadOne()) == (byte)'s'){
+               if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'s'){
                   cbuf[cix++] = (char)b;
-                  if((b = inPtr < end ? inBuf[inPtr++] : loadOne()) == (byte)';')
+                  if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)';')
                      return '\'';
                }
             }
          }
       }else if(b == (byte)'l'){
          cbuf[cix++] = (char)b;
-         if((b = inPtr < end ? inBuf[inPtr++] : loadOne()) == (byte)'t'){
+         if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'t'){
             cbuf[cix++] = (char)b;
-            if((b = inPtr < end ? inBuf[inPtr++] : loadOne()) == (byte)';')
+            if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)';')
                return '<';
          }
       }else if(b == (byte)'g'){
          cbuf[cix++] = (char)b;
-         if((b = inPtr < end ? inBuf[inPtr++] : loadOne()) == (byte)'t'){
+         if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'t'){
             cbuf[cix++] = (char)b;
-            if((b = inPtr < end ? inBuf[inPtr++] : loadOne()) == (byte)';')
+            if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)';')
                return '>';
          }
       }else if(b == (byte)'q'){
          cbuf[cix++] = (char)b;
-         if((b = inPtr < end ? inBuf[inPtr++] : loadOne()) == (byte)'u'){
+         if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'u'){
             cbuf[cix++] = (char)b;
-            if((b = inPtr < end ? inBuf[inPtr++] : loadOne()) == (byte)'o'){
+            if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'o'){
                cbuf[cix++] = (char)b;
-               if((b = inPtr < end ? inBuf[inPtr++] : loadOne()) == (byte)'t'){
+               if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'t'){
                   cbuf[cix++] = (char)b;
-                  if((b = inPtr < end ? inBuf[inPtr++] : loadOne()) == (byte)';')
+                  if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)';')
                      return '"';
                }
             }
