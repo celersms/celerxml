@@ -175,9 +175,9 @@ public final class Utf8Scanner extends XmlScanner{
                return startElem(b);
             case '\r':
                if(inPtr >= end && !more()){
-                  iniRawOff = bOrC + (rowOff = inPtr);
+                  iniRawOff = bOrC;
                   startRow = ++currRow;
-                  startCol = 0;
+                  startCol = rowOff = 0;
                   return -1;
                }
                if(inBuf[inPtr] == (byte)'\n')
