@@ -154,7 +154,7 @@ final class ReaderScanner extends XmlScanner{
          if(++inPtr >= end && !more())
             thErr(EOI);
          if((c = buf[inPtr++]) == '!')
-            return commOrCdataStart();
+            return dataStart();
          if(c == '?')
             return doPIStart();
          return c == '/' ? doEndE() : startElem((char)c);
@@ -250,7 +250,7 @@ final class ReaderScanner extends XmlScanner{
       return 0;
    }
 
-   private final int commOrCdataStart() throws XMLStreamException{
+   private final int dataStart() throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
       char c;

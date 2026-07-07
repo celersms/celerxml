@@ -224,7 +224,7 @@ public final class Utf8Scanner extends XmlScanner{
       byte b;
       if((b = inBuf[inPtr]) == (byte)'<'){
          if((b = ++inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'!')
-            return commOrCdataStart();
+            return dataStart();
          if(b == (byte)'?')
             return doPIStart();
          return b == (byte)'/' ? doEndE() : startElem(b);
@@ -324,7 +324,7 @@ public final class Utf8Scanner extends XmlScanner{
       return currTok = 11; // DTD
    }
 
-   private final int commOrCdataStart() throws XMLStreamException{
+   private final int dataStart() throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
       byte b;
