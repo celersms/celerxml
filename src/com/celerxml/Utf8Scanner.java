@@ -361,8 +361,7 @@ public final class Utf8Scanner extends XmlScanner{
       currTok = 3; // PROCESSING_INSTRUCTION
       if(inPtr >= end)
          assertMore();
-      byte b;
-      tokName = parsePN(b = inBuf[inPtr++]);
+      tokName = parsePN(inBuf[inPtr++]);
       String ln;
       if((ln = tokName.ln).length() == 3 && ln.equalsIgnoreCase("xml") && tokName.pfx == null)
          thErr("Target 'xml' reserved");
@@ -392,12 +391,10 @@ public final class Utf8Scanner extends XmlScanner{
          else
             endPI();
       }else{
-         if(c != '?')
-            thUnxp(decChr((byte)c));
          if(inPtr >= end)
             assertMore();
-         if((b = inBuf[inPtr++]) != (byte)'>')
-            thUnxp(decChr(b));
+         if(c != '?' || (c = inBuf[inPtr++]) != '>')
+            thUnxp(decChr((byte)c));
          reset();
          inc = false;
       }
@@ -1229,13 +1226,13 @@ adv:     while(true){
                ln();
                continue;
             case 5:  // MULTIBYTE_2
-               skipUTF_2();
+               skip2();
                continue;
             case 6:  // MULTIBYTE_3
-               skipUTF_3(c);
+               skip3(c);
                continue;
             case 7:  // MULTIBYTE_4
-               skipUTF_4();
+               skip4();
                continue;
             case 9:  // LT
                --inPtr;
@@ -1292,13 +1289,13 @@ adv:     while(true){
                ln();
                continue;
             case 5:  // MULTIBYTE_2
-               skipUTF_2();
+               skip2();
                continue;
             case 6:  // MULTIBYTE_3
-               skipUTF_3(c);
+               skip3(c);
                continue;
             case 7:  // MULTIBYTE_4
-               skipUTF_4();
+               skip4();
                continue;
             case 13: // HYPHEN
                if(ptr >= end)
@@ -1345,13 +1342,13 @@ adv:     while(true){
                ln();
                continue;
             case 5:  // MULTIBYTE_2
-               skipUTF_2();
+               skip2();
                continue;
             case 6:  // MULTIBYTE_3
-               skipUTF_3(c);
+               skip3(c);
                continue;
             case 7:  // MULTIBYTE_4
-               skipUTF_4();
+               skip4();
                continue;
             case 11: // RBRACKET
                int count = 0;
@@ -1401,13 +1398,13 @@ adv:     while(true){
                ln();
                continue;
             case 5:  // MULTIBYTE_2
-               skipUTF_2();
+               skip2();
                continue;
             case 6:  // MULTIBYTE_3
-               skipUTF_3(c);
+               skip3(c);
                continue;
             case 7:  // MULTIBYTE_4
-               skipUTF_4();
+               skip4();
                continue;
             case 12: // QMARK
                if(ptr >= end)
@@ -1459,7 +1456,7 @@ adv:     while(true){
       inPtr = ptr;
    }
 
-   private final void skipUTF_2() throws XMLStreamException{
+   private final void skip2() throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
       int c;
@@ -1467,7 +1464,7 @@ adv:     while(true){
          badUTF(c);
    }
 
-   private final void skipUTF_3(int c) throws XMLStreamException{
+   private final void skip3(int c) throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
       int d, e;
@@ -1481,7 +1478,7 @@ adv:     while(true){
          thC(c);
    }
 
-   private final void skipUTF_4() throws XMLStreamException{
+   private final void skip4() throws XMLStreamException{
       int d;
       if(inPtr + 4 > end){
          if(inPtr >= end)
