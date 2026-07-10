@@ -831,8 +831,7 @@ public final class Utf8Scanner extends XmlScanner{
          elemName = bindName(elemName, prefix);
          allBound = elemName.isBound();
       }
-      tokName = elemName;
-      curr = new Node(elemName, curr);
+      curr = new Node(tokName = elemName, curr);
       final byte[] buf = inBuf;
       int attrPtr = 0;
       while(true){
