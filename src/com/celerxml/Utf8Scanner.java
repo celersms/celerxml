@@ -162,6 +162,8 @@ public final class Utf8Scanner extends XmlScanner{
          }
          int c;
          switch(c = inBuf[inPtr++] & 0xFF){
+            default:
+               thUnxp(isProlog, decChr((byte)c));
             case '<':
                if(inPtr >= end)
                   assertMore();
@@ -187,8 +189,6 @@ public final class Utf8Scanner extends XmlScanner{
             case 0x20:
             case '\t':
                continue;
-            default:
-               thUnxp(isProlog, decChr((byte)c));
          }
       }
    }
@@ -399,37 +399,6 @@ public final class Utf8Scanner extends XmlScanner{
          inc = false;
       }
       return 3; // PROCESSING_INSTRUCTION
-   }
-
-   private final int chrEnt() throws XMLStreamException{
-      if(inPtr >= end)
-         assertMore();
-      byte b;
-      int c, value = 0;
-      if((b = inBuf[inPtr++]) == (byte)'x')
-         while(true){
-            if(inPtr >= end)
-               assertMore();
-            if((b = inBuf[inPtr++]) == (byte)';')
-               break;
-            if((c = (((int)b | 0x20) - 0x30)) > 9) // to lowercase
-               c -= 0x27;
-            if(c < 0 || c > 0xF)
-               thUnxp(decChr(b), ", not a hex digit");
-            value = value << 4 | c;
-         }
-      else
-         while(b != (byte)';'){
-            if(b < (byte)'0' || b > (byte)'9')
-               thUnxp(decChr(b), ", not a dec digit");
-            value = value * 10 + b - '0';
-            if(inPtr >= end)
-               assertMore();
-            b = inBuf[inPtr++];
-         }
-      if((value >= 0xD800 && value < 0xE000) || value == 0 || value == 0xFFFE || value == 0xFFFF)
-         thC(value);
-      return value;
    }
 
    private final int doEndE() throws XMLStreamException{
@@ -994,16 +963,15 @@ adv:     while(true){
                      attrBuffer = vals = xpand(vals);
                }
                break;
-            case 14: // ATTR_QUOTE
-               if(c == quoteByte)
-                  return attrPtr;
-               break;
             case 1:  // INVALID
                thC(c);
             case 4:  // MULTIBYTE_N
                badUTF(c);
             case 9:  // LT
                thUnxp(c, " in attribute value");
+            case 14: // ATTR_QUOTE
+               if(c == quoteByte)
+                  return attrPtr;
          }
          attrBuffer[attrPtr++] = (char)c;
       }
@@ -1057,54 +1025,82 @@ adv:     while(true){
    private final int entInTxt() throws XMLStreamException{
       if(inPtr >= end)
          assertMore();
+      final byte[] buf;
       byte b;
-      if((b = inBuf[inPtr++]) == (byte)'#')
-         return chrEnt();
+      if((b = (buf = inBuf)[inPtr++]) == (byte)'#'){
+         if(inPtr >= end)
+            assertMore();
+         int c, value = 0;
+         if((b = buf[inPtr++]) == (byte)'x')
+            while(true){
+               if(inPtr >= end)
+                  assertMore();
+               if((b = buf[inPtr++]) == (byte)';')
+                  break;
+               if((c = (((int)b | 0x20) - 0x30)) > 9) // to lowercase
+                  c -= 0x27;
+               if(c < 0 || c > 0xF)
+                  thUnxp(decChr(b), ", not a hex digit");
+               value = value << 4 | c;
+            }
+         else
+            while(b != (byte)';'){
+               if(b < (byte)'0' || b > (byte)'9')
+                  thUnxp(decChr(b), ", not a dec digit");
+               value = value * 10 + b - '0';
+               if(inPtr >= end)
+                  assertMore();
+               b = buf[inPtr++];
+            }
+         if((value >= 0xD800 && value < 0xE000) || value == 0 || value == 0xFFFE || value == 0xFFFF)
+            thC(value);
+         return value;
+      }
       char[] cbuf = nameBuf;
       int cix = 0;
       if(b == (byte)'a'){
          cbuf[cix++] = (char)b;
-         if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'m'){
+         if((b = inPtr < end ? buf[inPtr++] : load1()) == (byte)'m'){
             cbuf[cix++] = (char)b;
-            if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'p'){
+            if((b = inPtr < end ? buf[inPtr++] : load1()) == (byte)'p'){
                cbuf[cix++] = (char)b;
-               if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)';')
+               if((b = inPtr < end ? buf[inPtr++] : load1()) == (byte)';')
                   return '&';
             }
          }else if(b == (byte)'p'){
             cbuf[cix++] = (char)b;
-            if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'o'){
+            if((b = inPtr < end ? buf[inPtr++] : load1()) == (byte)'o'){
                cbuf[cix++] = (char)b;
-               if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'s'){
+               if((b = inPtr < end ? buf[inPtr++] : load1()) == (byte)'s'){
                   cbuf[cix++] = (char)b;
-                  if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)';')
+                  if((b = inPtr < end ? buf[inPtr++] : load1()) == (byte)';')
                      return '\'';
                }
             }
          }
       }else if(b == (byte)'l'){
          cbuf[cix++] = (char)b;
-         if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'t'){
+         if((b = inPtr < end ? buf[inPtr++] : load1()) == (byte)'t'){
             cbuf[cix++] = (char)b;
-            if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)';')
+            if((b = inPtr < end ? buf[inPtr++] : load1()) == (byte)';')
                return '<';
          }
       }else if(b == (byte)'g'){
          cbuf[cix++] = (char)b;
-         if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'t'){
+         if((b = inPtr < end ? buf[inPtr++] : load1()) == (byte)'t'){
             cbuf[cix++] = (char)b;
-            if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)';')
+            if((b = inPtr < end ? buf[inPtr++] : load1()) == (byte)';')
                return '>';
          }
       }else if(b == (byte)'q'){
          cbuf[cix++] = (char)b;
-         if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'u'){
+         if((b = inPtr < end ? buf[inPtr++] : load1()) == (byte)'u'){
             cbuf[cix++] = (char)b;
-            if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'o'){
+            if((b = inPtr < end ? buf[inPtr++] : load1()) == (byte)'o'){
                cbuf[cix++] = (char)b;
-               if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)'t'){
+               if((b = inPtr < end ? buf[inPtr++] : load1()) == (byte)'t'){
                   cbuf[cix++] = (char)b;
-                  if((b = inPtr < end ? inBuf[inPtr++] : load1()) == (byte)';')
+                  if((b = inPtr < end ? buf[inPtr++] : load1()) == (byte)';')
                      return '"';
                }
             }
@@ -1130,8 +1126,7 @@ adv:     while(true){
                ok = Chr.is10NS(c = dec3(c));
                break;
             case 7:  // MULTIBYTE_4
-               ok = Chr.is10NS(c = dec4(c));
-               if(ok){
+               if(ok = Chr.is10NS(c = dec4(c))){
                   if(cix >= cbuf.length)
                      nameBuf = cbuf = xpand(cbuf);
                   cbuf[cix++] = (char)(0xD800 | (c -= 0x10000) >> 10);
@@ -1145,7 +1140,7 @@ adv:     while(true){
          cbuf[cix++] = (char)c;
          if(inPtr >= end)
             assertMore();
-         b = inBuf[inPtr++];
+         b = buf[inPtr++];
       }
       if(impl.Code(16))
          thErr("Entity ref. in entity expanding mode");
@@ -1180,6 +1175,10 @@ adv:     while(true){
             case 6:  // MULTIBYTE_3
                c = dec3(c);
                break;
+            case 1:  // INVALID
+               thC(c);
+            case 4:  // MULTIBYTE_N
+               badUTF(c);
             case 7:  // MULTIBYTE_4
                if(outPtr >= outputBuffer.length){
                   outputBuffer = endSeg();
@@ -1187,11 +1186,6 @@ adv:     while(true){
                }
                outputBuffer[outPtr++] = (char)(0xD800 | (c = dec4(c)) >> 10);
                c = 0xDC00 | c & 0x3FF;
-               break;
-            case 1:  // INVALID
-               thC(c);
-            case 4:  // MULTIBYTE_N
-               badUTF(c);
          }
          if(outPtr >= outputBuffer.length)
             nameBuf = outputBuffer = xpand(outputBuffer);
@@ -1545,6 +1539,10 @@ adv:     while(true){
                }
                c = 0xDC00 | c & 0x3FF;
                break;
+            case 1:  // INVALID
+               thC(c);
+            case 4:  // MULTIBYTE_N
+               badUTF(c);
             case 11: // RBRACKET
                int count = 0;
                byte b;
@@ -1574,11 +1572,6 @@ adv:     while(true){
                      endClsTxt();
                   return;
                }
-               break;
-            case 1:  // INVALID
-               thC(c);
-            case 4:  // MULTIBYTE_N
-               badUTF(c);
          }
          outputBuffer[outPtr++] = (char)c;
       }
@@ -1671,6 +1664,10 @@ adv:     while(true){
                   c = 0xDC00 | c & 0x3FF;
                }
                break;
+            case 1:  // INVALID
+               thC(c);
+            case 4:  // MULTIBYTE_N
+               badUTF(c);
             case 11: // RBRACKET
                int count = 0;
                byte b;
@@ -1692,11 +1689,6 @@ adv:     while(true){
                   }
                   --count;
                }
-               break;
-            case 1:  // INVALID
-               thC(c);
-            case 4:  // MULTIBYTE_N
-               badUTF(c);
          }
          outputBuffer[outPtr++] = (char)c;
       }
@@ -1751,6 +1743,10 @@ adv:     while(true){
                }
                c = 0xDC00 | c & 0x3FF;
                break;
+            case 1:  // INVALID
+               thC(c);
+            case 4:  // MULTIBYTE_N
+               badUTF(c);
             case 13: // HYPHEN
                if(ptr >= end)
                   assertMore();
@@ -1762,11 +1758,6 @@ adv:     while(true){
                   currSz = outPtr;
                   return;
                }
-               break;
-            case 1:  // INVALID
-               thC(c);
-            case 4:  // MULTIBYTE_N
-               badUTF(c);
          }
          outputBuffer[outPtr++] = (char)c;
       }
@@ -1835,6 +1826,10 @@ adv:     while(true){
                if(quoteChar == 0)
                   inDecl = false;
                break;
+            case 1:  // INVALID
+               thC(c);
+            case 4:  // MULTIBYTE_N
+               badUTF(c);
             case 11: // RBRACKET
                if(!inDecl && quoteChar == 0){
                   currSz = outPtr;
@@ -1843,11 +1838,6 @@ adv:     while(true){
                      thUnxp(decChr(b), ", not '>' after internal subset");
                   return;
                }
-               break;
-            case 1:  // INVALID
-               thC(c);
-            case 4:  // MULTIBYTE_N
-               badUTF(c);
          }
          outputBuffer[outPtr++] = (char)c;
       }
@@ -1966,6 +1956,10 @@ adv:     while(true){
                }
                c = 0xDC00 | c & 0x3FF;
                break;
+            case 1:  // INVALID
+               thC(c);
+            case 4:  // MULTIBYTE_N
+               badUTF(c);
             case 12: // QMARK
                if(ptr >= end)
                   assertMore();
@@ -1974,11 +1968,6 @@ adv:     while(true){
                   currSz = outPtr;
                   return;
                }
-               break;
-            case 1:  // INVALID
-               thC(c);
-            case 4:  // MULTIBYTE_N
-               badUTF(c);
          }
          outputBuffer[outPtr++] = (char)c;
       }
@@ -2131,6 +2120,10 @@ adv:     while(true){
                   c = 0xDC00 | c & 0x3FF;
                }
                break;
+            case 1:  // INVALID
+               thC(c);
+            case 4:  // MULTIBYTE_N
+               badUTF(c);
             case 11: // RBRACKET
                int count = 0;
                byte b;
@@ -2152,11 +2145,6 @@ adv:     while(true){
                   }
                   --count;
                }
-               break;
-            case 1:  // INVALID
-               thC(c);
-            case 4:  // MULTIBYTE_N
-               badUTF(c);
          }
          outputBuffer[outPtr++] = (char)c;
       }
@@ -2211,6 +2199,10 @@ adv:     while(true){
                }
                c = 0xDC00 | c & 0x3FF;
                break;
+            case 1:  // INVALID
+               thC(c);
+            case 4:  // MULTIBYTE_N
+               badUTF(c);
             case 11: // RBRACKET
                int count = 0;
                byte b;
@@ -2237,11 +2229,6 @@ adv:     while(true){
                   currSz = outPtr;
                   return;
                }
-               break;
-            case 1:  // INVALID
-               thC(c);
-            case 4:  // MULTIBYTE_N
-               badUTF(c);
          }
          outputBuffer[outPtr++] = (char)c;
       }
