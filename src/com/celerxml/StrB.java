@@ -17,13 +17,12 @@ final class StrB{
    public StrB(int capacity){ v = new char[capacity]; }
 
    final StrB append(String str){
-      String lstr;
-      if((lstr = str) == null)
-         lstr = "null";
+      if(str == null)
+         str = "null";
       int newCount, len;
-      if((newCount = cap + (len = lstr.length())) > v.length)
+      if((newCount = cap + (len = str.length())) > v.length)
          Code(newCount);
-      lstr.getChars(0, len, v, cap);
+      str.getChars(0, len, v, cap);
       cap = newCount;
       return this;
    }
