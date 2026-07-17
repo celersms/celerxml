@@ -19,7 +19,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
 
    final InputFactoryImpl impl;
    boolean inc, pend, empty;
-   int depth, nsCnt, attrCnt, currSz, attrs, currTok, currRow, rowOff, bOrC, iniRawOff, startRow, startCol, inPtr;
+   int depth, nsCnt, attrCnt, currSz, attrs, currTok, currRow, rowOff, bOrC, iniOff, startRow, startCol, inPtr;
    char[] nameBuf, currSeg, vals;
    PN tokName;
    NsD lastNs;
@@ -95,7 +95,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
       return false;
    }
 
-   final Location getLocation(){ return new LocImpl(impl.pubId, impl.sysId, startCol, startRow, iniRawOff); }
+   final Location getLocation(){ return new LocImpl(impl.pubId, impl.sysId, startCol, startRow, iniOff); }
 
    final String getText() throws XMLStreamException{
       if(inc)
@@ -633,8 +633,6 @@ findOrCreate:
    abstract boolean skipCTxt() throws XMLStreamException;
 
    abstract boolean more() throws XMLStreamException;
-
-   final int col(){ return inPtr - iniRawOff; }
 
    final void thErr(String msg) throws XMLStreamException{ throw new XMLStreamException(msg, loc()); }
    final void thErr() throws XMLStreamException{ thErr("'--' in comment"); }

@@ -79,13 +79,13 @@ final class ReaderScanner extends XmlScanner{
    final int nxtFromProlog(boolean isProlog) throws XMLStreamException{
       if(inc)
          skipTok();
-      iniRawOff = bOrC + inPtr;
+      iniOff = bOrC + inPtr;
       startRow = currRow;
       startCol = inPtr - rowOff;
       char c;
       while(true){
          if(inPtr >= end && !more()){
-            iniRawOff = bOrC;
+            iniOff = bOrC;
             startCol = -rowOff;
             return -1;
          }
@@ -103,7 +103,7 @@ final class ReaderScanner extends XmlScanner{
             case '\r':
                if(inPtr >= end && !more()){
                   rowOff = startCol = 0;
-                  iniRawOff = bOrC;
+                  iniOff = bOrC;
                   startRow = ++currRow;
                   return -1;
                }
@@ -141,11 +141,11 @@ final class ReaderScanner extends XmlScanner{
          reset();
          return currTok = 9; // ENTITY_REFERENCE
       }
-      iniRawOff = bOrC + inPtr;
+      iniOff = bOrC + inPtr;
       startRow = currRow;
       startCol = inPtr - rowOff;
       if(inPtr >= end && !more()){
-         iniRawOff = bOrC;
+         iniOff = bOrC;
          startCol = -rowOff;
          return -1;
       }

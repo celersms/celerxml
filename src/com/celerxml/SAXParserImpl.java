@@ -56,8 +56,7 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
          case 0x8DDD0287: // "xml-string"
             return null;
          default:
-            throw new SAXNotRecognizedException(new StrB(22 + name.length()).a("Unrecognized property ").a(name).toString());
-      }
+            throw new SAXNotRecognizedException(new StrB(22 + name.length()).a("Unrecognized property ").a(name).toString());      }
    }
 
    public final void setProperty(String name, Object value) throws SAXNotRecognizedException{
@@ -264,7 +263,7 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
    public final boolean isSpecified(int idx){ return true; }
    public final boolean isSpecified(String qName){ return true; }
    public final boolean isSpecified(String uri, String lName){ return true; }
-   public final int getColumnNumber(){ return scan.col(); }
+   public final int getColumnNumber(){ return scan.inPtr - scan.iniOff; }
    public final int getLineNumber(){ return scan.currRow + 1; }
    public final String getPublicId(){ return scan.impl.pubId; }
    public final String getSystemId(){ return scan.impl.sysId; }

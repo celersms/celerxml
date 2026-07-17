@@ -150,12 +150,12 @@ public final class Utf8Scanner extends XmlScanner{
    final int nxtFromProlog(boolean isProlog) throws XMLStreamException{
       if(inc)
          skipTok();
-      iniRawOff = bOrC + inPtr;
+      iniOff = bOrC + inPtr;
       startRow = currRow;
       startCol = inPtr - rowOff;
       while(true){
          if(inPtr >= end && !more()){
-            iniRawOff = bOrC;
+            iniOff = bOrC;
             startRow = currRow;
             startCol = -rowOff;
             return -1;
@@ -177,7 +177,7 @@ public final class Utf8Scanner extends XmlScanner{
                return startElem(b);
             case '\r':
                if(inPtr >= end && !more()){
-                  iniRawOff = bOrC;
+                  iniOff = bOrC;
                   startRow = ++currRow;
                   startCol = rowOff = 0;
                   return -1;
@@ -213,11 +213,11 @@ public final class Utf8Scanner extends XmlScanner{
          reset();
          return currTok = 9; // ENTITY_REFERENCE
       }
-      iniRawOff = bOrC + inPtr;
+      iniOff = bOrC + inPtr;
       startRow = currRow;
       startCol = inPtr - rowOff;
       if(inPtr >= end && !more()){
-         iniRawOff = bOrC;
+         iniOff = bOrC;
          startCol = -rowOff;
          return -1;
       }
