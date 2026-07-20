@@ -32,13 +32,13 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
 
    private final InputFactoryImpl Code;
    private XmlScanner scan;
-   private ContentHandler cntH;
-   private ErrorHandler errH;
-   private DTDHandler dtdH;
-   private LexicalHandler lexH;
-   private DeclHandler dclH;
-   private EntityResolver eRes;
-   private int attrc;
+   private ContentHandler cnt;
+   private ErrorHandler err;
+   private DTDHandler dtd;
+   private LexicalHandler lex;
+   private DeclHandler dcl;
+   private EntityResolver res;
+   private int att;
 
    SAXParserImpl(InputFactoryImpl factory){ Code = factory; }
    public final org.xml.sax.Parser getParser(){ return this; }
@@ -47,11 +47,11 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
    public Object getProperty(String name) throws SAXNotRecognizedException{
       switch(Code(name)){
          case 0xDB4F95F7: // "declaration-handler"
-            return dclH;
+            return dcl;
          case 0x3698DB70: // "document-xml-version"
             return scan.impl.declVer;
          case 0x175D4BE1: // "lexical-handler"
-            return lexH;
+            return lex;
          case 0x407743AD: // "dom-node"
          case 0x8DDD0287: // "xml-string"
             return null;
@@ -62,13 +62,13 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
    public final void setProperty(String name, Object value) throws SAXNotRecognizedException{
       switch(Code(name)){
          case 0xDB4F95F7: // "declaration-handler"
-            dclH = (DeclHandler)value;
+            dcl = (DeclHandler)value;
             return;
          case 0x3698DB70: // "document-xml-version"
             scan.impl.declVer = value == null ? null : String.valueOf(value);
             return;
          case 0x175D4BE1: // "lexical-handler"
-            lexH = (LexicalHandler)value;
+            lex = (LexicalHandler)value;
          case 0x407743AD: // "dom-node"
          case 0x8DDD0287: // "xml-string"
             return;
@@ -79,41 +79,41 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
 
    public final void parse(InputSource is, org.xml.sax.HandlerBase hb) throws SAXException{
       if(hb != null){
-         if(cntH == null)
+         if(cnt == null)
             setDocumentHandler(hb);
-         if(eRes == null)
-            eRes = hb;
-         if(errH == null)
-            errH = hb;
-         if(dtdH == null)
-            dtdH = hb;
+         if(res == null)
+            res = hb;
+         if(err == null)
+            err = hb;
+         if(dtd == null)
+            dtd = hb;
       }
       parse(is);
    }
 
    public final void parse(InputSource is, DefaultHandler dh) throws SAXException{
       if(dh != null){
-         if(cntH == null)
-            cntH = dh;
-         if(eRes == null)
-            eRes = dh;
-         if(errH == null)
-            errH = dh;
-         if(dtdH == null)
-            dtdH = dh;
+         if(cnt == null)
+            cnt = dh;
+         if(res == null)
+            res = dh;
+         if(err == null)
+            err = dh;
+         if(dtd == null)
+            dtd = dh;
       }
       parse(is);
    }
 
-   public final ContentHandler getContentHandler(){ return cntH; }
-   public final DTDHandler getDTDHandler(){ return dtdH; }
-   public final EntityResolver getEntityResolver(){ return eRes; }
-   public final ErrorHandler getErrorHandler(){ return errH; }
+   public final ContentHandler getContentHandler(){ return cnt; }
+   public final DTDHandler getDTDHandler(){ return dtd; }
+   public final EntityResolver getEntityResolver(){ return res; }
+   public final ErrorHandler getErrorHandler(){ return err; }
    public final boolean getFeature(String name) throws SAXNotRecognizedException{ return SAXParserFactoryImpl.fix(name); }
-   public final void setContentHandler(ContentHandler cntH){ this.cntH = cntH; }
-   public final void setDTDHandler(DTDHandler dtdH){ this.dtdH = dtdH; }
-   public final void setEntityResolver(EntityResolver eRes){ this.eRes = eRes; }
-   public final void setErrorHandler(ErrorHandler errH){ this.errH = errH; }
+   public final void setContentHandler(ContentHandler cnt){ this.cnt = cnt; }
+   public final void setDTDHandler(DTDHandler dtd){ this.dtd = dtd; }
+   public final void setEntityResolver(EntityResolver res){ this.res = res; }
+   public final void setErrorHandler(ErrorHandler err){ this.err = err; }
    public final void setFeature(String name, boolean val){ /* NOOP */ }
 
    public final void parse(InputSource input) throws SAXException{
@@ -132,9 +132,8 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
                url = new URL(str);
             else{
                String absPath = new File(str).getAbsolutePath();
-               char sep;
-               if((sep = File.separatorChar) != '/')
-                  absPath = absPath.replace(sep, '/');
+               if(File.separatorChar != '/')
+                  absPath = absPath.replace(File.separatorChar, '/');
                if((ix = absPath.length()) > 0 && absPath.charAt(0) != '/')
                   absPath = new StrB(1 + ix).a('/').a(absPath).toString();
                url = new URL("file", "", absPath);
@@ -147,9 +146,9 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
             throw new SAXException(ex);
          }
       }
-      if(cntH != null){
-         cntH.setDocumentLocator(this);
-         cntH.startDocument();
+      if(cnt != null){
+         cnt.setDocumentLocator(this);
+         cnt.startDocument();
       }
       try{
          final XmlScanner scan = this.scan = (r != null ? new InSrc(impl, r) : new bSrc(impl, is)).w();
@@ -157,33 +156,33 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
          while((type = scan.nxtFromProlog(true)) != 1) // START_ELEMENT
             if(type != 6) // SPACE
                Code(type);
-         attrc = scan.attrCnt;
-         scan.startElement(cntH, this);
-         int depth = 1;
+         att = scan.attrCnt;
+         scan.startElement(cnt, this);
+         int depth = 0;
          while(true)
             if((type = scan.nxtFromTree()) == 1){ // START_ELEMENT
-               attrc = scan.attrCnt;
-               scan.startElement(cntH, this);
+               att = scan.attrCnt;
+               scan.startElement(cnt, this);
                ++depth;
             }else if(type == 2){ // END_ELEMENT
-               scan.endElement(cntH);
-               if(--depth < 1)
+               scan.endElement(cnt);
+               if(--depth < 0)
                   break;
             }else if(type == 4) // CHARACTERS
-               scan.chrEvts(cntH);
+               scan.chrEvts(cnt);
             else
                Code(type);
          while((type = scan.nxtFromProlog(false)) != -1) // EOI
             if(type != 6) // SPACE
                Code(type);
       }catch(XMLStreamException ex){
-         SAXParseException se = new SAXParseException(ex.getMessage(), (Locator)this, ex);
-         if(errH != null)
-            errH.fatalError(se);
+         SAXParseException se = new SAXParseException(ex.getMessage(), this, ex);
+         if(err != null)
+            err.fatalError(se);
          throw se;
       }finally{
-         if(cntH != null)
-            cntH.endDocument();
+         if(cnt != null)
+            cnt.endDocument();
          if(scan != null)
             try{
                scan.free();
@@ -204,57 +203,57 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
    private final void Code(int type) throws SAXException, XMLStreamException{
       switch(type){
          case 5:  // COMMENT
-            scan.commentEvent(lexH);
+            scan.commentEvent(lex);
             return;
          case 12: // CDATA
-            if(lexH != null){
-               lexH.startCDATA();
-               scan.chrEvts(cntH);
-               lexH.endCDATA();
+            if(lex != null){
+               lex.startCDATA();
+               scan.chrEvts(cnt);
+               lex.endCDATA();
             }else
-               scan.chrEvts(cntH);
+               scan.chrEvts(cnt);
             return;
          case 11: // DTD
-            if(lexH != null){
-               lexH.startDTD(scan.tokName.Code, scan.dtdPub, scan.dtdSys);
-               lexH.endDTD();
+            if(lex != null){
+               lex.startDTD(scan.tokName.Code, scan.dtdPub, scan.dtdSys);
+               lex.endDTD();
             }
             return;
          case 3:  // PROCESSING_INSTRUCTION
-            scan.PIEvent(cntH);
+            scan.PIEvent(cnt);
             return;
          case 6:  // SPACE
-            scan.spaceEvts(cntH);
+            scan.spaceEvts(cnt);
             return;
       }
       if(type == -1){ // EOI
          SAXParseException se = new SAXParseException("Unexpected EOI", (Locator)this);
-         if(errH != null)
-            errH.fatalError(se);
+         if(err != null)
+            err.fatalError(se);
          throw se;
       }
       throw new RuntimeException(new StrB(26).a("Unexpected type ").apos(type).toString());
    }
 
-   public final void setDocumentHandler(org.xml.sax.DocumentHandler h){ cntH = new DocH(h); }
+   public final void setDocumentHandler(org.xml.sax.DocumentHandler h){ cnt = new DocH(h); }
    public final void setLocale(java.util.Locale locale){ /* NOOP */ }
    public final int getIndex(String qName){ return scan.findIdx(null, qName); }
    public final int getIndex(String uri, String lName){ return scan.findIdx(uri, lName); }
-   public final int getLength(){ return attrc; }
-   public final String getLocalName(int idx){ return idx < 0 || idx >= attrc ? null : scan.names[idx].ln; }
-   public final String getQName(int idx){ return idx < 0 || idx >= attrc ? null : scan.names[idx].Code; }
-   public final String getType(int idx){ return idx < 0 || idx >= attrc ? null : "CDATA"; }
+   public final int getLength(){ return att; }
+   public final String getLocalName(int idx){ return idx < 0 || idx >= att ? null : scan.names[idx].ln; }
+   public final String getQName(int idx){ return idx < 0 || idx >= att ? null : scan.names[idx].Code; }
+   public final String getType(int idx){ return idx < 0 || idx >= att ? null : "CDATA"; }
    public final String getType(String qName){ return getIndex(qName) < 0 ? null : "CDATA"; }
    public final String getType(String uri, String lName){ return getIndex(uri, lName) < 0 ? null : "CDATA"; }
 
    public final String getURI(int idx){
-      if(idx < 0 || idx >= attrc)
+      if(idx < 0 || idx >= att)
          return null;
       String uri;
       return (uri = scan.names[idx].getNsUri()) == null ? "" : uri;
    }
 
-   public final String getValue(int idx){ return idx < 0 || idx >= attrc ? null : scan.getV(idx); }
+   public final String getValue(int idx){ return idx < 0 || idx >= att ? null : scan.getV(idx); }
    public final String getValue(String qName){ return scan.getV(null, qName); }
    public final String getValue(String uri, String lName){ return scan.getV(uri, lName); }
    public final boolean isDeclared(int idx){ return false; }
