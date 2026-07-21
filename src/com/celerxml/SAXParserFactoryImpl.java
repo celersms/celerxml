@@ -19,7 +19,7 @@ public final class SAXParserFactoryImpl extends javax.xml.parsers.SAXParserFacto
    public final boolean getFeature(String n) throws SAXNotRecognizedException{ return fix(n); }
 
    public final void setFeature(String n, boolean enabled) throws SAXNotRecognizedException, SAXNotSupportedException{
-      boolean ok = false;
+      boolean ok;
       switch(Code(n)){
          case 0x8BF31EFE: // "xml-1.1"
          case 0xFD674879: // "validation"
@@ -71,9 +71,8 @@ public final class SAXParserFactoryImpl extends javax.xml.parsers.SAXParserFacto
          case 0x19CC6B08: // "use-entity-resolver2"
          case 0xF86B0798: // "xmlns-uris"
             return true;
-         default:
-            throw new SAXNotRecognizedException(new StrB(22 + name.length()).a("Unrecognized feature ").a(name).toString());
       }
+      throw new SAXNotRecognizedException(new StrB(22 + name.length()).a("Unrecognized feature ").a(name).toString());
    }
 
    private static final int Code(String s){ return s.startsWith("http://xml.org/sax/features/") ? s.substring(28).hashCode() : 0; }
