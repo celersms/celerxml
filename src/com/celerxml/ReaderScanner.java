@@ -90,16 +90,6 @@ final class ReaderScanner extends XmlScanner{
             return -1;
          }
          switch(c = buf[inPtr++]){
-            case '<':
-               if(inPtr >= end)
-                  assertMore();
-               if((c = buf[inPtr++]) == '!')
-                  return doPrologDecl(isProlog);
-               if(c == '?')
-                  return doPIStart();
-               if(c == '/' || !isProlog)
-                  thUnxp(c, isProlog);
-               return startElem(c);
             case '\r':
                if(inPtr >= end && !more()){
                   rowOff = startCol = 0;
@@ -115,6 +105,15 @@ final class ReaderScanner extends XmlScanner{
             case ' ':
             case '\t':
                continue;
+            case '<':
+               if(inPtr >= end)
+                  assertMore();
+               if((c = buf[inPtr++]) == '!')
+                  return doPrologDecl(isProlog);
+               if(c == '?')
+                  return doPIStart();
+               if(c != '/' && isProlog)
+                  return startElem(c);
             default:
                thUnxp(isProlog, c);
          }
@@ -500,6 +499,10 @@ adv:     while(true){
          inPtr = ptr;
          if(c <= 0xFF)
             switch(TYPES[c]){
+               case 1:  // INVALID
+                  thC(c);
+               case 9:  // LT
+                  thUnxp(c, " in attribute value");
                case 2:  // WS_CR
                   if(ptr >= end)
                      assertMore();
@@ -525,11 +528,6 @@ adv:     while(true){
                case 14: // ATTR_QUOTE
                   if(c == quote)
                      return attrPtr;
-                  break;
-               case 1:  // INVALID
-                  thC(c);
-               case 9:  // LT
-                  thUnxp(c, " in attribute value");
             }
          else if(c >= 0xD800 && c < 0xE000){
             c = chkSurrgCh(attrBuffer[attrPtr++] = c);
@@ -895,6 +893,8 @@ adv:     while(true){
          boolean adv = false;
          if(c <= 0xFF)
             switch(TYPES[c]){
+               case 1:  // INVALID
+                  thC(c);
                case 2:  // WS_CR
                   if(ptr >= end)
                      assertMore();
@@ -925,9 +925,6 @@ adv:     while(true){
                         thUnxp(c, ", not '>' after internal subset");
                      return;
                   }
-                  break;
-               case 1:  // INVALID
-                  thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000){
             c = chkSurrgCh(outBuf[outPtr++] = c);
@@ -1125,6 +1122,8 @@ adv:     while(true){
          inPtr = ptr;
          if(c <= 0xFF)
             switch(TYPES[c]){
+               case 1:  // INVALID
+                  thC(c);
                case 2:  // WS_CR
                   if(ptr >= end)
                      assertMore();
@@ -1174,9 +1173,6 @@ adv:     while(true){
                      }
                   }
                   c = ']';
-                  break;
-               case 1:  // INVALID
-                  thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000){
             c = chkSurrgCh(outputBuffer[outPtr++] = c);
@@ -1381,6 +1377,8 @@ adv:     while(true){
          inPtr = ptr;
          if(c <= 0xFF)
             switch(TYPES[c]){
+               case 1:  // INVALID
+                  thC(c);
                case 2:  // WS_CR
                   if(ptr >= end)
                      assertMore();
@@ -1430,9 +1428,6 @@ adv:     while(true){
                      }
                   }
                   c = ']';
-                  break;
-               case 1:  // INVALID
-                  thC(c);
             }
          else if(c >= 0xD800 && c < 0xE000){
             c = chkSurrgCh(outputBuffer[outPtr++] = c);
@@ -1858,6 +1853,8 @@ adv:     while(true){
          if((c = buf[inPtr++]) == quote)
             return new String(outputBuffer, 0, outPtr);
          switch(TYPES[c]){
+            case 1: // INVALID
+               thC(c);
             case 2: // WS_CR
                if(inPtr >= end)
                   assertMore();
@@ -1867,9 +1864,6 @@ adv:     while(true){
             case 3: // WS_LF
                rowOff = inPtr;
                ++currRow;
-               break;
-            case 1: // INVALID
-               thC(c);
          }
          if(outPtr >= outputBuffer.length)
             nameBuf = outputBuffer = xpand(outputBuffer);

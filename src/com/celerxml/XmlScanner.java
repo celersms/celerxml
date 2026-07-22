@@ -657,14 +657,6 @@ findOrCreate:
       thErr(new StrB(24 + msg.length()).a("Unexpected ").apos(ch).a(msg).toString());
    }
 
-   final void thUnxp(int ch, boolean isProl) throws XMLStreamException{
-      if((ch &= 0x7FFFF) == '/')
-         thErr(isProl ? "Unexpected end element in prolog" : "Unexpected end element in epilog");
-      if(ch < 32)
-         thUnxp(ch, isProl ? ", unrecognized prolog directive" : ", unrecognized epilog directive");
-      thErr("Only one root element allowed");
-   }
-
    final void thC() throws XMLStreamException{ thErr("Unexpanded ENTITY_REF"); }
    final void thC(int ch) throws XMLStreamException{ thErr(new StrB(24).a("Illegal char ").apos(ch).toString()); }
 }
