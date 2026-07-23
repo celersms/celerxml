@@ -46,8 +46,6 @@ final class bPN{
    }
 
    final PN find(int hash, int[] quads, int qlen){
-      //if(qlen < 3)
-      //   return find(hash, quads[0], qlen < 2 ? 0 : quads[1]);
       int ix, val;
       PN pname;
       if((((val = hsh[ix = hash & msk]) >> 8 ^ hash) << 8) == 0 && ((pname = nams[ix]) == null || pname.equals(quads, qlen)))
@@ -85,7 +83,7 @@ final class bPN{
          rh = namSh = false;
          hsh = new int[ix = (xx = hsh.length) + xx];
          msk = ix - 1;
-         PN[] oldNames = nams;
+         final PN[] oldNames = nams;
          nams = new PN[ix];
          PN symb;
          for(int i = 0; i < xx; ++i)
@@ -96,23 +94,22 @@ final class bPN{
          if((xx = clEnd) != 0){
             clCnt = clEnd = 0;
             clLstSh = false;
-            Node[] oldNodes = clLst;
+            final Node[] oldNodes = clLst;
             clLst = new Node[oldNodes.length];
             for(int i = 0; i < xx; ++i)
-               for(Node curr = oldNodes[i]; curr != null; curr = curr.nxt){
-                  int val = hsh[ix = (hh = (symb = curr.Code).hashCode()) & msk];
-                  if(nams[ix] == null){
+               for(Node curr = oldNodes[i]; curr != null; curr = curr.nxt)
+                  if(nams[ix = (hh = (symb = curr.Code).hashCode()) & msk] == null){
                      hsh[ix] = hh << 8;
                      nams[ix] = symb;
                   }else{
+                     int val;
                      ++clCnt;
-                     if((hh = (byte)val) == 0)
+                     if((hh = (byte)(val = hsh[ix])) == 0)
                         hsh[ix] = val | ((hh = Code()) + 1);
                      else
                         --hh;
                      clLst[hh] = new Node(symb, clLst[hh]);
                   }
-               }
          }
       }
       if(nams[ix = hash & msk] == null){
