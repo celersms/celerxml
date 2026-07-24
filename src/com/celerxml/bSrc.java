@@ -59,8 +59,8 @@ bom:     if(Code(4)){
                case 0x4C6FA794: // EBCDIC
                   throw new XMLStreamException("Unsupported encoding");
             }
-            int msw = yy >>> 16;
-            if(msw == 0xFEFF || msw == 0xFFFE){
+            int msw;
+            if((msw = yy >>> 16) == 0xFEFF || msw == 0xFFFE){
                Code = xx = 2;
                if(msw == 0xFFFE)
                   big = false;
