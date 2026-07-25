@@ -46,8 +46,8 @@ public final class InputFactoryImpl extends XMLInputFactory{
 
    static{
        softR = new ThreadLocal();
-       HashMap pp = Code = new HashMap();
-       pp.put(XMLInputFactory.IS_NAMESPACE_AWARE, Boolean.TRUE);
+       HashMap pp;
+       (pp = Code = new HashMap()).put(XMLInputFactory.IS_NAMESPACE_AWARE, Boolean.TRUE);
        pp.put(XMLInputFactory.IS_VALIDATING, Integer.valueOf(8));                   // DTD_VALIDATING
        pp.put(XMLInputFactory.IS_COALESCING, Integer.valueOf(2));                   // COALESCING
        pp.put(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, Integer.valueOf(16)); // EXPAND_ENTITIES
@@ -75,8 +75,8 @@ public final class InputFactoryImpl extends XMLInputFactory{
       this.rep = impl.rep;
       this.res = impl.res;
       this.mURIs = impl.mURIs;
-      SoftReference ref = (SoftReference)softR.get();
-      if(ref != null)
+      SoftReference ref;
+      if((ref = (SoftReference)softR.get()) != null)
          rcclr = (ShBuf)ref.get();
       if(forceAutoClose)
          Code(8192, true);
@@ -107,8 +107,8 @@ public final class InputFactoryImpl extends XMLInputFactory{
       }else if(src instanceof SAXSource){
          SAXSource ss = (SAXSource)src;
          sysId = ss.getSystemId();
-         InputSource isrc = ss.getInputSource();
-         if(isrc != null){
+         InputSource isrc;
+         if((isrc = ss.getInputSource()) != null){
             sysId = isrc.getSystemId();
             pubId = isrc.getPublicId();
             encoding = isrc.getEncoding();
@@ -125,23 +125,21 @@ public final class InputFactoryImpl extends XMLInputFactory{
          throw new XMLStreamException("Can't create reader");
       try{
          URL url;
-         int ix = sysId.indexOf(':', 0);
-         if(ix >= 3 && ix <= 8)
+         int ix;
+         if((ix = sysId.indexOf(':', 0)) >= 3 && ix <= 8)
             url = new URL(sysId);
          else{
             String absId = new File(sysId).getAbsolutePath();
-            char sep = File.separatorChar;
-            if(sep != '/')
+            char sep;
+            if((sep = File.separatorChar) != '/')
                absId = absId.replace(sep, '/');
             if((ix = absId.length()) > 0 && absId.charAt(0) != '/')
                absId = new StrB(1 + ix).a('/').a(absId).toString();
             url = new URL("file", "", absId);
          }
-         if("file".equals(url.getProtocol())){
-            String host = url.getHost();
-            if(host == null || host.length() == 0)
-               in = new FileInputStream(url.getPath());
-         }
+         String host;
+         if("file".equals(url.getProtocol()) && ((host = url.getHost()) == null || host.length() == 0))
+            in = new FileInputStream(url.getPath());
          if(in == null)
             in = url.openStream();
          return new ReaderImpl(new bSrc(new InputFactoryImpl(pubId, sysId, encoding, this, true), in).w());
@@ -157,8 +155,8 @@ public final class InputFactoryImpl extends XMLInputFactory{
    public final Object getProperty(String name){ return getProperty(name, true); }
 
    public final void setProperty(String name, Object value){
-      Object ob = Code.get(name);
-      if(ob == null || ob instanceof Boolean)
+      Object ob;
+      if((ob = Code.get(name)) == null || ob instanceof Boolean)
          return;
       if(!(ob instanceof Integer))
          throw new RuntimeException("Internal error");
@@ -166,22 +164,16 @@ public final class InputFactoryImpl extends XMLInputFactory{
    }
 
    public final XMLEventAllocator getEventAllocator(){ return alloc; }
-    
    public final XMLReporter getXMLReporter(){ return rep; }
-
    public final XMLResolver getXMLResolver(){ return res; }
-
    public final boolean isPropertySupported(String name){ return Code.containsKey(name); }
-
    public final void setEventAllocator(XMLEventAllocator alloc){ this.alloc = alloc; }
-
    public final void setXMLReporter(XMLReporter rep){ this.rep = rep; }
-
    public final void setXMLResolver(XMLResolver res){ this.res = res; }
 
    final Object getProperty(String name, boolean isMandatory){
-      Object ob = Code.get(name);
-      if(ob == null){
+      Object ob;
+      if((ob = Code.get(name)) == null){
          if(Code.containsKey(name))
             return null;
          if("http://java.sun.com/xml/stream/properties/implementation-name".equals(name))
@@ -340,20 +332,12 @@ public final class InputFactoryImpl extends XMLInputFactory{
    }
 
    public final XMLEventReader createFilteredReader(XMLEventReader reader, javax.xml.stream.EventFilter filter){ return null; }
-
    public final XMLStreamReader createFilteredReader(XMLStreamReader reader, javax.xml.stream.StreamFilter filter){ return null; }
-
    public final XMLEventReader createXMLEventReader(InputStream in){ return null; }
-
    public final XMLEventReader createXMLEventReader(InputStream in, String enc){ return null; }
-
    public final XMLEventReader createXMLEventReader(Reader reader){ return null; }
-
    public final XMLEventReader createXMLEventReader(Source source){ return null; }
-
    public final XMLEventReader createXMLEventReader(String systemId, InputStream in){ return null; }
-
    public final XMLEventReader createXMLEventReader(String systemId, Reader r){ return null; }
-
    public final XMLEventReader createXMLEventReader(XMLStreamReader sr){ return null; }
 }
