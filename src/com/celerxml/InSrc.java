@@ -44,10 +44,9 @@ class InSrc{
          thUnxp(ch, "; expected 'version'");
       if((ch = isKW("version", 7)) != 0)
          thUnxp(ch, "version");
-      if((len = qVal(mKW, handleEq())) == 3 && mKW[0] == '1' && mKW[1] == '.' && ((ch = mKW[2]) == '0' || ch == '1'))
-         mXmlVer = ch; // V10 | V11
-      else
+      if((len = qVal(mKW, handleEq())) != 3 || mKW[0] != '1' || mKW[1] != '.' || ((ch = mKW[2]) != '0' && ch != '1'))
          thPsAttr("version", V10, V11);
+      mXmlVer = ch; // V10 | V11
       if((ch = wsOrQ()) == 'e'){
          if((ch = isKW("encoding", 8)) != 0)
             thUnxp(ch, "encoding");
@@ -72,8 +71,8 @@ class InSrc{
    }
 
    private final int handleEq() throws IOException, XMLStreamException{
-      int ch = afterWs();
-      if(ch != '=')
+      int ch;
+      if((ch = afterWs()) != '=')
          thUnxp(ch, ", expected '='");
       if((ch = afterWs()) != '"' && ch != '\'')
          thUnxp(ch, ", expected a quote");
@@ -81,8 +80,8 @@ class InSrc{
    }
 
    private final int wsOrQ() throws IOException, XMLStreamException{
-      int ch = nxt();
-      if(ch == '?')
+      int ch;
+      if((ch = nxt()) == '?')
          return ch;
       if(ch > 0x20)
          thUnxp(ch, ", expected '?' or white space");
@@ -93,28 +92,24 @@ class InSrc{
 
    XmlScanner w() throws XMLStreamException{
       try{
-         if(r != null)
-            while(inLen < 7){
-               int count = r.read(Code, inLen, 4096 - inLen);
-               if(count < 1)
-                  break;
+         if(r != null){
+            int count;
+            while(inLen < 7 && (count = r.read(Code, inLen, 4096 - inLen)) >= 1)
                inLen += count;
-            }
+         }
          String normEnc = null;
          if(inLen - offset >= 7){
-            char c = Code[offset];
-            if(c == (char)0xFEFF)
+            char c;
+            if((c = Code[offset]) == (char)0xFEFF)
                c = Code[++offset];
             if(c == '<'){
                if(Code[offset + 1] == '?' && Code[offset + 2] == 'x' && Code[offset + 3] == 'm' && Code[offset + 4] == 'l' && Code[offset + 5] <= 0x20){
                   offset += 6;
                   readDecl();
                   String extEnc;
-                  if(fnd != null && (normEnc = Code(fnd)) != null && (extEnc = impl.extEnc) != null && !extEnc.equalsIgnoreCase(normEnc)){
-                     XMLReporter rep = impl.rep;
-                     if(rep != null)
-                        rep.report("Inconsistent encoding", "xml declaration", this, loc());
-                  }
+                  XMLReporter rep;
+                  if(fnd != null && (normEnc = Code(fnd)) != null && (extEnc = impl.extEnc) != null && !extEnc.equalsIgnoreCase(normEnc) && (rep = impl.rep) != null)
+                     rep.report("Inconsistent encoding", "xml declaration", this, loc());
                }
             }else if(c == 0xEF)
                throw new XMLStreamException("First char 0xEF not valid in XML");
@@ -135,8 +130,8 @@ class InSrc{
 
    int afterWs() throws IOException, XMLStreamException{
       while(true){
-         char c = offset < inLen ? Code[offset++] : Code();
-         if(c > 0x20)
+         char c;
+         if((c = offset < inLen ? Code[offset++] : Code()) > 0x20)
             return c;
          if(c == '\r' || c == '\n'){
             if(c == '\r' && (offset < inLen ? Code[offset++] : Code()) != '\n')
@@ -150,8 +145,8 @@ class InSrc{
 
    int isKW(String kw, int len) throws IOException, XMLStreamException{
       for(int ptr = 1; ptr < len; ++ptr){
-         char c = offset < inLen ? Code[offset++] : Code();
-         if(c == 0)
+         char c;
+         if((c = offset < inLen ? Code[offset++] : Code()) == 0)
             thNull();
          if(c != kw.charAt(ptr))
             return c;
@@ -162,8 +157,8 @@ class InSrc{
    int qVal(char[] kw, int quoteChar) throws IOException, XMLStreamException{
       int i = 0, len = kw.length;
       while(true){
-         char c = offset < inLen ? Code[offset++] : Code();
-         if(c == '\r' || c == '\n'){
+         char c;
+         if((c = offset < inLen ? Code[offset++] : Code()) == '\r' || c == '\n'){
             if(c == '\r' && (offset < inLen ? Code[offset++] : Code()) != '\n')
                --offset;
             ++inRow;
@@ -180,11 +175,11 @@ class InSrc{
    Location loc(){ return new LocImpl(impl.pubId, impl.sysId, offset - inRowOff, inRow, proc + offset); }
 
    static final String Code(String enc){
-      int len = enc.length();
-      if(len < 3)
+      int len;
+      if((len = enc.length()) < 3)
          return enc;
-      int off = 0, ch = enc.charAt(0) | 0x20; // to lowercase
-      if(ch == 'c' && (enc.charAt(1) | 0x20) == 's'){ // to lowercase
+      int off = 0, ch; // to lowercase
+      if((ch = enc.charAt(0) | 0x20) == 'c' && (enc.charAt(1) | 0x20) == 's'){ // to lowercase
          ch = enc.charAt(2) | 0x20; // to lowercase
          off = 2;
       }
