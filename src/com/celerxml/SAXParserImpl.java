@@ -227,7 +227,7 @@ final class SAXParserImpl extends SAXParser implements org.xml.sax.Parser, XMLRe
             return;
       }
       if(type == -1){ // EOI
-         SAXParseException se = new SAXParseException("Unexpected EOI", (Locator)this);
+         SAXParseException se = new SAXParseException("EOI", (Locator)this);
          if(err != null)
             err.fatalError(se);
          throw se;

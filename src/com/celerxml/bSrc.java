@@ -175,18 +175,12 @@ bom:     if(Code(4)){
       return (offset <= inLen ? bBuf[offset - 1] : nxtB()) & 0xFF;
    }
 
-   final int isKW(String kw, int len) throws IOException, XMLStreamException{
+   final void isKW(String kw, int len) throws IOException, XMLStreamException{
       int c, i = 1;
       final boolean mb = Code > 1;
-      while(i < len){
-         if(mb)
-            c = Code();
-         else if((c = (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF) == 0)
-            thNull();
-         if(c != kw.charAt(i++))
-            return c;
-      }
-      return 0;
+      while(i < len)
+         if((c = mb ? Code() : (offset < inLen ? bBuf[offset++] : nxtB()) & 0xFF) != kw.charAt(i++))
+            throw new XMLStreamException(new StrB(30).apos(c).a(", expected ").a(kw).toString(), loc());
    }
 
    final int qVal(char[] kw, int quote) throws IOException, XMLStreamException{
@@ -226,7 +220,7 @@ bom:     if(Code(4)){
       inRowOff -= inLen;
       offset = 0;
       if(is == null || (inLen = is.read(bBuf, 0, 4096)) < 1)
-         throw new XMLStreamException("Unexpected EOI", loc());
+         throw new XMLStreamException("EOI", loc());
       return bBuf[offset++];
    }
 

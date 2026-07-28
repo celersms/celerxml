@@ -36,7 +36,7 @@ abstract class XmlScanner implements javax.xml.namespace.NamespaceContext{
    String err, dtdSys, dtdPub;
    final boolean cls, lazy;
 
-   static final String EOI = "Unexpected EOI", CDATA = "CDATA[";
+   static final String EOI = "EOI", CDATA = "CDATA[";
    private static final char[] arr0 = new char[0], indWS = "\n                                 ".toCharArray(), indTAB = "\n\t\t\t\t\t\t\t\t\t".toCharArray();
    private static final String[] arrWS = new String[34], arrTAB = new String[10];
    private static final Iterator s1Empty = new SIterator(null, true);

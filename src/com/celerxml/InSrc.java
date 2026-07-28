@@ -41,23 +41,20 @@ class InSrc{
    final void readDecl() throws IOException, XMLStreamException{
       int len, ch;
       if((ch = afterWs()) != 'v')
-         thUnxp(ch, "; expected 'version'");
-      if((ch = isKW("version", 7)) != 0)
-         thUnxp(ch, "version");
+         thUnxp(ch, "; expected version");
+      isKW("version", 7);
       if((len = qVal(mKW, handleEq())) != 3 || mKW[0] != '1' || mKW[1] != '.' || ((ch = mKW[2]) != '0' && ch != '1'))
          thPsAttr("version", V10, V11);
       mXmlVer = ch; // V10 | V11
       if((ch = wsOrQ()) == 'e'){
-         if((ch = isKW("encoding", 8)) != 0)
-            thUnxp(ch, "encoding");
+         isKW("encoding", 8);
          if((len = qVal(mKW, handleEq())) == 0)
             thPsAttr("encoding", null, null);
          fnd = len < 0 ? new String(mKW) : new String(mKW, 0, len);
          ch = wsOrQ();
       }
       if(ch == 's'){
-         if((ch = isKW("standalone", 10)) != 0)
-            thUnxp(ch, "standalone");
+         isKW("standalone", 10);
          if((len = qVal(mKW, handleEq())) == 2 && mKW[0] == 'n' && mKW[1] == 'o')
             stand = NO;
          else if(len == 3 && mKW[0] == 'y' && mKW[1] == 'e' && mKW[2] == 's')
@@ -67,15 +64,15 @@ class InSrc{
          ch = wsOrQ();
       }
       if(ch != '?' || (ch = nxt()) != '>')
-         thUnxp(ch, ", expected '?>'");
+         thUnxp(ch, ", expected ?>");
    }
 
    private final int handleEq() throws IOException, XMLStreamException{
       int ch;
       if((ch = afterWs()) != '=')
-         thUnxp(ch, ", expected '='");
+         thUnxp(ch, ", expected =");
       if((ch = afterWs()) != '"' && ch != '\'')
-         thUnxp(ch, ", expected a quote");
+         thUnxp(ch, ", expected quote");
       return ch;
    }
 
@@ -84,7 +81,7 @@ class InSrc{
       if((ch = nxt()) == '?')
          return ch;
       if(ch > 0x20)
-         thUnxp(ch, ", expected '?' or white space");
+         thUnxp(ch, ", expected ? or space");
       if(ch == '\n' || ch == '\r')
          bck();
       return afterWs();
@@ -112,7 +109,7 @@ class InSrc{
                      rep.report("Inconsistent encoding", "xml declaration", this, loc());
                }
             }else if(c == 0xEF)
-               throw new XMLStreamException("First char 0xEF not valid in XML");
+               throw new XMLStreamException("First char EF not valid in XML");
          }
          impl.enc = normEnc;
          impl.Code(mXmlVer, fnd, stand);
@@ -143,15 +140,11 @@ class InSrc{
       }
    }
 
-   int isKW(String kw, int len) throws IOException, XMLStreamException{
-      for(int ptr = 1; ptr < len; ++ptr){
-         char c;
-         if((c = offset < inLen ? Code[offset++] : Code()) == 0)
-            thNull();
-         if(c != kw.charAt(ptr))
-            return c;
-      }
-      return 0;
+   void isKW(String kw, int len) throws IOException, XMLStreamException{
+      char c;
+      for(int ptr = 1; ptr < len; ++ptr)
+         if((c = offset < inLen ? Code[offset++] : Code()) != kw.charAt(ptr))
+            throw new XMLStreamException(new StrB(30).apos(c).a(", expected ").a(kw).toString(), loc());
    }
 
    int qVal(char[] kw, int quoteChar) throws IOException, XMLStreamException{
@@ -280,21 +273,19 @@ class InSrc{
          inRowOff -= inLen;
          offset = 0;
          if(r == null || (inLen = r.read(Code, 0, 4096)) < 1)
-            throw new XMLStreamException("Unexpected EOI", loc());
+            throw new XMLStreamException("EOI", loc());
       }
       return Code[offset++];
    }
 
-   final void thNull() throws XMLStreamException{ throw new XMLStreamException("Null in InputStream", loc()); }
+   final void thNull() throws XMLStreamException{ throw new XMLStreamException("Null in stream", loc()); }
 
-   final void thUnxp(int ch, String msg) throws XMLStreamException{
-      throw new XMLStreamException(new StrB(24 + msg.length()).a("Unexpected ").apos(ch).a(msg).toString(), loc());
-   }
+   final void thUnxp(int ch, String msg) throws XMLStreamException{ throw new XMLStreamException(new StrB(31).apos(ch).a(msg).toString(), loc()); }
 
    private final void thPsAttr(String name, String val1, String val2) throws XMLStreamException{
-      StrB sb = new StrB(52 + name.length()).a("Missing pseudo-attribute '").a(name).a('\'');
+      StrB sb = new StrB(46 + name.length()).a("Missing pseudo-attribute ").a(name);
       if(val1 != null)
-         sb.a(", expected '").a(val1).a("' or '").a(val2).a('\'');
+         sb.a(", expected ").a(val1).a(" or ").a(val2);
       throw new XMLStreamException(sb.toString(), loc());
    }
 }
