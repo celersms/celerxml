@@ -253,9 +253,9 @@ class InSrc{
       int c1, c2, len2 = equ.length(), i2 = 0, cend = 0x10000;
       while(i1 < len1 || i2 < len2){
          c1 = c2 = cend;
-         while(i1 < len1 && ((c1 = enc.charAt(i1++)) <= 0x2D || c1 == '_' ))
+         while(i1 < len1 && ((c1 = enc.charAt(i1++)) <= 0x2D || c1 == '_'))
             c1 = cend;
-         while(i2 < len2 && ((c2 = equ.charAt(i2++)) <= 0x2D || c2 == '_' ))
+         while(i2 < len2 && ((c2 = equ.charAt(i2++)) <= 0x2D || c2 == '_'))
             c2 = cend;
          if(c1 != c2){
             if(c2 == cend)
@@ -283,7 +283,7 @@ class InSrc{
    final void thUnxp(int ch, String msg) throws XMLStreamException{ throw new XMLStreamException(new StrB(31).apos(ch).a(msg).toString(), loc()); }
 
    private final void thPsAttr(String name, String val1, String val2) throws XMLStreamException{
-      StrB sb = new StrB(46 + name.length()).a("Missing pseudo-attribute ").a(name);
+      StrB sb = new StrB(56).a("Missing pseudo-attribute ").a(name);
       if(val1 != null)
          sb.a(", expected ").a(val1).a(" or ").a(val2);
       throw new XMLStreamException(sb.toString(), loc());
