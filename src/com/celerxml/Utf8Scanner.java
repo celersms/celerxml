@@ -317,7 +317,7 @@ public final class Utf8Scanner extends XmlScanner{
          return currTok = 11; // DTD
       }
       if(b != (byte)'[')
-         thUnxp(decChr(b), ", expected '[' or '>'");
+         thUnxp(decChr(b), ", expected [ or >");
       inc = true;
       return currTok = 11; // DTD
    }
@@ -437,7 +437,7 @@ public final class Utf8Scanner extends XmlScanner{
          q = (inPtr < end ? buf[inPtr++] : load1()) & 0xFF;
       }
       if(q != '>')
-         thUnxp(decChr((byte)q), ", not space or closing '>'");
+         thUnxp(decChr((byte)q), ", not space or closing >");
       return 2; // END_ELEMENT
    }
 
@@ -478,7 +478,7 @@ public final class Utf8Scanner extends XmlScanner{
                q = (inPtr < end ? inBuf[inPtr++] : load1()) & 0xFF;
             }
             if(q != '>')
-               thUnxp(decChr((byte)q), ", not space or closing '>'");
+               thUnxp(decChr((byte)q), ", not space or closing >");
             return 2; // END_ELEMENT
          }
          if(++i > 3)
@@ -821,12 +821,12 @@ public final class Utf8Scanner extends XmlScanner{
                   assertMore();
             }while((c = (b = buf[inPtr++]) & 0xFF) <= 0x20);
          else if(c != '/' && c != '>')
-            thUnxp(decChr(b), ", not space or '>' or '/>'");
+            thUnxp(decChr(b), ", not space or > or />");
          if(c == '/'){
             if(inPtr >= end)
                assertMore();
             if((b = buf[inPtr++]) != (byte)'>')
-               thUnxp(decChr(b), ", not '>'");
+               thUnxp(decChr(b), ", not >");
             empty = true;
             break;
          }
@@ -863,7 +863,7 @@ public final class Utf8Scanner extends XmlScanner{
                thC(c);
          }
          if(c != '=')
-            thUnxp(decChr(b), ", not '='");
+            thUnxp(decChr(b), ", not =");
          while(true){
             if(inPtr >= end)
                assertMore();
@@ -1038,13 +1038,13 @@ adv:     while(true){
                if((c = (((int)b | 0x20) - 0x30)) > 9) // to lowercase
                   c -= 0x27;
                if(c < 0 || c > 0xF)
-                  thUnxp(decChr(b), ", not a hex digit");
+                  thUnxp(decChr(b), ", not hex digit");
                value = value << 4 | c;
             }
          else
             while(b != (byte)';'){
                if(b < (byte)'0' || b > (byte)'9')
-                  thUnxp(decChr(b), ", not a dec digit");
+                  thUnxp(decChr(b), ", not dec digit");
                value = value * 10 + b - '0';
                if(inPtr >= end)
                   assertMore();
@@ -1833,7 +1833,7 @@ adv:     while(true){
                   currSz = outPtr;
                   byte b;
                   if((b = Code(false)) != (byte)'>')
-                     thUnxp(decChr(b), ", not '>' after internal subset");
+                     thUnxp(decChr(b), ", not > after internal subset");
                   return;
                }
          }
@@ -1894,7 +1894,7 @@ adv:     while(true){
                if(!inDecl && quoteChar == 0){
                   byte b;
                   if((b = Code(false)) != (byte)'>')
-                     thUnxp(decChr(b), ", not '>' after internal subset");
+                     thUnxp(decChr(b), ", not > after internal subset");
                }
                continue;
             case 1:  // INVALID

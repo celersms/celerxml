@@ -245,7 +245,7 @@ final class ReaderScanner extends XmlScanner{
          dtdPub = dtdSys = null;
       if((inc = c == '[') || c == '>')
          return currTok = 11; // DTD
-      thUnxp(c, ", expected '[' or '>'");
+      thUnxp(c, ", expected [ or >");
       return 0;
    }
 
@@ -391,12 +391,12 @@ final class ReaderScanner extends XmlScanner{
                   assertMore();
             }while((c = buf[inPtr++]) <= 0x20);
          else if(c != '/' && c != '>')
-            thUnxp(c, ", not space or '>' or '/>'");
+            thUnxp(c, ", not space or > or />");
          if(c == '/'){
             if(inPtr >= end)
                assertMore();
             if((c = buf[inPtr++]) != '>')
-               thUnxp(c, ", not '>'");
+               thUnxp(c, ", not >");
             empty = true;
             break;
          }else if(c == '>'){
@@ -433,7 +433,7 @@ final class ReaderScanner extends XmlScanner{
                thC(c);
          }
          if(c != '=')
-            thUnxp(c, ", not '='");
+            thUnxp(c, ", not =");
          while(true){
             if(inPtr >= end)
                assertMore();
@@ -604,7 +604,7 @@ adv:     while(true){
       else if(c == ':' || Chr.is10N(c))
          thUnxp(pname);
       if(c != '>')
-         thUnxp(c, ", not space or closing '>'");
+         thUnxp(c, ", not space or closing >");
       return 2; // END_ELEMENT
    }
 
@@ -922,7 +922,7 @@ adv:     while(true){
                   if(!adv && quoteChar == 0){
                      currSz = outPtr;
                      if((c = Code(false)) != '>')
-                        thUnxp(c, ", not '>' after internal subset");
+                        thUnxp(c, ", not > after internal subset");
                      return;
                   }
             }
@@ -982,7 +982,7 @@ adv:     while(true){
                case 11: // RBRACKET
                   if(!adv && quoteChar == 0){
                      if((c = Code(false)) != '>')
-                        thUnxp(c, ", not '>' after internal subset");
+                        thUnxp(c, ", not > after internal subset");
                      return;
                   }
                   continue;

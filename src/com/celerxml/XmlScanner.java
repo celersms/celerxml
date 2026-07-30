@@ -649,12 +649,12 @@ findOrCreate:
    final void thUnxp(boolean isProl, int ch) throws XMLStreamException{ thUnxp(ch, isProl ? " in prolog" : " in epilog"); }
    final void thUnxp(String n) throws XMLStreamException{ thErr(new StrB(24 + n.length()).a("Unexpected end tag, not ").a(n).toString()); }
    final void thUnxp() throws XMLStreamException{ thErr("']]>' must only close CDATA"); }
-   final void thUnxp(int ch) throws XMLStreamException{ thUnxp(ch, ", not space or closing '?>'"); }
+   final void thUnxp(int ch) throws XMLStreamException{ thUnxp(ch, ", not space or closing ?>"); }
 
    final void thUnxp(int ch, String msg) throws XMLStreamException{
       if(ch < 32 && ch != '\r' && ch != '\n' && ch != '\t')
          thC(ch);
-      thErr(new StrB(24 + msg.length()).a("Unexpected ").apos(ch).a(msg).toString());
+      thErr(new StrB(53).a("Unexpected ").apos(ch).a(msg).toString());
    }
 
    final void thC() throws XMLStreamException{ thErr("Unexpanded ENTITY_REF"); }
