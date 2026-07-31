@@ -344,9 +344,9 @@ findOrCreate:
       }
       if(!ns.Code()){
          if(uri == XMLConstants.XML_NS_URI)
-            thErr("Can't bind 'http://www.w3.org/XML/1998/namespace' to prefix other than 'xml'");
+            thErr("Can't bind http://www.w3.org/XML/1998/namespace to prefix other than xml");
          if(uri == XMLConstants.XMLNS_ATTRIBUTE_NS_URI)
-            thErr("Can't bind 'http://www.w3.org/2000/xmlns/' to prefix other than 'xmlns'");
+            thErr("Can't bind http://www.w3.org/2000/xmlns/ to prefix other than xmlns");
       }
       if(lastNs != null && lastNs.Code(pfx, depth))
          thErr(pfx == null ? "Duplicate default namespace" : new StrB(24 + pfx.length()).a("Duplicate decl., prefix ").a(pfx).toString());
@@ -635,10 +635,10 @@ findOrCreate:
    abstract boolean more() throws XMLStreamException;
 
    final void thErr(String msg) throws XMLStreamException{ throw new XMLStreamException(msg, loc()); }
-   final void thErr() throws XMLStreamException{ thErr("'--' in comment"); }
+   final void thErr() throws XMLStreamException{ thErr("-- in comment"); }
 
    final void thErr(int ch) throws XMLStreamException{
-      thErr(ch == (int)':' ? "Single ':' allowed in elem./attr. names, none in PI target/entity"
+      thErr(ch == (int)':' ? "Single : allowed in elem./attr. names, none in PI target/entity"
         : new StrB(20).a("Name char ").apos(ch).toString());
    }
 
@@ -648,7 +648,7 @@ findOrCreate:
 
    final void thUnxp(boolean isProl, int ch) throws XMLStreamException{ thUnxp(ch, isProl ? " in prolog" : " in epilog"); }
    final void thUnxp(String n) throws XMLStreamException{ thErr(new StrB(24 + n.length()).a("Unexpected end tag, not ").a(n).toString()); }
-   final void thUnxp() throws XMLStreamException{ thErr("']]>' must only close CDATA"); }
+   final void thUnxp() throws XMLStreamException{ thErr("]]> must only close CDATA"); }
    final void thUnxp(int ch) throws XMLStreamException{ thUnxp(ch, ", not space or closing ?>"); }
 
    final void thUnxp(int ch, String msg) throws XMLStreamException{
