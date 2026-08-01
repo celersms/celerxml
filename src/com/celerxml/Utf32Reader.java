@@ -50,7 +50,7 @@ final class Utf32Reader extends Reader{
       if(len < 1)
          return len;
       len += start;
-      int xx, yy, outPtr = start;
+      int yy, outPtr = start;
       if(cSurrgt != 0){
          cbuf[outPtr++] = cSurrgt;
          cSurrgt = 0;
@@ -64,46 +64,46 @@ final class Utf32Reader extends Reader{
             mLen = yy;
          }else{
             mPtr = 0;
-            if((xx = mIn.read(mBuf)) < 1){
+            if((yy = mIn.read(mBuf)) < 1){
                mLen = 0;
-               if(xx < 0){
+               if(yy < 0){
                   Code();
                   return -1;
                }
                throw new IOException("Stream read 0");
             }
-            mLen = xx;
+            mLen = yy;
          }
          while(mLen < 4){
-            if((xx = mIn.read(mBuf, mLen, 4096 - mLen)) < 1){
-               if(xx < 0){
+            if((yy = mIn.read(mBuf, mLen, 4096 - mLen)) < 1){
+               if(yy < 0){
                   Code();
-                  throw new IOException(new StrB(37).a("EOF in UTF32: expected 4 bytes, got ").a((char)('0' + mLen)).toString());
+                  throw new IOException(new StrB(32).a("Expected 4 bytes in UTF32, got ").a((char)('0' + mLen)).toString());
                }
                throw new IOException("Stream read 0");
             }
-            mLen += xx;
+            mLen += yy;
          }
       }
       final byte[] buf = mBuf;
       while(outPtr < len){
          yy = mPtr;
-         xx = bigEnd ? buf[yy] << 24 | (buf[yy + 1] & 0xFF) << 16 | (buf[yy + 2] & 0xFF) << 8 | buf[yy + 3] & 0xFF
+         yy = bigEnd ? buf[yy] << 24 | (buf[yy + 1] & 0xFF) << 16 | (buf[yy + 2] & 0xFF) << 8 | buf[yy + 3] & 0xFF
                      : buf[yy] & 0xFF | (buf[yy + 1] & 0xFF) << 8 | (buf[yy + 2] & 0xFF) << 16 | buf[yy + 3] << 24;
          mPtr += 4;
-         if(xx >= 0xD800){
-            if(xx > 0x10FFFF || xx < 0xE000 || xx == 0xFFFE || xx == 0xFFFF)
-               throw new IOException(new StrB(30).a("Invalid UTF32 char ").apos(xx).toString());
-            if(xx > 0xFFFF){
-               cbuf[outPtr++] = (char)(0xD800 + ((xx -= 0x10000) >> 10));
-               xx = 0xDC00 | xx & 0x03FF;
+         if(yy >= 0xD800){
+            if(yy > 0x10FFFF || yy < 0xE000 || yy == 0xFFFE || yy == 0xFFFF)
+               throw new IOException(new StrB(30).a("Invalid UTF32 char ").apos(yy).toString());
+            if(yy > 0xFFFF){
+               cbuf[outPtr++] = (char)(0xD800 + ((yy -= 0x10000) >> 10));
+               yy = 0xDC00 | yy & 0x03FF;
                if(outPtr >= len){
-                  cSurrgt = (char)xx;
+                  cSurrgt = (char)yy;
                   break;
                }
             }
          }
-         cbuf[outPtr++] = (char)xx;
+         cbuf[outPtr++] = (char)yy;
          if(mPtr >= mLen)
             break;
       }
