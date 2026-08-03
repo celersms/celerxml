@@ -19,7 +19,7 @@ public final class Utf8Scanner extends XmlScanner{
    private int end, cTmp;
    private final bPN syms;
    private Node curr;
-   private int[] qBuf = new int[32];
+   private int[] qb = new int[32];
 
    public Utf8Scanner(InputFactoryImpl impl, InputStream in, byte[] inBuf, int inPtr, int end){
       super(impl);
@@ -104,7 +104,7 @@ public final class Utf8Scanner extends XmlScanner{
                break;
             case 1:  // NAME_COLON
                if(lastColon >= 0)
-                  thErr("Multiple ':'");
+                  thErr("Multiple :");
                lastColon = cix;
             case 2:  // NAME_NONFIRST
             case 3:  // NAME_ANY
@@ -330,7 +330,7 @@ public final class Utf8Scanner extends XmlScanner{
          if(inPtr >= end)
             assertMore();
          if(inBuf[inPtr++] != (byte)'-')
-            thErr("Expected '-'");
+            thErr("Expected -");
          if(lazy)
             inc = true;
          else
@@ -343,7 +343,7 @@ public final class Utf8Scanner extends XmlScanner{
             if(inPtr >= end)
                assertMore();
             if(inBuf[inPtr++] != (byte)CDATA.charAt(i))
-               thErr("Expected '[CDATA['");
+               thErr("Expected [CDATA[");
          }
          if(lazy)
             inc = true;
@@ -351,7 +351,7 @@ public final class Utf8Scanner extends XmlScanner{
             endCData();
          return 12; // CDATA
       }
-      thErr("Expected '-' or '[CDATA['");
+      thErr("Expected - or [CDATA[");
       return 0;
    }
 
@@ -362,7 +362,7 @@ public final class Utf8Scanner extends XmlScanner{
       tokName = parsePN(inBuf[inPtr++]);
       String ln;
       if((ln = tokName.ln).length() == 3 && ln.equalsIgnoreCase("xml") && tokName.pfx == null)
-         thErr("Target 'xml' reserved");
+         thErr("Target xml reserved");
       if(inPtr >= end)
          assertMore();
       int c;
@@ -516,7 +516,7 @@ public final class Utf8Scanner extends XmlScanner{
       q2 = q2 << 8 | i2;
       if((i2 = buf[inPtr++] & 0xFF) < 45 || (i2 > 58 && i2 < 65) || i2 == 47)
          return findPName(q, q2, 4);
-      int[] quads = qBuf;
+      int[] quads = qb;
       quads[0] = q;
       quads[1] = q2;
       q = 2;
@@ -532,7 +532,7 @@ public final class Utf8Scanner extends XmlScanner{
          }
          int len;
          if(q >= (len = quads.length))
-            System.arraycopy(quads, 0, qBuf = quads = new int[len + len], 0, len);
+            System.arraycopy(quads, 0, qb = quads = new int[len + len], 0, len);
          quads[q++] = i2;
          i2 = q2;
       }
@@ -542,7 +542,7 @@ public final class Utf8Scanner extends XmlScanner{
       int q;
       if((q = b & 0xFF) < 'A')
          thUnxp(q, ", not a name start");
-      int[] quads = qBuf;
+      int[] quads = qb;
       int qix = 0, firstQuad = 0;
       while(true){
          if(inPtr >= end)
@@ -562,7 +562,7 @@ public final class Utf8Scanner extends XmlScanner{
             quads[1] = q;
          }else{
             if(qix >= (len = quads.length))
-               System.arraycopy(quads, 0, qBuf = quads = new int[len + len], 0, len);
+               System.arraycopy(quads, 0, qb = quads = new int[len + len], 0, len);
             quads[qix] = q;
          }
          ++qix;
@@ -576,8 +576,8 @@ public final class Utf8Scanner extends XmlScanner{
       hash ^= hash >>> 16;
       PN name;
       if((name = syms.find(hash ^= hash >>> 8, onlyQuad, 0)) == null){
-         qBuf[0] = onlyQuad;
-         name = Code(hash, qBuf, 0, lastByteCount);
+         qb[0] = onlyQuad;
+         name = Code(hash, qb, 0, lastByteCount);
       }
       return name;
    }
@@ -588,9 +588,9 @@ public final class Utf8Scanner extends XmlScanner{
       hash ^= hash >>> 16;
       PN name;
       if((name = syms.find(hash ^= hash >>> 8, firstQuad, secondQuad)) == null){
-         qBuf[0] = firstQuad;
-         qBuf[1] = secondQuad;
-         name = Code(hash, qBuf, 1, lastByteCount);
+         qb[0] = firstQuad;
+         qb[1] = secondQuad;
+         name = Code(hash, qb, 1, lastByteCount);
       }
       return name;
    }
@@ -599,7 +599,7 @@ public final class Utf8Scanner extends XmlScanner{
       --inPtr;
       int ll;
       if(qlen >= (ll = quads.length))
-         System.arraycopy(quads, 0, qBuf = quads = new int[ll + ll], 0, ll);
+         System.arraycopy(quads, 0, qb = quads = new int[ll + ll], 0, ll);
       quads[qlen++] = lastQuad;
       ll = quads[0];
       for(int i = 1; i < qlen; ++i)
@@ -835,7 +835,7 @@ public final class Utf8Scanner extends XmlScanner{
             break;
          }
          if(c == '<')
-            thErr("Unexpected '<'");
+            thErr("Unexpected <");
          boolean isNsDecl = true;
          PN attrName;
          if((prefix = (attrName = parsePN(b)).pfx) == null)
@@ -2039,7 +2039,7 @@ adv:     while(true){
                if(inPtr >= end)
                   assertMore();
                if(inBuf[inPtr++] != (byte)CDATA.charAt(i))
-                  thErr("Expected '[CDATA['");
+                  thErr("Expected [CDATA[");
             }
             endClsCData();
          }else{
@@ -2244,7 +2244,7 @@ adv:     while(true){
                if(inPtr >= end)
                   assertMore();
                if(inBuf[inPtr++] != (byte)CDATA.charAt(i))
-                  thErr("Expected '[CDATA['");
+                  thErr("Expected [CDATA[");
             }
             skipCData();
          }else if(skipChars())
