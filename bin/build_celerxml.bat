@@ -8,7 +8,7 @@ REM The JDK 6 or later installation path (optional)
 SET JDK6=\Tools\jdk1.8.0_202
 
 REM Current CelerXML version
-SET LIB_VER=1.0.2
+SET LIB_VER=1.0.3
 
 REM === CONFIG END ==================================
 TITLE Rebuilding CelerXML...
@@ -36,8 +36,8 @@ rd /s /q classes >nul 2>nul
 mkdir classes\celerxml\META-INF\services 2>nul
 
 REM Include the services
-ECHO com.celerxml.InputFactoryImpl >classes\celerxml\META-INF\services\javax.xml.stream.XMLInputFactory
-ECHO com.celerxml.SAXParserFactoryImpl >classes\celerxml\META-INF\services\javax.xml.parsers.SAXParserFactory
+ECHO com.celerxml.InputFactoryImpl>classes\celerxml\META-INF\services\javax.xml.stream.XMLInputFactory
+ECHO com.celerxml.SAXParserFactoryImpl>classes\celerxml\META-INF\services\javax.xml.parsers.SAXParserFactory
 
 REM Compile the source code
 "%JDK6%\bin\javac" -source 6 -target 6 -classpath src -bootclasspath "%JDK6%\jre\lib\rt.jar" -d classes\celerxml src\com\celerxml\SAXParserFactoryImpl.java
