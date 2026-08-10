@@ -2,10 +2,10 @@
 # === CONFIG BEGIN ================================
 
 # The JDK 9 or later installation path
-JDK9=/Tools/jdk-16.0.2
+JDK9=/usr/lib/jvm/java-11-openjdk
 
 # The JDK 6 or later installation path (optional)
-JDK6=/Tools/jdk1.8.0_202
+JDK6=/usr/java/jdk1.8.0_241
 
 # Current CelerXML version
 LIB_VER=1.0.3
@@ -13,12 +13,12 @@ LIB_VER=1.0.3
 # === CONFIG END ==================================
 cd "`dirname $0`/.."
 
-if [ "x$JDK9" = x ] || [ ! -x "$JDK9/bin/java" ]
+if [ "x$JDK9" = x ] || [ ! -x "$JDK9/bin/javac" ]
 then
   printf 'If a JDK v9 or later is installed, set the JDK9 environment variable to point to where the JDK is located.\n' && exit 1
 fi
-[ ! -x "$JDK6/bin/java" ] && JDK6="$JDK9"
-[ ! -x "$JDK6/jre/lib/rt.jar" ] && printf '%s/jre/lib/rt.jar not found\n' "$JDK6" && exit 1
+[ ! -x "$JDK6/bin/javac" ] && JDK6="$JDK9"
+[ ! -f "$JDK6/jre/lib/rt.jar" ] && printf '%s/jre/lib/rt.jar not found\n' "$JDK6" && exit 1
 rm -rf classes 2>/dev/null
 mkdir -p classes/celerxml/META-INF/services 2>/dev/null
 
@@ -40,3 +40,42 @@ rm -f module-info.java >/dev/null 2>&1
 
 # Create the jar
 "$JDK6/bin/jar" cMf lib/celerxml-${LIB_VER}.jar -C classes/celerxml .
+
+# Create the bundle for Maven Central
+MVN_BUNDLE=mvn/com/celersms/celerxml/$LIB_VER
+rm -rf mvn 2>/dev/null
+mkdir -p $MVN_BUNDLE 2>/dev/null
+cp lib/celerxml-${LIB_VER}.jar ${MVN_BUNDLE}/celerxml-${LIB_VER}.jar 2>/dev/null
+cat <<EOF >${MVN_BUNDLE}/celerxml-${LIB_VER}.pom
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org">
+ <modelVersion>4.0.0</modelVersion>
+ <groupId>com.celersms</groupId>
+ <artifactId>celerxml</artifactId>
+ <version>${LIB_VER}</version>
+ <packaging>jar</packaging>
+ <name>CelerXML</name>
+ <description>Lightweight open-source Java library implementing the standard XML parsers: SAX, SAX2, StAX.</description>
+ <url>https://www.celersms.com/CelerXML.htm</url>
+ <licenses>
+  <license>
+   <name>BSD 3-Clause</name>
+   <url>https://github.com/celersms/celerxml/blob/main/LICENSE</url>
+  </license>
+ </licenses>
+ <developers>
+  <developer>
+   <name>Victor Celer</name>
+   <email>admin@celersms.com</email>
+   <organization>CelerSMS</organization>
+   <organizationUrl>https://www.celersms.com</organizationUrl>
+  </developer>
+ </developers>
+ <scm>
+  <connection>scm:git:https://github.com/celersms/celerxml.git</connection>
+  <developerConnection>scm:git:https://github.com/celersms/celerxml.git</developerConnection>
+  <url>https://github.com/celersms/celerxml</url>
+ </scm>
+</project>
+EOF
+"$JDK6/bin/jar" cMf ${MVN_BUNDLE}/celerxml-${LIB_VER}-sources.jar -C src com
+"$JDK6/bin/jar" cMf ${MVN_BUNDLE}/celerxml-${LIB_VER}-javadoc.jar -C .github documentation.htm
