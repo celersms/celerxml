@@ -79,3 +79,18 @@ cat <<EOF >${MVN_BUNDLE}/celerxml-${LIB_VER}.pom
 EOF
 "$JDK6/bin/jar" cMf ${MVN_BUNDLE}/celerxml-${LIB_VER}-sources.jar -C src com
 "$JDK6/bin/jar" cMf ${MVN_BUNDLE}/celerxml-${LIB_VER}-javadoc.jar -C .github documentation.htm
+
+# Sign the files and package the Maven bundle
+printf 'Enter GPG passphrase: '
+stty -echo
+read GPG_PWD
+stty echo
+printf '\n'
+for f in celerxml-${LIB_VER}.jar celerxml-${LIB_VER}.pom celerxml-${LIB_VER}-sources.jar celerxml-${LIB_VER}-javadoc.jar
+do
+  echo $GPG_PWD | gpg --batch --pinentry-mode loopback --passphrase-fd 0 --yes --detach-sign --armor -o $MVN_BUNDLE/${f}.asc $MVN_BUNDLE/$f
+  md5sum $MVN_BUNDLE/$f  | cut -d' ' -f1 >$MVN_BUNDLE/${f}.md5
+  sha1sum $MVN_BUNDLE/$f | cut -d' ' -f1 >$MVN_BUNDLE/${f}.sha1
+done
+"$JDK6/bin/jar" cMf lib/celerxml-${LIB_VER}-bundle.zip -C mvn .
+rm -rf classes mvn 2>/dev/null
