@@ -38,19 +38,17 @@ GOTO EXIT
 
 SET /a TOTAL_TESTS=0
 SET /a TESTS_OK=0
-FOR /f "delims=" %%i IN ('dir /A-D /B /S src\test\test_*.java 2^>NUL ^| findstr /E /R ".*.java" ^|sort') DO CALL :TST "%%i"
+CD src\test
+"%JDK%\bin\javac" test_*.java
+FOR %%i IN (test_*.class) DO CALL :TST "%%i"
 ECHO Tests passed: %TESTS_OK% / %TOTAL_TESTS%
 GOTO EXIT
 
 :TST
- SET /a TOTAL_TESTS+=1
  ECHO Testing %~n1 ...
- "%JDK%\bin\javac" %1
- IF %ERRORLEVEL% NEQ 0 GOTO :EOF
- CD "%~dp1"
+ SET /a TOTAL_TESTS+=1
  "%JDK%\bin\java" %XML_CP% %J_XML_OVERRIDE% %~n1
- IF %ERRORLEVEL% NEQ 0 GOTO :EOF
- SET /a TESTS_OK+=1
+ IF %ERRORLEVEL% EQU 0 SET /a TESTS_OK+=1
  GOTO :EOF
 
 :EXIT
