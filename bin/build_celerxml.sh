@@ -86,9 +86,15 @@ stty -echo
 read GPG_PWD
 stty echo
 printf '\n'
+GPG_VER=`gpg --version | sed -n '1s/[^0-9]*\([0-9][0-9]*\)\.\([0-9]\).*/\1\2/p'`
 for f in celerxml-${LIB_VER}.jar celerxml-${LIB_VER}.pom celerxml-${LIB_VER}-sources.jar celerxml-${LIB_VER}-javadoc.jar
 do
-  echo $GPG_PWD | gpg --batch --pinentry-mode loopback --passphrase-fd 0 --yes --detach-sign --armor -o $MVN_BUNDLE/${f}.asc $MVN_BUNDLE/$f
+  if [ $GPG_VER -gt 21 ]
+  then
+    echo $GPG_PWD | gpg --batch --pinentry-mode loopback --passphrase-fd 0 --yes --detach-sign --armor -o $MVN_BUNDLE/${f}.asc $MVN_BUNDLE/$f
+  else
+    gpg --batch --passphrase $GPG_PWD --yes --detach-sign --armor -o $MVN_BUNDLE/${f}.asc $MVN_BUNDLE/$f
+  fi
   md5sum $MVN_BUNDLE/$f  | cut -d' ' -f1 >$MVN_BUNDLE/${f}.md5
   sha1sum $MVN_BUNDLE/$f | cut -d' ' -f1 >$MVN_BUNDLE/${f}.sha1
 done
