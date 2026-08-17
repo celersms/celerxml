@@ -154,8 +154,7 @@ final class Chr{
       chars[392] = 0xFFFFFFE0; // 0x3105 - 0x312C
       chars[393] = 0x00001FFF;
 
-      chars = s10 = new int[394];
-      System.arraycopy(s10S, 0, chars, 0, 394);
+      System.arraycopy(s10S, 0, chars = s10 = new int[394], 0, 394);
       chars[1]   = 0x03FF6000; // 0x2D, 0x2E, 0x30 - 0x39
       chars[5]   = 0x00800000; // 0xB7
       chars[22]  = 0x00030003; // (0x2BB - 0x2C1) 0x2D0, 0x2D1
@@ -234,9 +233,9 @@ final class Chr{
 
    static final Chr getAscii(){
       if(sAscii == null){
-         Chr chr = sAscii = new Chr();
+         Chr chr;
          byte[] bTXT, bATT, bNAM, bDTD, bOTH;
-         doLat(bTXT = chr.TXT, bATT = chr.ATT, bNAM = chr.NAM, bDTD = chr.DTD, bOTH = chr.OTH);
+         doLat(bTXT = (chr = sAscii = new Chr()).TXT, bATT = chr.ATT, bNAM = chr.NAM, bDTD = chr.DTD, bOTH = chr.OTH);
          for(int i = 128; i <= 255; i++)
             bTXT[i] = bATT[i] = bNAM[i] = bDTD[i] = bOTH[i] = 1; // INVALID
       }
@@ -245,8 +244,8 @@ final class Chr{
 
    static final Chr getLat1(){
       if(sLat == null){
-         Chr chr = sLat = new Chr();
-         doLat(chr.TXT, chr.ATT, chr.NAM, chr.DTD, chr.OTH);
+         Chr chr;
+         doLat((chr = sLat = new Chr()).TXT, chr.ATT, chr.NAM, chr.DTD, chr.OTH);
       }
       return sLat;
    }
