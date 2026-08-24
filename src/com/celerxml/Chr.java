@@ -21,8 +21,8 @@ final class Chr{
       for(int i = 0x27; i <= 0x3B; ++i)
          bchars[i] = 1; // PUBID_OK
       bchars[0x0A] = bchars[0x0D] = bchars[0x20] = bchars[0x21] = bchars[0x23] = bchars[0x24] = bchars[0x25] = bchars[0x3D] = bchars[0x3F] = bchars[0x40] = bchars[0x5F] = 1; // PUBID_OK
-      Chr chr = sUtf8 = new Chr();
-      do8bTxt(chr.TXT);
+      Chr chr;
+      do8bTxt((chr = sUtf8 = new Chr()).TXT);
       Code(chr.TXT);
       doAttr(chr.ATT);
       Code(chr.ATT);
@@ -38,8 +38,8 @@ final class Chr{
       bchars[0x3F] = 12; // QMARK
       bchars[0x5D] = 11; // RBRACKET
 
-      int[] chars = s10S = new int[394];
-      chars[2]   = 0x87FFFFFE; // 0x41 - 0x5A, 0x5F
+      int[] chars;
+      (chars = s10S = new int[394])[2] = 0x87FFFFFE; // 0x41 - 0x5A, 0x5F
       chars[3]   = 0x07FFFFFE; // 0x61 - 0x7A
       chars[6]   = chars[7]   = 0xFF7FFFFF; // 0xC0 - 0xD6, 0xD8 - 0xF6 | 0xF8 - 0xFF
       chars[8]   = 0xFFFFFFFF; // 0x100 - 0x131
@@ -262,7 +262,7 @@ final class Chr{
          else if((c & 0xF0) == 0xE0)
             code = 6; // MULTIBYTE_3
          else if((c & 0xF8) == 0xF0)
-            code = 7;  // MULTIBYTE_4
+            code = 7; // MULTIBYTE_4
          arr[c] = code;
       }
    }
