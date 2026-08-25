@@ -230,7 +230,7 @@ final class ReaderScanner extends XmlScanner{
                addSpace = false;
             }
             if(outPtr >= outputBuffer.length)
-                nameBuf = outputBuffer = xpand(outputBuffer);
+               nameBuf = outputBuffer = xpand(outputBuffer);
             outputBuffer[outPtr++] = c;
          }
          dtdPub = new String(outputBuffer, 0, outPtr);
@@ -257,7 +257,7 @@ final class ReaderScanner extends XmlScanner{
          if(inPtr >= end)
             assertMore();
          if(buf[inPtr++] != '-')
-            thErr("Expected '-'");
+            thErr("Expected -");
          if(lazy)
             inc = true;
          else
@@ -270,7 +270,7 @@ final class ReaderScanner extends XmlScanner{
             if(inPtr >= end)
                assertMore();
             if(buf[inPtr++] != CDATA.charAt(i))
-               thErr("Expected '[CDATA['");
+               thErr("Expected [CDATA[");
          }
          if(lazy)
             inc = true;
@@ -278,7 +278,7 @@ final class ReaderScanner extends XmlScanner{
             endCData();
          return 12; // CDATA
       }
-      thErr("Expected '-' or '[CDATA['");
+      thErr("Expected - or [CDATA[");
       return 0;
    }
 
@@ -288,7 +288,7 @@ final class ReaderScanner extends XmlScanner{
          assertMore();
       String ln;
       if((ln = (tokName = parsePN(buf[inPtr++])).ln).length() == 3 && ln.equalsIgnoreCase("xml") && tokName.pfx == null)
-         thErr("Target 'xml' reserved");
+         thErr("Target xml reserved");
       if(inPtr >= end)
          assertMore();
       char c;
@@ -403,7 +403,7 @@ final class ReaderScanner extends XmlScanner{
             empty = false;
             break;
          }else if(c == '<')
-            thErr("Unexpected '<'");
+            thErr("Unexpected <");
          PN attrName;
          boolean isNsDecl = true;
          if((prefix = (attrName = parsePN(c)).pfx) == null)
@@ -1256,7 +1256,7 @@ adv:     while(true){
                if(inPtr >= end)
                   assertMore();
                if(buf[inPtr++] != CDATA.charAt(i))
-                  thErr("Expected '[CDATA['");
+                  thErr("Expected [CDATA[");
             }
             endClsCData();
          }else{
@@ -1454,7 +1454,7 @@ adv:     while(true){
                if(inPtr >= end)
                   assertMore();
                if(buf[inPtr++] != CDATA.charAt(i))
-                  thErr("Expected '[CDATA['");
+                  thErr("Expected [CDATA[");
             }
             skipCData();
          }else if(skipChars())
@@ -1826,7 +1826,7 @@ adv:     while(true){
                if((c = nameBuffer[namePtr]) < 0xD800 || c >= 0xE000){
                   if(c == ':'){
                      if(lastColon >= 0)
-                        thErr("Multiple ':'");
+                        thErr("Multiple :");
                      lastColon = namePtr;
                   }else if(!Chr.is10N(c))
                      thErr(c);
