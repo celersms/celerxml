@@ -94,8 +94,8 @@ final class bPN{
          if((xx = clEnd) != 0){
             clCnt = clEnd = 0;
             clLstSh = false;
-            final Node[] oldNodes = clLst;
-            clLst = new Node[oldNodes.length];
+            final Node[] oldNodes;
+            clLst = new Node[(oldNodes = clLst).length];
             for(int i = 0; i < xx; ++i)
                for(Node curr = oldNodes[i]; curr != null; curr = curr.nxt)
                   if(nams[ix = (hh = (symb = curr.Code).hashCode()) & msk] == null){
