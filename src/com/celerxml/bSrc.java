@@ -111,7 +111,7 @@ bom:     if(Code(4)){
                      ff = true;
                   }
                   if(yy != Code || ff != big)
-                     throw new XMLStreamException(new StrB(normEnc.length() + 90).a("Declared '").a(normEnc).a(ff ? "' is big" : "' is little").a(" endian, uses ").a(
+                     throw new XMLStreamException(new StrB(normEnc.length() + 88).a("Declared ").a(normEnc).a(ff ? " is big" : " is little").a(" endian, uses ").a(
                         (char)('0' + yy)).a(" bytes/char; differs from the actual ordering/encoding").toString(), loc());
                }
             }
