@@ -56,8 +56,8 @@ final class cPN{
          msk = idx - 1;
          Code <<= 1;
          for(int i = 0; i < xx; ++i){
-            PN symbol = oldSyms[i];
-            if(symbol != null)
+            PN symbol;
+            if((symbol = oldSyms[i]) != null)
                if(syms[idx = symbol.hashCode() & msk] == null)
                   syms[idx] = symbol;
                else
@@ -67,8 +67,8 @@ final class cPN{
          for(int i = 0; i < xx; ++i){
             Node b = oldNodes[i];
             while(b != null){
-               PN symbol = b.Code;
-               if(syms[idx = symbol.hashCode() & msk] == null)
+               PN symbol;
+               if(syms[idx = (symbol = b.Code).hashCode() & msk] == null)
                   syms[idx] = symbol;
                else
                   nn[idx >>= 1] = new Node(symbol, nn[idx]);
@@ -83,8 +83,8 @@ final class cPN{
          dirty = true;
       }
       ++sz;
-      String sname = new String(buff, 0, len).intern();
-      PN pname = (xx = sname.indexOf(':')) < 0 ? new PN(sname, null, sname, hash) : new PN(sname, sname.substring(0, xx).intern(), sname.substring(xx + 1).intern(), hash);
+      String sn;
+      PN pname = (xx = (sn = new String(buff, 0, len).intern()).indexOf(':')) < 0 ? new PN(sn, null, sn, hash) : new PN(sn, sn.substring(0, xx).intern(), sn.substring(xx + 1).intern(), hash);
       if(primary)
          syms[idx] = pname;
       else
