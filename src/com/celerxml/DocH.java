@@ -15,7 +15,7 @@ import org.xml.sax.ContentHandler;
 final class DocH implements ContentHandler, org.xml.sax.AttributeList{
 
    private final org.xml.sax.DocumentHandler Code;
-   private Attributes attrs;
+   private Attributes a;
 
    DocH(org.xml.sax.DocumentHandler docH){ Code = docH; }
 
@@ -27,23 +27,23 @@ final class DocH implements ContentHandler, org.xml.sax.AttributeList{
    public final void processingInstruction(String tgt, String data) throws SAXException{ Code.processingInstruction(tgt, data); }
    public final void setDocumentLocator(Locator loc){ Code.setDocumentLocator(loc); }
 
-   public final void startElement(String uri, String lName, String qName, Attributes attrs) throws SAXException{
-      this.attrs = attrs;
+   public final void startElement(String uri, String lName, String qName, Attributes a) throws SAXException{
+      this.a = a;
       Code.startElement(qName == null ? lName : qName, this);
    }
 
    public final void skippedEntity(String n){ /* NOOP */ }
    public final void startPrefixMapping(String pfx, String uri){ /* NOOP */ }
    public final void endPrefixMapping(String pfx){ /* NOOP */ }
-   public final int getLength(){ return attrs.getLength(); }
+   public final int getLength(){ return a.getLength(); }
 
    public final String getName(int i){
       String n;
-      return (n = attrs.getQName(i)) == null ? attrs.getLocalName(i) : n;
+      return (n = a.getQName(i)) == null ? a.getLocalName(i) : n;
    }
 
-   public final String getType(int i){ return attrs.getType(i); }
-   public final String getType(String name){ return attrs.getType(name); }
-   public final String getValue(int i){ return attrs.getValue(i); }
-   public final String getValue(String name){ return attrs.getValue(name); }
+   public final String getType(int i){ return a.getType(i); }
+   public final String getType(String name){ return a.getType(name); }
+   public final String getValue(int i){ return a.getValue(i); }
+   public final String getValue(String name){ return a.getValue(name); }
 }
