@@ -29,7 +29,7 @@ import org.xml.sax.InputSource;
 @SuppressWarnings("unchecked")
 public final class InputFactoryImpl extends XMLInputFactory{
 
-   private int flags;
+   private int ff;
    private bPN utf8T, lat1T, ascT;
    private LinkedHashMap mURIs;
    private XMLEventAllocator alloc;
@@ -42,10 +42,10 @@ public final class InputFactoryImpl extends XMLInputFactory{
    XMLResolver res;
    byte bStand;
    final static HashMap Code;
-   final static ThreadLocal softR;
+   final static ThreadLocal sR;
 
    static{
-       softR = new ThreadLocal();
+       sR = new ThreadLocal();
        HashMap pp;
        (pp = Code = new HashMap()).put(XMLInputFactory.IS_NAMESPACE_AWARE, Boolean.TRUE);
        pp.put(XMLInputFactory.IS_VALIDATING, Integer.valueOf(8));                   // DTD_VALIDATING
@@ -59,7 +59,7 @@ public final class InputFactoryImpl extends XMLInputFactory{
    }
 
    public InputFactoryImpl(){
-      flags = 7957;
+      ff = 7957;
       pubId = sysId = extEnc = null;
    }
 
@@ -67,7 +67,7 @@ public final class InputFactoryImpl extends XMLInputFactory{
       this.pubId = pubId;
       this.sysId = sysId;
       this.extEnc = extEnc;
-      this.flags = impl.flags;
+      this.ff = impl.ff;
       this.utf8T = impl.utf8T;
       this.lat1T = impl.lat1T;
       this.ascT = impl.ascT;
@@ -76,7 +76,7 @@ public final class InputFactoryImpl extends XMLInputFactory{
       this.res = impl.res;
       this.mURIs = impl.mURIs;
       SoftReference ref;
-      if((ref = (SoftReference)softR.get()) != null)
+      if((ref = (SoftReference)sR.get()) != null)
          rcclr = (ShBuf)ref.get();
       if(forceAutoClose)
          Code(8192, true);
@@ -257,7 +257,7 @@ public final class InputFactoryImpl extends XMLInputFactory{
 
    private final ShBuf getSBuf(){
       ShBuf rcclr = new ShBuf();
-      softR.set(new SoftReference(rcclr));
+      sR.set(new SoftReference(rcclr));
       return rcclr;
    }
 
@@ -281,13 +281,13 @@ public final class InputFactoryImpl extends XMLInputFactory{
       return new bPN(tab);
    }
 
-   final boolean Code(int mask){ return (flags & mask) != 0; }
+   final boolean Code(int mask){ return (ff & mask) != 0; }
 
    final void Code(int mask, boolean state){
       if(state)
-         flags |= mask;
+         ff |= mask;
       else
-         flags &= ~mask;
+         ff &= ~mask;
    }
 
    final void Code(int ver, String xmlDeclEnc, String standalone){
@@ -339,5 +339,5 @@ public final class InputFactoryImpl extends XMLInputFactory{
    public final XMLEventReader createXMLEventReader(Source source){ return null; }
    public final XMLEventReader createXMLEventReader(String systemId, InputStream in){ return null; }
    public final XMLEventReader createXMLEventReader(String systemId, Reader r){ return null; }
-   public final XMLEventReader createXMLEventReader(XMLStreamReader sr){ return null; }
+   public final XMLEventReader createXMLEventReader(XMLStreamReader xsr){ return null; }
 }
