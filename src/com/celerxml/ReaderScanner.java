@@ -22,9 +22,9 @@ final class ReaderScanner extends XmlScanner{
    ReaderScanner(InputFactoryImpl impl, Reader in, char[] buf, int inPtr, int end){
       super(impl);
       this.in = in;
-      if(impl.genTab == null)
-         impl.genTab = new cPN();
-      syms = new cPN(impl.genTab);
+      if(impl.gen == null)
+         impl.gen = new cPN();
+      syms = new cPN(impl.gen);
       this.buf = buf;
       this.inPtr = inPtr;
       this.end = end;
@@ -1903,7 +1903,7 @@ adv:     while(true){
    final void Code(){
       super.Code();
       if(syms.dirty)
-         impl.genTab.Code(syms);
+         impl.gen.Code(syms);
       if(buf != null){
          impl.setCB3(buf);
          buf = null;

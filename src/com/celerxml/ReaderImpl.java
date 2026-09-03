@@ -27,9 +27,9 @@ class ReaderImpl implements javax.xml.stream.XMLStreamReader{
 
    public String getVersion(){ return scan.impl.declVer; }
 
-   public final boolean isStandalone(){ return scan.impl.bStand == 1; }
+   public final boolean isStandalone(){ return scan.impl.bS == 1; }
 
-   public final boolean standaloneSet(){ return scan.impl.bStand != 0; }
+   public final boolean standaloneSet(){ return scan.impl.bS != 0; }
 
    public Object getProperty(String p){
       return "javax.xml.stream.entities".equals(p) || "javax.xml.stream.notations".equals(p) ? java.util.Collections.EMPTY_LIST : scan.impl.getProperty(p, false);

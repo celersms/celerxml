@@ -36,11 +36,11 @@ public final class InputFactoryImpl extends XMLInputFactory{
    private ShBuf rcclr;
 
    final String pubId, sysId, extEnc;
-   cPN genTab;
+   cPN gen;
    String enc, declVer, declEnc;
    XMLReporter rep;
    XMLResolver res;
-   byte bStand;
+   byte bS;
    final static HashMap Code;
    final static ThreadLocal sR;
 
@@ -71,7 +71,7 @@ public final class InputFactoryImpl extends XMLInputFactory{
       this.utf8T = impl.utf8T;
       this.lat1T = impl.lat1T;
       this.ascT = impl.ascT;
-      this.genTab = impl.genTab;
+      this.gen = impl.gen;
       this.rep = impl.rep;
       this.res = impl.res;
       this.mURIs = impl.mURIs;
@@ -293,7 +293,7 @@ public final class InputFactoryImpl extends XMLInputFactory{
    final void Code(int ver, String xmlDeclEnc, String standalone){
       declVer = ver == '0' ? InSrc.V10 : InSrc.V11;
       declEnc = xmlDeclEnc;
-      bStand = standalone == InSrc.YES ? 1 : standalone == InSrc.NO ? (byte)2 : 0;
+      bS = standalone == InSrc.YES ? 1 : standalone == InSrc.NO ? (byte)2 : 0;
    }
 
    @SuppressWarnings("unchecked")
