@@ -11,7 +11,7 @@ CelerXML is free even for commercial use and redistribution of any kind, as long
 
 # Installation
 
-Just add `celerxml-1.0.2.jar` to the classpath. If the classpath contains other SAX or StAX processors, the following system properties can be used to select the current implementation:  
+Just add `celerxml-1.0.3.jar` to the classpath. If the classpath contains other SAX or StAX processors, the following system properties can be used to select the current implementation:  
 
 Configure the **SAX** processor to use the CelerXML implementation:  
 ```-Djavax.xml.parsers.SAXParserFactory=com.celerxml.SAXParserFactoryImpl```
