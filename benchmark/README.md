@@ -4,7 +4,7 @@ These benchmarks measures the average XML parsing time and the classload time fo
 processors were benchmarked:
  * *Xerces2* (the default XML processor)
  * *FasterXML/aalto-xml* v1.3.3
- * *CelerXML* v1.0.2
+ * *CelerXML* v1.0.3
 
 The following table summarizes the benchmark settings and environment characteristics:
 
